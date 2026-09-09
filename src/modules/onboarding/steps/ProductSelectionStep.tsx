@@ -1,14 +1,15 @@
-import type { ValidatedStepProps } from "../../../types";
 import { PRODUCTS } from "../../../data/products";
 import { clickable } from "../../../components/clickable";
-import { createFieldBinder } from "./fieldBinder";
+import { useStepFields } from "./useStepFields";
 
-export function ProductSelectionStep({ data, setData, errors, setErrors, step }: ValidatedStepProps) {
-  const { clear } = createFieldBinder(step, data, setData, errors, setErrors);
+export function ProductSelectionStep() {
+  const { values, choose, message } = useStepFields();
+  const selected = values.product;
+  const error = message("product");
 
   const selectProduct = (id: string, name: string) => {
-    setData({ ...data, product: id, productName: name });
-    clear("product");
+    choose("product", id);
+    choose("productName", name);
   };
 
   return (
@@ -21,13 +22,13 @@ export function ProductSelectionStep({ data, setData, errors, setErrors, step }:
           <div key={p.id}
             {...clickable(() => selectProduct(p.id, p.name))}
             style={{
-              border: `2px solid ${data.product === p.id ? p.color : "var(--gray-200)"}`,
+              border: `2px solid ${selected === p.id ? p.color : "var(--gray-200)"}`,
               borderRadius: 12,
               padding: "20px 22px",
               cursor: "pointer",
               transition: "all 0.15s",
-              background: data.product === p.id ? p.bg : "white",
-              boxShadow: data.product === p.id ? `0 0 0 4px ${p.color}18` : "var(--shadow-sm)",
+              background: selected === p.id ? p.bg : "white",
+              boxShadow: selected === p.id ? `0 0 0 4px ${p.color}18` : "var(--shadow-sm)",
             }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
               <div style={{ width: 48, height: 48, borderRadius: 10, background: p.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, border: `1px solid ${p.color}30` }}>
@@ -36,7 +37,7 @@ export function ProductSelectionStep({ data, setData, errors, setErrors, step }:
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "var(--navy)" }}>{p.name}</div>
-                  {data.product === p.id && (
+                  {selected === p.id && (
                     <div style={{ width: 18, height: 18, borderRadius: "50%", background: p.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
                     </div>
@@ -56,11 +57,11 @@ export function ProductSelectionStep({ data, setData, errors, setErrors, step }:
         ))}
       </div>
       {/* One slot: a neutral prompt until the user tries to advance without choosing. */}
-      {errors.product ? (
+      {error ? (
         <div className="error-msg" role="alert" style={{ marginTop: 20, justifyContent: "center", textAlign: "center" }}>
-          ⚠ {errors.product}
+          ⚠ {error}
         </div>
-      ) : !data.product && (
+      ) : !selected && (
         <div style={{ marginTop: 20, padding: "10px 16px", background: "var(--gray-50)", border: "1px solid var(--gray-200)", borderRadius: 8, fontSize: 12, color: "var(--gray-400)", textAlign: "center" }}>
           Please select a product above to continue
         </div>

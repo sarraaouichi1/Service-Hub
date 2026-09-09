@@ -144,6 +144,16 @@ export const onboardingDraftSchema = z.object({
   ...salesApprovalStep.shape,
 });
 
+/**
+ * The fields a given step owns, read straight off its schema so the step
+ * boundary is defined in exactly one place. React Hook Form validates a step by
+ * triggering this list.
+ */
+export function fieldsForStep(step: number): (keyof OnboardingForm)[] {
+  const schema = STEP_SCHEMAS[step];
+  return schema ? (Object.keys(schema.shape) as (keyof OnboardingForm)[]) : [];
+}
+
 /** Collapse Zod issues to one message per field, matching `Field`'s single slot. */
 function toFormErrors(error: z.ZodError): FormErrors {
   const errors: FormErrors = {};
@@ -157,6 +167,11 @@ function toFormErrors(error: z.ZodError): FormErrors {
 /**
  * Validate one step of the draft. The final step has no controls of its own, so
  * it is checked against the whole draft instead.
+ *
+ * The wizard itself no longer calls this — React Hook Form's resolver drives
+ * the UI. It stays as the module's framework-independent entry point: it is
+ * what the verification harness exercises, and what the coming API layer will
+ * use to check a payload outside of React.
  */
 export function validateStep(step: number, data: OnboardingForm): FormErrors {
   const schema = STEP_SCHEMAS[step] ?? onboardingDraftSchema;
@@ -164,7 +179,7 @@ export function validateStep(step: number, data: OnboardingForm): FormErrors {
   return result.success ? {} : toFormErrors(result.error);
 }
 
-/** True when every step's rules pass — what the review step gates submission on. */
+/** True when every step's rules pass. The React path uses `formState.isValid`. */
 export function isDraftComplete(data: OnboardingForm): boolean {
   return onboardingDraftSchema.safeParse(data).success;
 }
@@ -178,15 +193,3 @@ export function draftIssues(data: OnboardingForm): string[] {
   return result.success ? [] : Object.values(toFormErrors(result.error));
 }
 
-/**
- * Re-check a single field after an edit, in the context of its step. Used to
- * clear a message the moment the user fixes the value, without surfacing errors
- * for fields they haven't reached yet.
- */
-export function validateField(
-  step: number,
-  data: OnboardingForm,
-  key: keyof FormErrors,
-): string | undefined {
-  return validateStep(step, data)[key];
-}

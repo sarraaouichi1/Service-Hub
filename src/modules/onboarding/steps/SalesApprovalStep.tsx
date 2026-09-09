@@ -1,14 +1,10 @@
-import type { ValidatedStepProps } from "../../../types";
-import { createFieldBinder } from "./fieldBinder";
+import { useStepFields } from "./useStepFields";
 
 /** Wizard step 05 — Sales confirms payment before the submission is reviewed. */
-export function SalesApprovalStep({ data, setData, errors, setErrors, step }: ValidatedStepProps) {
-  const { clear } = createFieldBinder(step, data, setData, errors, setErrors);
-  const approved = data.salesApproved ?? false;
-  const setApproved = (value: boolean) => {
-    setData({ ...data, salesApproved: value });
-    if (value) clear("salesApproved");
-  };
+export function SalesApprovalStep() {
+  const { values, choose, message } = useStepFields();
+  const approved = values.salesApproved ?? false;
+  const setApproved = (value: boolean) => choose("salesApproved", value);
   return (
     <div className="slide-in">
       <div style={{ marginBottom: 20, padding: "12px 16px", background: "#FFF0F6", border: "1px solid #F5A7C7", borderRadius: 8, fontSize: 13, color: "#C0185A" }}>
@@ -25,15 +21,15 @@ export function SalesApprovalStep({ data, setData, errors, setErrors, step }: Va
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 18 }}>
           <div style={{ background: "var(--gray-50)", borderRadius: 8, padding: "12px 14px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", marginBottom: 4 }}>Customer</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>{data.siteName || "Medway Hospital"}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>{values.siteName || "Medway Hospital"}</div>
           </div>
           <div style={{ background: "var(--gray-50)", borderRadius: 8, padding: "12px 14px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", marginBottom: 4 }}>Product</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>{data.productName || "smart web pay"}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>{values.productName || "smart web pay"}</div>
           </div>
           <div style={{ background: "var(--gray-50)", borderRadius: 8, padding: "12px 14px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", marginBottom: 4 }}>PSP</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>{data.psp || "Fiserv"}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>{values.psp || "Fiserv"}</div>
           </div>
           <div style={{ background: "var(--gray-50)", borderRadius: 8, padding: "12px 14px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", marginBottom: 4 }}>Sales Contact</div>
@@ -59,8 +55,8 @@ export function SalesApprovalStep({ data, setData, errors, setErrors, step }: Va
           </div>
         )}
       </div>
-      {errors.salesApproved && (
-        <div className="error-msg" role="alert">⚠ {errors.salesApproved}</div>
+      {message("salesApproved") && (
+        <div className="error-msg" role="alert">⚠ {message("salesApproved")}</div>
       )}
     </div>
   );

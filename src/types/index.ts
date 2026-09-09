@@ -1,6 +1,6 @@
 // Domain types for the entervo Service Hub.
 
-import type { Dispatch, ReactNode, SetStateAction } from "react";
+import type { ReactNode } from "react";
 
 // ─── DOMAIN TYPES ───────────────────────────────────────────────────────────
 export type ModuleId = "onboarding" | "patch";
@@ -170,14 +170,6 @@ export type OnboardingForm = { [K in FormTextKey]?: string } & {
   [key: `pm_${string}`]: boolean | undefined;
 };
 
-export interface StepProps {
-  data: OnboardingForm;
-  setData: Dispatch<SetStateAction<OnboardingForm>>;
-}
-
-export interface ReviewStepProps {
-  data: OnboardingForm;
-}
 
 /**
  * Validation messages keyed by the field that produced them. Facilities are a
@@ -187,15 +179,12 @@ export type FormErrors = Partial<
   Record<FormTextKey | FormBoolKey | "facilities", string>
 >;
 
-/** Props for a wizard step that renders validation messages against its fields. */
-export interface ValidatedStepProps extends StepProps {
-  errors: FormErrors;
-  setErrors: Dispatch<SetStateAction<FormErrors>>;
-  /** The step's own index, so a field can be re-checked in the right context. */
-  step: number;
-}
-
-export interface DeclarationReviewStepProps extends ReviewStepProps {
+/**
+ * Wizard steps take no draft props: they reach the shared React Hook Form
+ * instance through `FormProvider`. The review step still needs the declaration
+ * tick, which is module state rather than draft data.
+ */
+export interface DeclarationReviewStepProps {
   declared: boolean;
   onDeclaredChange: (declared: boolean) => void;
 }

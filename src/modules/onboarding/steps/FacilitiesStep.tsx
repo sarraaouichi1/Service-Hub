@@ -1,24 +1,20 @@
-import type { Facility, ValidatedStepProps } from "../../../types";
+import { useFieldArray, useFormContext } from "react-hook-form";
+import type { OnboardingForm } from "../../../types";
 import { Icon } from "../../../components/Icon";
-import { createFieldBinder } from "./fieldBinder";
 
-const EMPTY_ROW: Facility = { id: "", name: "", city: "", inpayEntry: 30, inpayPayment: 30 };
+const EMPTY_ROW = { id: "", name: "", city: "", inpayEntry: 30, inpayPayment: 30 };
 
-export function FacilitiesStep({ data, setData, errors, setErrors, step }: ValidatedStepProps) {
-  const { recheck } = createFieldBinder(step, data, setData, errors, setErrors);
-  const facilities: Facility[] = data.facilities || [EMPTY_ROW];
+export function FacilitiesStep() {
+  const { control, register, formState } = useFormContext<OnboardingForm>();
+  const { fields, append, remove } = useFieldArray({ control, name: "facilities" });
 
-  /** Apply a change to the rows and re-check the one message they share. */
-  const commit = (rows: Facility[]) => {
-    const next = { ...data, facilities: rows };
-    setData(next);
-    recheck("facilities", next);
-  };
-
-  const update = (i: number, key: keyof Facility, val: string) =>
-    commit(facilities.map((row, idx) => (idx === i ? { ...row, [key]: val } : row)));
-  const addRow = () => commit([...facilities, { ...EMPTY_ROW }]);
-  const removeRow = (i: number) => commit(facilities.filter((_, idx) => idx !== i));
+  // The rows share one message — the schema reports the first offending row,
+  // and there is nowhere per-row to render it yet. Zod's issue lands on the
+  // array itself; React Hook Form may nest it under `root`.
+  const arrayError = formState.errors.facilities as
+    | { message?: string; root?: { message?: string } }
+    | undefined;
+  const error = arrayError?.message ?? arrayError?.root?.message;
 
   return (
     <div className="slide-in">
@@ -30,18 +26,18 @@ export function FacilitiesStep({ data, setData, errors, setErrors, step }: Valid
         <div className="facility-col-label">InPay Pay</div>
         <div />
       </div>
-      {facilities.map((fac, i) => (
-        <div className="facility-row" key={i}>
-          <input className="facility-input mono" placeholder="4439" value={fac.id} onChange={e => update(i, "id", e.target.value)} />
-          <input className="facility-input" placeholder="Car Park A – Public" value={fac.name} onChange={e => update(i, "name", e.target.value)} />
-          <input className="facility-input" placeholder="City" value={fac.city} onChange={e => update(i, "city", e.target.value)} />
-          <input className="facility-input mono" placeholder="30 min" value={fac.inpayEntry} onChange={e => update(i, "inpayEntry", e.target.value)} />
-          <input className="facility-input mono" placeholder="30 min" value={fac.inpayPayment} onChange={e => update(i, "inpayPayment", e.target.value)} />
-          <button className="del-btn" onClick={() => removeRow(i)} title="Remove">×</button>
+      {fields.map((row, i) => (
+        <div className="facility-row" key={row.id}>
+          <input className="facility-input mono" placeholder="4439" {...register(`facilities.${i}.id`)} />
+          <input className="facility-input" placeholder="Car Park A – Public" {...register(`facilities.${i}.name`)} />
+          <input className="facility-input" placeholder="City" {...register(`facilities.${i}.city`)} />
+          <input className="facility-input mono" placeholder="30 min" {...register(`facilities.${i}.inpayEntry`)} />
+          <input className="facility-input mono" placeholder="30 min" {...register(`facilities.${i}.inpayPayment`)} />
+          <button className="del-btn" onClick={() => remove(i)} title="Remove">×</button>
         </div>
       ))}
-      {errors.facilities && <div className="error-msg" role="alert" style={{ marginTop: 10 }}>⚠ {errors.facilities}</div>}
-      <button className="btn btn-secondary" style={{ marginTop: 12 }} onClick={addRow}>
+      {error && <div className="error-msg" role="alert" style={{ marginTop: 10 }}>⚠ {error}</div>}
+      <button className="btn btn-secondary" style={{ marginTop: 12 }} onClick={() => append({ ...EMPTY_ROW })}>
         <Icon name="plus" /> Add Facility
       </button>
       <div style={{ marginTop: 20, background: "var(--blue-pale)", border: "1px solid var(--blue-mid)", borderRadius: 8, padding: "12px 16px", fontSize: 12, color: "var(--blue)" }}>

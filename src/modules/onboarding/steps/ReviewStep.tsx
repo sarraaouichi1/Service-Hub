@@ -1,9 +1,11 @@
-import type { DeclarationReviewStepProps } from "../../../types";
+import { useWatch } from "react-hook-form";
+import type { DeclarationReviewStepProps, OnboardingForm } from "../../../types";
 import { PSP_LIST } from "../../../data/psps";
 import { Icon } from "../../../components/Icon";
 import { draftIssues } from "../../../schemas/onboarding";
 
-export function ReviewStep({ data, declared, onDeclaredChange }: DeclarationReviewStepProps) {
+export function ReviewStep({ declared, onDeclaredChange }: DeclarationReviewStepProps) {
+  const data = useWatch<OnboardingForm>() as OnboardingForm;
   const pspLabel = PSP_LIST.find(p => p.id === data.psp)?.name || "Not selected";
   const facs = data.facilities || [];
   // Named against the schema, so this can't claim the draft is ready when the

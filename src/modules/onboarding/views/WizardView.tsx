@@ -9,8 +9,11 @@ import { FacilitiesStep } from "../steps/FacilitiesStep";
 import { AppPaymentStep } from "../steps/AppPaymentStep";
 import { SalesApprovalStep } from "../steps/SalesApprovalStep";
 import { ReviewStep } from "../steps/ReviewStep";
+import { useFormContext } from "react-hook-form";
+import type { FieldPath } from "react-hook-form";
+import type { OnboardingForm } from "../../../types";
 import { useOnboarding } from "../context/onboardingContext";
-import { isDraftComplete, validateStep } from "../../../schemas/onboarding";
+import { fieldsForStep } from "../../../schemas/onboarding";
 
 const route = getRouteApi("/onboarding/wizard/$step");
 
@@ -20,10 +23,8 @@ export function WizardView() {
   const navigate = useNavigate();
   const { step } = route.useParams();
   const { project } = route.useSearch();
-  const {
-    formData, setFormData, fieldErrors, setFieldErrors,
-    declared, setDeclared, submitted, setSubmitted,
-  } = useOnboarding();
+  const { declared, setDeclared, submitted, setSubmitted } = useOnboarding();
+  const { trigger, formState } = useFormContext<OnboardingForm>();
 
   // The step lives in the URL, so a refresh or a shared link lands on the
   // same step. Out-of-range values are clamped rather than rendering nothing.
@@ -41,18 +42,9 @@ export function WizardView() {
    * only moves on once it passes. Back and the step nav stay free, so a partly
    * filled step is never a trap.
    */
-  const advance = () => {
-    const errors = validateStep(wizardStep, formData);
-    setFieldErrors(errors);
-    if (Object.keys(errors).length === 0) goToStep(wizardStep + 1);
-  };
-
-  const stepProps = {
-    data: formData,
-    setData: setFormData,
-    errors: fieldErrors,
-    setErrors: setFieldErrors,
-    step: wizardStep,
+  const advance = async () => {
+    const fields = fieldsForStep(wizardStep) as FieldPath<OnboardingForm>[];
+    if (await trigger(fields)) goToStep(wizardStep + 1);
   };
 
   /**
@@ -61,18 +53,19 @@ export function WizardView() {
    */
   const renderStep = () => {
     switch (wizardStep) {
-      case 0: return <ProductSelectionStep {...stepProps} />;
-      case 1: return <OperatorStep {...stepProps} />;
-      case 2: return <CellComputerStep {...stepProps} />;
-      case 3: return <FacilitiesStep {...stepProps} />;
-      case 4: return <AppPaymentStep {...stepProps} />;
-      case 5: return <SalesApprovalStep {...stepProps} />;
-      default: return <ReviewStep data={formData} declared={declared} onDeclaredChange={setDeclared} />;
+      case 0: return <ProductSelectionStep />;
+      case 1: return <OperatorStep />;
+      case 2: return <CellComputerStep />;
+      case 3: return <FacilitiesStep />;
+      case 4: return <AppPaymentStep />;
+      case 5: return <SalesApprovalStep />;
+      default: return <ReviewStep declared={declared} onDeclaredChange={setDeclared} />;
     }
   };
 
   // Submission needs both the declaration ticked and every step's rules met.
-  const canSubmit = declared && isDraftComplete(formData);
+  // `isValid` is the whole draft schema, maintained by the form's onTouched mode.
+  const canSubmit = declared && formState.isValid;
 
   if (submitted) {
     return (
@@ -143,7 +136,7 @@ export function WizardView() {
               )}
               <button className="btn btn-secondary">Save Draft</button>
               {wizardStep < LAST_STEP ? (
-                <button className="btn btn-primary" onClick={advance}>
+                <button className="btn btn-primary" onClick={() => void advance()}>
                   Continue <Icon name="chevronRight" />
                 </button>
               ) : (
