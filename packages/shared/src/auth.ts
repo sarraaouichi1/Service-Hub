@@ -26,6 +26,8 @@ export interface AuthUser {
   permissions: Permission[];
   /** Which identity provider vouched for this user; "local" for a password account. */
   issuer: string;
+  /** ISO timestamp of the last successful sign-in, or null for an account that never has. */
+  lastLoginAt?: string | null;
 }
 
 export interface SessionInfo {

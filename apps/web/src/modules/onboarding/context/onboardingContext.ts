@@ -16,7 +16,8 @@ export interface OnboardingContextValue {
   /** Whoever is signed in. Comes from the session, so nothing here changes it. */
   currentUser: AuthUser;
   notifs: AppNotification[];
-  setNotifs: Dispatch<SetStateAction<AppNotification[]>>;
+  /** Marks every notification read on the server; the list refreshes from it. */
+  markAllRead: () => void;
 
   /** The final declaration tick. Not part of the draft, so not a form field. */
   declared: boolean;

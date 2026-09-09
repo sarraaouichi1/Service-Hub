@@ -1,11 +1,10 @@
-import { PATCH_BULLETINS } from "../../../data/patch";
-
-/** Bulletins staged for a maintenance window but not yet deployed. */
-const SCHEDULED_BULLETINS = PATCH_BULLETINS.filter(
-  b => b.status === "scheduled" || b.status === "pending",
-);
+import { useBulletins } from "../../../queries";
 
 export function PatchScheduleView() {
+  /** Bulletins staged for a maintenance window but not yet deployed. */
+  const SCHEDULED_BULLETINS = (useBulletins().data ?? []).filter(
+    b => b.status === "scheduled" || b.status === "pending",
+  );
   return (
   <div className="patch-fade">
     <div className="patch-page-header">

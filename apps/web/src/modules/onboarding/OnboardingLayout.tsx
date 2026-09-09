@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet, getRouteApi, useMatches, useNavigate } from "@tanstack/react-router";
-import { PROJECTS, projectCountByStatus } from "../../data/projects";
+import { countByStatus } from "../../data/display";
+import { useProjects } from "../../queries";
 import { Icon } from "../../components/Icon";
 import { clickable } from "../../components/clickable";
 import { OnboardingProvider } from "./context/OnboardingProvider";
@@ -36,7 +37,8 @@ export function OnboardingLayout() {
 function OnboardingShell() {
   const navigate = useNavigate();
   const matches = useMatches();
-  const { currentUser, notifs, setNotifs, resetDraft } = useOnboarding();
+  const { currentUser, notifs, markAllRead, resetDraft } = useOnboarding();
+  const projects = useProjects().data ?? [];
   const { can } = useAuth();
   const [showNotifs, setShowNotifs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -67,10 +69,10 @@ function OnboardingShell() {
 
   const mainNav: NavLink[] = [
     { to: "/onboarding/dashboard", icon: "grid", label: "Dashboard" },
-    { to: "/onboarding/projects", icon: "list", label: "All Projects", badge: String(PROJECTS.length) },
+    { to: "/onboarding/projects", icon: "list", label: "All Projects", badge: String(projects.length) },
   ];
   const reviewNav: NavLink[] = [
-    { to: "/onboarding/review-queue", icon: "eye", label: "Review Queue", badge: String(projectCountByStatus("review") + projectCountByStatus("sales-approval")), permission: "project:review" },
+    { to: "/onboarding/review-queue", icon: "eye", label: "Review Queue", badge: String(countByStatus(projects, "review") + countByStatus(projects, "sales-approval")), permission: "project:review" },
     { to: "/onboarding/approved", icon: "shield", label: "Approved", permission: "project:read" },
   ];
   const adminNav: NavLink[] = [
@@ -166,11 +168,11 @@ function OnboardingShell() {
               <div className="topbar-dropdown fade-in">
                 <div className="dropdown-header">
                   <div className="dropdown-header-title">Notifications</div>
-                  <button className="btn btn-ghost" style={{ fontSize: 11, padding: "4px 8px" }} onClick={() => setNotifs(notifs.map(n => ({ ...n, read: true })))}>Mark all read</button>
+                  <button className="btn btn-ghost" style={{ fontSize: 11, padding: "4px 8px" }} onClick={markAllRead}>Mark all read</button>
                 </div>
                 <div style={{ maxHeight: 380, overflowY: "auto" }}>
                   {notifs.map(n => (
-                    <div key={n.id} className={`notif-item${n.read ? "" : " unread"}`} {...clickable(() => setNotifs(notifs.map(x => x.id === n.id ? { ...x, read: true } : x)))}>
+                    <div key={n.id} className={`notif-item${n.read ? "" : " unread"}`} >
                       <div className="notif-icon" style={{ background: n.color }}>
                         {n.type === "submit" && <Icon name="plus" size={16} color={n.iconColor} />}
                         {n.type === "approve" && <Icon name="check" size={16} color={n.iconColor} />}

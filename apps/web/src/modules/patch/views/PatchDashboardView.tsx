@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { PATCH_SERVICE_TIERS, PATCH_STAGES } from "../../../data/patch";
+import { usePatchStages, useServiceTiers } from "../../../queries";
 import type { PatchServiceTier } from "../../../types";
 
 const CheckIcon = () => (
@@ -15,6 +15,8 @@ const CheckIcon = () => (
 export function PatchDashboardView({ tier }: { tier?: PatchServiceTier["id"] }) {
   const navigate = useNavigate();
   const isDashboard = tier === undefined;
+  const tiers = useServiceTiers().data ?? [];
+  const stages = usePatchStages().data ?? [];
 
   return (
   <div className="patch-fade">
@@ -73,10 +75,10 @@ export function PatchDashboardView({ tier }: { tier?: PatchServiceTier["id"] }) 
 
     {/* Service Tiers — the dashboard lists both, the tier views show one */}
     <div className="patch-section-title">
-      {isDashboard ? "Our Service Tiers" : PATCH_SERVICE_TIERS.find(t => t.id === tier)?.name}
+      {isDashboard ? "Our Service Tiers" : tiers.find(t => t.id === tier)?.name}
     </div>
     <div className="patch-service-grid" style={isDashboard ? undefined : { gridTemplateColumns: "minmax(0, 520px)" }}>
-      {PATCH_SERVICE_TIERS.filter(t => isDashboard || t.id === tier).map(t => (
+      {tiers.filter(t => isDashboard || t.id === tier).map(t => (
         <div key={t.id} className={`patch-service-card${t.popular ? " popular" : ""}`}>
           {t.popular && <div className="patch-popular-badge">MOST POPULAR</div>}
           <div className="patch-service-title">{t.name}</div>
@@ -96,7 +98,7 @@ export function PatchDashboardView({ tier }: { tier?: PatchServiceTier["id"] }) 
       <div className="patch-process-title">The entervo 5-Stage Patching Process</div>
       <div className="patch-stages" style={{ position: "relative" }}>
         <div className="patch-stages-line" />
-        {PATCH_STAGES.map(s => (
+        {stages.map(s => (
           <div key={s.num} className="patch-stage">
             <div style={{ position: "relative" }}>
               <div className="patch-stage-circle" style={{ background: s.color }} dangerouslySetInnerHTML={{ __html: s.icon }} />

@@ -1,9 +1,8 @@
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
-import {
-  PROJECTS, STATUS_COLOR, STATUS_MAP, productName,
-} from "../../../data/projects";
-import { PRODUCT_BY_ID } from "../../../data/products";
+import { STATUS_COLOR, STATUS_MAP } from "../../../data/display";
 import { Icon } from "../../../components/Icon";
+import { AsyncSection } from "../../../components/AsyncSection";
+import { useProductLookup, useProjects } from "../../../queries";
 import { Can } from "../../auth/Can";
 import { clickable } from "../../../components/clickable";
 import { useOnboarding } from "../context/onboardingContext";
@@ -26,6 +25,8 @@ export function ProjectsView() {
   const navigate = useNavigate();
   const { status, q } = route.useSearch();
   const { resetDraft } = useOnboarding();
+  const projects = useProjects();
+  const productById = useProductLookup();
 
   const openProject = (p: Project) =>
     navigate({ to: "/onboarding/wizard/$step", params: { step: String(p.step) }, search: { project: p.id } });
@@ -36,7 +37,7 @@ export function ProjectsView() {
   };
 
   const needle = (q ?? "").trim().toLowerCase();
-  const visible = PROJECTS.filter(p =>
+  const visible = (projects.data ?? []).filter(p =>
     (status === "all" || p.status === status) &&
     (needle === "" ||
       p.name.toLowerCase().includes(needle) ||
@@ -81,8 +82,10 @@ export function ProjectsView() {
       ))}
     </div>
     <div style={{ border: "1px solid var(--gray-200)", borderRadius: "0 0 8px 8px", overflow: "hidden", background: "white" }}>
+      <AsyncSection query={projects} label="projects">
+        {() => <>
       {visible.map((p, i) => {
-        const pc = PRODUCT_BY_ID[p.product];
+        const pc = productById[p.product];
         return (
           <div key={p.id} {...clickable(() => openProject(p))} style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 1.2fr 1fr 1fr 1.2fr 80px", padding: "14px 18px", borderBottom: i < visible.length - 1 ? "1px solid var(--gray-100)" : "none", alignItems: "center", cursor: "pointer", transition: "background 0.12s" }}
             onMouseEnter={e => e.currentTarget.style.background = "var(--gray-50)"}
@@ -92,7 +95,7 @@ export function ProjectsView() {
               <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 2 }}>PM: {p.pm}</div>
             </div>
             <div>
-              <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: pc?.bg ?? "var(--gray-100)", color: pc?.color ?? "var(--gray-400)" }}>{productName(p)}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: pc?.bg ?? "var(--gray-100)", color: pc?.color ?? "var(--gray-400)" }}>{pc?.name ?? p.product}</span>
             </div>
             <div style={{ fontSize: 13, color: "var(--gray-600)" }}>{p.partner}</div>
             <div style={{ fontSize: 13, color: "var(--gray-600)" }}>{p.psp}</div>
@@ -111,6 +114,8 @@ export function ProjectsView() {
           </div>
         );
       })}
+        </>}
+      </AsyncSection>
     </div>
   </div>
   );

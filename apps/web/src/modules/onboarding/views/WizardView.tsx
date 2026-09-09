@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, getRouteApi, useNavigate } from "@tanstack/react-router";
 import { WIZARD_STEPS } from "../../../data/wizardSteps";
 import { Icon } from "../../../components/Icon";
@@ -14,6 +15,8 @@ import type { FieldPath } from "react-hook-form";
 import type { OnboardingForm } from "../../../types";
 import { useOnboarding } from "../context/onboardingContext";
 import { fieldsForStep } from "@service-hub/shared";
+import { ApiError } from "../../../api";
+import { useSaveDraft, useSubmitDraft } from "../../../queries";
 
 const route = getRouteApi("/onboarding/wizard/$step");
 
@@ -24,7 +27,27 @@ export function WizardView() {
   const { step } = route.useParams();
   const { project } = route.useSearch();
   const { declared, setDeclared, submitted, setSubmitted } = useOnboarding();
-  const { trigger, formState } = useFormContext<OnboardingForm>();
+  const { trigger, formState, getValues, setError } = useFormContext<OnboardingForm>();
+  const [failure, setFailure] = useState<string | null>(null);
+
+  const saveDraft = useSaveDraft({ onError: (error) => setFailure(error.message) });
+
+  /**
+   * The server re-checks the schema, so a submission can still be refused here.
+   * Its 422 carries per-field messages, which go back to the fields that
+   * produced them — the same slot the wizard's own validation uses.
+   */
+  const submitDraft = useSubmitDraft({
+    onSuccess: () => { setFailure(null); setSubmitted(true); },
+    onError: (error) => {
+      if (error instanceof ApiError && error.fieldErrors) {
+        for (const [field, message] of Object.entries(error.fieldErrors)) {
+          setError(field as keyof OnboardingForm, { message });
+        }
+      }
+      setFailure(error.message);
+    },
+  });
 
   // The step lives in the URL, so a refresh or a shared link lands on the
   // same step. Out-of-range values are clamped rather than rendering nothing.
@@ -128,13 +151,21 @@ export function WizardView() {
                 <div key={s.num} className={`step-dot${wizardStep === s.num ? " active" : wizardStep > s.num ? " done" : ""}`} />
               ))}
             </div>
+            {failure && (
+              <div className="error-msg" role="alert" style={{ marginRight: "auto" }}>⚠ {failure}</div>
+            )}
             <div style={{ display: "flex", gap: 10 }}>
               {wizardStep > 0 && (
                 <button className="btn btn-secondary" onClick={() => goToStep(wizardStep - 1)}>
                   <Icon name="chevronLeft" /> Back
                 </button>
               )}
-              <button className="btn btn-secondary">Save Draft</button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => saveDraft.mutate(getValues())}
+                disabled={saveDraft.isPending}>
+                {saveDraft.isPending ? "Saving…" : saveDraft.isSuccess ? "Draft saved" : "Save Draft"}
+              </button>
               {wizardStep < LAST_STEP ? (
                 <button className="btn btn-primary" onClick={() => void advance()}>
                   Continue <Icon name="chevronRight" />
@@ -143,9 +174,9 @@ export function WizardView() {
                 <button
                   className="btn btn-primary"
                   style={{ background: canSubmit ? "var(--green)" : "var(--gray-200)", color: canSubmit ? "white" : "var(--gray-400)", cursor: canSubmit ? "pointer" : "not-allowed" }}
-                  disabled={!canSubmit}
+                  disabled={!canSubmit || submitDraft.isPending}
                   title={canSubmit ? undefined : declared ? "Some steps are still incomplete" : "Tick the confirmation above to submit"}
-                  onClick={() => setSubmitted(true)}>
+                  onClick={() => submitDraft.mutate(getValues())}>
                   <Icon name="check" /> Submit for Review
                 </button>
               )}

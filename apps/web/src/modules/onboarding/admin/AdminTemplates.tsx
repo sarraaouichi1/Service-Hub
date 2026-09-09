@@ -1,28 +1,38 @@
 import { useState } from "react";
-import type { CountryTemplate, TemplateDraft, TemplateDraftTextKey } from "../../../types";
-import { INITIAL_TEMPLATES } from "../../../data/templates";
-import { PSP_NAMES } from "../../../data/psps";
+import type { TemplateDraft, TemplateDraftTextKey } from "../../../types";
 import { clickable } from "../../../components/clickable";
+import { AsyncSection } from "../../../components/AsyncSection";
+import {
+  useCreateTemplate, useDeleteTemplate, usePsps, useTemplates, useUpdateTemplate,
+} from "../../../queries";
+
+const EMPTY_DRAFT: TemplateDraft = { title: "", country: "", lang: "", currency: "", vat: "", psp: "", status: "draft" };
 
 export function AdminTemplates() {
-  const [templates, setTemplates] = useState<CountryTemplate[]>(INITIAL_TEMPLATES);
+  const query = useTemplates();
+  const templates = query.data ?? [];
+  const pspNames = (usePsps().data ?? []).map(p => p.name);
   const [selected, setSelected] = useState<number | null>(null);
   const [showNew, setShowNew] = useState(false);
-  const [newTpl, setNewTpl] = useState<TemplateDraft>({ title: "", country: "", lang: "", currency: "", vat: "", psp: "", status: "draft" });
+  const [newTpl, setNewTpl] = useState<TemplateDraft>(EMPTY_DRAFT);
 
+  // Every write goes to the API and the list refreshes from it, so an edit
+  // survives navigating away — which it did not when this was useState.
+  const createTemplate = useCreateTemplate({
+    onSuccess: () => { setShowNew(false); setNewTpl(EMPTY_DRAFT); },
+  });
+  const updateTemplate = useUpdateTemplate();
+  const removeTemplate = useDeleteTemplate();
 
   const saveNew = () => {
     if (!newTpl.title) return;
-    setTemplates([...templates, { ...newTpl, id: Date.now(), projects: 0 }]);
-    setShowNew(false);
-    setNewTpl({ title: "", country: "", lang: "", currency: "", vat: "", psp: "", status: "draft" });
+    createTemplate.mutate(newTpl);
   };
 
-  const toggleStatus = (id: number) => {
-    setTemplates(templates.map(t => t.id === id ? { ...t, status: t.status === "active" ? "draft" : "active" } : t));
-  };
+  const toggleStatus = (id: number, status: "active" | "draft") =>
+    updateTemplate.mutate({ id, patch: { status: status === "active" ? "draft" : "active" } });
 
-  const deleteTemplate = (id: number) => setTemplates(templates.filter(t => t.id !== id));
+  const deleteTemplate = (id: number) => removeTemplate.mutate(id);
 
   return (
     <div className="fade-in">
@@ -67,7 +77,7 @@ export function AdminTemplates() {
                 onChange={e => setNewTpl({ ...newTpl, psp: e.target.value })}
               >
                 <option value="">Select PSP…</option>
-                {PSP_NAMES.map(p => <option key={p}>{p}</option>)}
+                {pspNames.map(p => <option key={p}>{p}</option>)}
               </select>
             </div>
           </div>
@@ -79,6 +89,8 @@ export function AdminTemplates() {
       )}
 
       {/* Template list */}
+      <AsyncSection query={query} label="templates">
+        {() => (
       <div style={{ display: "grid", gap: 10 }}>
         {templates.map(t => (
           <div key={t.id}
@@ -102,7 +114,7 @@ export function AdminTemplates() {
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8 }} onClick={e => e.stopPropagation()}>
-                <button className="btn btn-secondary" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => toggleStatus(t.id)}>
+                <button className="btn btn-secondary" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => toggleStatus(t.id, t.status)}>
                   {t.status === "active" ? "Deactivate" : "Activate"}
                 </button>
                 <button className="btn btn-ghost" style={{ fontSize: 11, padding: "5px 10px", color: "var(--red)" }} onClick={() => deleteTemplate(t.id)}>
@@ -134,6 +146,8 @@ export function AdminTemplates() {
           </div>
         ))}
       </div>
+        )}
+      </AsyncSection>
     </div>
   );
 }

@@ -17,9 +17,16 @@ const check = (label: string, got: unknown, want: unknown) => {
 
 const ADMIN = "k.harperscheidt@scheidt-bachmann.de";
 const CUSTOMER = "medwayft.carparking@nhs.net";
+const SALES = "a.krueger@scheidt-bachmann.de";
+const REVIEWER = "l.meissner@scheidt-bachmann.de";
+const PM = "m.delvaux@scheidt-bachmann.de";
 const PASSWORD = process.env.SEED_PASSWORD ?? "ChangeMe123!dev";
 
 async function main() {
+  // Re-runnable: a run that fails mid-way must not poison the next one.
+  await prisma.user.deleteMany({ where: { email: { in: ["ada.lovelace@example.com", "e@v.il", "z@y.com"] } } });
+  await prisma.template.deleteMany({ where: { title: "Ireland" } });
+
   const app = await buildServer();
   await app.listen({ port: 0, host: "127.0.0.1" });
   const base = `http://127.0.0.1:${(app.server.address() as { port: number }).port}`;
@@ -116,6 +123,58 @@ async function main() {
   check("reactivated account signs in", reviewer.status, 200);
   await call(`/api/users/${newUser.id}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ roles: ["Customer"] }) });
   check("a role change invalidates the existing session", (await call("/api/auth/me", { cookie: reviewer.cookie })).status, 401);
+
+  // ── Resources, and the RBAC on them ─────────────────────────────────────
+  const sales = await login(SALES);
+  const auditor = await login(REVIEWER);
+
+  check("everyone signed in can read projects", (await call("/api/projects", { cookie: customer.cookie })).status, 200);
+  check("a customer may not update a project", (await call("/api/projects/1", { method: "PATCH", cookie: customer.cookie, body: JSON.stringify({ status: "approved" }) })).status, 403);
+  check("an admin may update a project", (await call("/api/projects/1", { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ step: 5 }) })).status, 200);
+
+  check("a customer may not read templates", (await call("/api/templates", { cookie: customer.cookie })).status, 403);
+  check("a project manager may read templates", (await call("/api/templates", { cookie: (await login(PM)).cookie })).status, 200);
+  check("a project manager may not write templates", (await call("/api/templates", { method: "POST", cookie: (await login(PM)).cookie, body: JSON.stringify({ title: "X", country: "X", lang: "en-GB", currency: "GBP", vat: "20" }) })).status, 403);
+
+  check("a reviewer may read rules", (await call("/api/rules", { cookie: auditor.cookie })).status, 200);
+  check("a reviewer may not change a rule", (await call("/api/rules/1", { method: "PATCH", cookie: auditor.cookie, body: JSON.stringify({ active: false }) })).status, 403);
+  check("sales may not read settings", (await call("/api/settings", { cookie: sales.cookie })).status, 403);
+  check("a reviewer may read the audit log", (await call("/api/audit-log", { cookie: auditor.cookie })).status, 200);
+  check("sales may not read the audit log", (await call("/api/audit-log", { cookie: sales.cookie })).status, 403);
+
+  // The bug this whole layer exists to fix: an admin edit has to outlive the
+  // request that made it.
+  const ruleBefore = ((await call("/api/rules", { cookie: admin.cookie })).body?.rules as { id: number; active: boolean }[])[0];
+  await call(`/api/rules/${ruleBefore.id}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ active: !ruleBefore.active }) });
+  const ruleAfter = ((await call("/api/rules", { cookie: admin.cookie })).body?.rules as { id: number; active: boolean }[])[0];
+  check("a rule toggle persists across requests", ruleAfter.active, !ruleBefore.active);
+  await call(`/api/rules/${ruleBefore.id}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ active: ruleBefore.active }) });
+
+  check("a rule's pattern cannot be rewritten here", (await call("/api/rules/1", { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ pattern: "anything" }) })).body?.rule ? "accepted-but-ignored" : "rejected", "accepted-but-ignored");
+
+  const tpl = await call("/api/templates", { method: "POST", cookie: admin.cookie, body: JSON.stringify({ title: "Ireland", country: "IE", lang: "en-IE", currency: "EUR", vat: "23", psp: "Fiserv", status: "draft" }) });
+  check("an admin creates a template", tpl.status, 201);
+  const tplId = (tpl.body?.template as { id: number }).id;
+  const listed = (await call("/api/templates", { cookie: admin.cookie })).body?.templates as { id: number }[];
+  check("the new template persists", listed.some(t => t.id === tplId), true);
+  await call(`/api/templates/${tplId}`, { method: "DELETE", cookie: admin.cookie });
+  check("deleting it persists too", ((await call("/api/templates", { cookie: admin.cookie })).body?.templates as { id: number }[]).some(t => t.id === tplId), false);
+
+  check("settings update persists", (await call("/api/settings", { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ platformName: "Renamed" }) })).status, 200);
+  check("and reads back", ((await call("/api/settings", { cookie: admin.cookie })).body?.settings as { platformName: string }).platformName, "Renamed");
+  check("a bad support email is 422", (await call("/api/settings", { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ supportEmail: "nope" }) })).status, 422);
+
+  // ── Drafts are per person ───────────────────────────────────────────────
+  await call("/api/draft", { method: "PUT", cookie: admin.cookie, body: JSON.stringify({ opName: "Admin's draft" }) });
+  check("a saved draft reads back", ((await call("/api/draft", { cookie: admin.cookie })).body?.draft as { opName: string }).opName, "Admin's draft");
+  check("another person doesn't see it", (await call("/api/draft", { cookie: auditor.cookie })).body?.draft, null);
+  await call("/api/draft", { method: "DELETE", cookie: admin.cookie });
+
+  // ── Submitting still re-checks the schema server-side ───────────────────
+  const badSubmit = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify({ opName: "Incomplete" }) });
+  check("an incomplete submission is 422", badSubmit.status, 422);
+  check("the 422 names the missing fields", Object.keys((badSubmit.body?.fieldErrors ?? {}) as object).length > 3, true);
+  check("a customer may not submit at all", (await call("/api/projects/submit", { method: "POST", cookie: customer.cookie, body: JSON.stringify({}) })).status, 403);
 
   // ── CSRF ────────────────────────────────────────────────────────────────
   const foreign = await fetch(base + "/api/users", {

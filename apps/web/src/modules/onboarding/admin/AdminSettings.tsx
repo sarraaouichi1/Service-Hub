@@ -1,12 +1,37 @@
 import { useState } from "react";
 import type { PlatformConfig, PlatformConfigBoolKey, PlatformConfigTextKey } from "../../../types";
-import { AUDIT_LOG, DEFAULT_PLATFORM_CONFIG } from "../../../data/platformSettings";
+import { AsyncSection } from "../../../components/AsyncSection";
+import { useAuditLog, useSettings, useUpdateSettings } from "../../../queries";
 
 export function AdminSettings() {
-  const [saved, setSaved] = useState(false);
-  const [cfg, setCfg] = useState<PlatformConfig>(DEFAULT_PLATFORM_CONFIG);
+  const query = useSettings();
+  return (
+    <AsyncSection query={query} label="settings">
+      {(settings) => <SettingsForm settings={settings} />}
+    </AsyncSection>
+  );
+}
 
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500); };
+/**
+ * Loaded settings are server state; the edits in progress are not. The saved
+ * values come from the query, a local draft holds unsaved changes, and saving
+ * clears the draft so the form falls back to whatever the server confirmed.
+ */
+function SettingsForm({ settings }: { settings: PlatformConfig }) {
+  const [draft, setDraft] = useState<PlatformConfig | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+  const auditLog = useAuditLog();
+  const cfg = draft ?? settings;
+
+  const save = useUpdateSettings({
+    onSuccess: () => { setDraft(null); setFailure(null); },
+    onError: (error) => setFailure(error.message),
+  });
+
+  const setCfg = (next: PlatformConfig) => setDraft(next);
+  const handleSave = () => save.mutate(cfg);
+  const saved = save.isSuccess && draft === null;
+  const dirty = draft !== null;
 
   return (
     <div className="fade-in">
@@ -77,7 +102,7 @@ export function AdminSettings() {
         <div style={{ background: "white", border: "1px solid var(--gray-200)", borderRadius: 10, padding: 24, boxShadow: "var(--shadow-sm)", gridColumn: "span 2" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--navy)", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--gray-100)" }}>Recent Audit Log</div>
           <div style={{ display: "grid", gap: 8 }}>
-            {AUDIT_LOG.map((log, i) => (
+            {(auditLog.data ?? []).map((log, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "130px 160px 160px 1fr", gap: 12, padding: "8px 12px", background: "var(--gray-50)", borderRadius: 7, alignItems: "center" }}>
                 <div style={{ fontSize: 11, color: "var(--gray-400)", fontFamily: "var(--mono)" }}>{log.time}</div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--navy)" }}>{log.user}</div>
@@ -90,9 +115,15 @@ export function AdminSettings() {
       </div>
 
       <div style={{ marginTop: 24, display: "flex", gap: 12, alignItems: "center" }}>
-        <button className="btn btn-primary" onClick={handleSave}>Save Changes</button>
-        <button className="btn btn-secondary">Reset to Defaults</button>
-        {saved && <span style={{ fontSize: 13, color: "var(--green)", fontWeight: 600 }}>✓ Settings saved successfully</span>}
+        <button className="btn btn-primary" onClick={handleSave} disabled={!dirty || save.isPending}>
+          {save.isPending ? "Saving…" : "Save Changes"}
+        </button>
+        <button className="btn btn-secondary" onClick={() => setDraft(null)} disabled={!dirty}>
+          Discard changes
+        </button>
+        {saved && <span style={{ fontSize: 13, color: "var(--green)", fontWeight: 600 }}>✓ Settings saved</span>}
+        {dirty && !save.isPending && <span style={{ fontSize: 13, color: "var(--gray-400)" }}>Unsaved changes</span>}
+        {failure && <span className="error-msg" role="alert">⚠ {failure}</span>}
       </div>
     </div>
   );

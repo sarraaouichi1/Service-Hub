@@ -1,8 +1,10 @@
-import { PRODUCTS } from "../../../data/products";
 import { clickable } from "../../../components/clickable";
+import { AsyncSection } from "../../../components/AsyncSection";
+import { useProducts } from "../../../queries";
 import { useStepFields } from "./useStepFields";
 
 export function ProductSelectionStep() {
+  const products = useProducts();
   const { values, choose, message } = useStepFields();
   const selected = values.product;
   const error = message("product");
@@ -17,8 +19,10 @@ export function ProductSelectionStep() {
       <div style={{ marginBottom: 20, padding: "12px 16px", background: "var(--blue-pale)", border: "1px solid var(--blue-mid)", borderRadius: 8, fontSize: 13, color: "var(--blue)" }}>
         Select the <strong>entervo smart</strong> product you want to onboard. The wizard steps will adapt based on your selection.
       </div>
+      <AsyncSection query={products} label="products">
+        {(list) => (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-        {PRODUCTS.map(p => (
+        {list.map(p => (
           <div key={p.id}
             {...clickable(() => selectProduct(p.id, p.name))}
             style={{
@@ -56,6 +60,8 @@ export function ProductSelectionStep() {
           </div>
         ))}
       </div>
+        )}
+      </AsyncSection>
       {/* One slot: a neutral prompt until the user tries to advance without choosing. */}
       {error ? (
         <div className="error-msg" role="alert" style={{ marginTop: 20, justifyContent: "center", textAlign: "center" }}>

@@ -5,6 +5,9 @@ import type { FastifyError } from "fastify";
 import { authRoutes } from "./auth/routes.js";
 import { SESSION_COOKIE, readSession } from "./auth/session.js";
 import { allowedOrigins, env, isProduction } from "./env.js";
+import { adminRoutes } from "./routes/admin.js";
+import { catalogRoutes } from "./routes/catalog.js";
+import { projectRoutes } from "./routes/projects.js";
 import { userRoutes } from "./routes/users.js";
 
 /** Requests that change something must come from the app's own origin. */
@@ -79,6 +82,9 @@ export async function buildServer() {
   await app.register(async (api) => {
     await authRoutes(api);
     await userRoutes(api);
+    await projectRoutes(api);
+    await adminRoutes(api);
+    await catalogRoutes(api);
   }, { prefix: "/api" });
 
   return app;

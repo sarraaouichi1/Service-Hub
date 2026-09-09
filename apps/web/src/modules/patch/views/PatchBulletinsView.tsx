@@ -1,6 +1,8 @@
-import { PATCH_BULLETINS } from "../../../data/patch";
+import { AsyncSection } from "../../../components/AsyncSection";
+import { useBulletins } from "../../../queries";
 
 export function PatchBulletinsView() {
+  const bulletins = useBulletins();
   return (
   <div className="patch-fade">
     <div className="patch-page-header">
@@ -25,7 +27,9 @@ export function PatchBulletinsView() {
           <div key={h} className="patch-th">{h}</div>
         ))}
       </div>
-      {PATCH_BULLETINS.map(b => (
+      <AsyncSection query={bulletins} label="bulletins">
+        {(list) => <>
+      {list.map(b => (
         <div key={b.id} className="patch-table-row">
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#0B1F3A" }}>{b.name}</div>
@@ -42,6 +46,8 @@ export function PatchBulletinsView() {
           </div>
         </div>
       ))}
+        </>}
+      </AsyncSection>
     </div>
   </div>
   );

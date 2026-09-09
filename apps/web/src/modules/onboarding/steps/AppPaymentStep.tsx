@@ -1,10 +1,12 @@
-import { PSP_LIST } from "../../../data/psps";
 import { Field } from "../../../components/Field";
 import { Toggle } from "../../../components/Toggle";
 import { clickable } from "../../../components/clickable";
 import { useStepFields } from "./useStepFields";
+import { AsyncSection } from "../../../components/AsyncSection";
+import { usePsps } from "../../../queries";
 
 export function AppPaymentStep() {
+  const psps = usePsps();
   const { values, input, toggle, choose, message } = useStepFields();
   const psp = values.psp;
 
@@ -28,20 +30,24 @@ export function AppPaymentStep() {
       </div>
       <div style={{ marginBottom: 12 }}>
         <div className="form-label" style={{ marginBottom: 10 }}>Payment Service Provider <span style={{ color: "var(--red)" }}>*</span></div>
-        <div className="psp-grid">
-          {PSP_LIST.map(p => (
-            <div key={p.id} className={`psp-card${psp === p.id ? " selected" : ""}`} {...clickable(() => choose("psp", p.id))}>
-              <div className="psp-name">{p.name}</div>
-              <div className="psp-tag">{p.tag}</div>
+        <AsyncSection query={psps} label="payment providers">
+          {(list) => (
+            <div className="psp-grid">
+              {list.map(p => (
+                <div key={p.id} className={`psp-card${psp === p.id ? " selected" : ""}`} {...clickable(() => choose("psp", p.id))}>
+                  <div className="psp-name">{p.name}</div>
+                  <div className="psp-tag">{p.tag}</div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </AsyncSection>
         {message("psp") && <div className="error-msg" role="alert" style={{ marginTop: 8 }}>⚠ {message("psp")}</div>}
       </div>
       {psp && (
         <div className="slide-in" style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)", borderRadius: 8, padding: "18px 20px", marginTop: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy)", marginBottom: 14 }}>
-            {PSP_LIST.find(p => p.id === psp)?.name} — Configuration
+            {psps.data?.find(p => p.id === psp)?.name ?? psp} — Configuration
           </div>
           <div className="form-grid">
             <Field label="Merchant ID" required error={message("pspMid")}><input {...input("pspMid", "mono")} placeholder="MID-xxxxx" /></Field>

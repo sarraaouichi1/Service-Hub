@@ -1,7 +1,10 @@
-import { PROJECTS, STATUS_MAP } from "../../../data/projects";
+import { STATUS_MAP } from "../../../data/display";
 import { Icon } from "../../../components/Icon";
+import { useProjects } from "../../../queries";
 
 export function ReviewQueueView() {
+  const projects = useProjects();
+  const inStatus = (status: string) => (projects.data ?? []).filter(p => p.status === status);
   return (
   <div className="fade-in">
     <div className="page-header">
@@ -13,7 +16,7 @@ export function ReviewQueueView() {
     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, marginTop: 4 }}>
       S&amp;B Technical Review
     </div>
-    {PROJECTS.filter(p => p.status === "review").map(p => (
+    {inStatus("review").map(p => (
       <div key={p.id} className="project-card" style={{ marginBottom: 10, cursor: "default" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
@@ -33,7 +36,7 @@ export function ReviewQueueView() {
     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, marginTop: 20 }}>
       Awaiting Sales Payment Confirmation
     </div>
-    {PROJECTS.filter(p => p.status === "sales-approval").map(p => (
+    {inStatus("sales-approval").map(p => (
       <div key={p.id} className="project-card" style={{ marginBottom: 10, cursor: "default", borderLeft: "3px solid #C0185A" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>

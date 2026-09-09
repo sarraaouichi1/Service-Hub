@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
-import { PROJECTS, STATUS_MAP, productName } from "../../../data/projects";
-import { PRODUCT_BY_ID } from "../../../data/products";
+import { STATUS_MAP } from "../../../data/display";
 import { Icon } from "../../../components/Icon";
+import { useProductLookup, useProjects } from "../../../queries";
 import { clickable } from "../../../components/clickable";
 import type { Project, ProjectStatus } from "../../../types";
 
@@ -10,6 +10,8 @@ const APPROVED_STATUSES: ProjectStatus[] = ["approved", "onboarded"];
 
 export function ApprovedView() {
   const navigate = useNavigate();
+  const allProjects = useProjects();
+  const productById = useProductLookup();
   const openProject = (p: Project) =>
     navigate({ to: "/onboarding/wizard/$step", params: { step: String(p.step) }, search: { project: p.id } });
 
@@ -20,7 +22,7 @@ export function ApprovedView() {
       <div className="page-desc">Projects that have cleared S&amp;B review, and those already live.</div>
     </div>
     {APPROVED_STATUSES.map(status => {
-      const projects = PROJECTS.filter(p => p.status === status);
+      const projects = (allProjects.data ?? []).filter(p => p.status === status);
       return (
         <div key={status} style={{ marginBottom: 24 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
@@ -41,7 +43,7 @@ export function ApprovedView() {
                   <span>🏢 {p.partner}</span>
                   <span>💳 {p.psp}</span>
                   <span>👤 {p.pm}</span>
-                  <span style={{ fontWeight: 700, color: PRODUCT_BY_ID[p.product]?.color }}>{productName(p)}</span>
+                  <span style={{ fontWeight: 700, color: productById[p.product]?.color }}>{productById[p.product]?.name ?? p.product}</span>
                 </div>
               </div>
               <Icon name="chevronRight" color="var(--gray-400)" />

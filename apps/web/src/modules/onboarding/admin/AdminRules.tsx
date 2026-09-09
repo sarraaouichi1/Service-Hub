@@ -1,14 +1,21 @@
 import { useState } from "react";
-import type { ValidationRule } from "../../../types";
-import { INITIAL_RULES, RULE_CATEGORY_BG, RULE_CATEGORY_FG } from "../../../data/validationRules";
+import { RULE_CATEGORY_BG, RULE_CATEGORY_FG } from "../../../data/display";
+import { AsyncSection } from "../../../components/AsyncSection";
+import { useRules, useUpdateRule } from "../../../queries";
 
 export function AdminRules() {
-  const [rules, setRules] = useState<ValidationRule[]>(INITIAL_RULES);
-
+  const query = useRules();
+  const rules = query.data ?? [];
+  const updateRule = useUpdateRule();
   const [editing, setEditing] = useState<number | null>(null);
 
-  const toggleActive = (id: number) => setRules(rules.map(r => r.id === id ? { ...r, active: !r.active } : r));
-  const toggleSeverity = (id: number) => setRules(rules.map(r => r.id === id ? { ...r, severity: r.severity === "error" ? "warning" : "error" } : r));
+  // These used to live in useState, so an edit died the moment the route
+  // unmounted. They are server state, and now they are stored as such: the
+  // write goes to the API and the query refreshes from it.
+  const toggleActive = (id: number, active: boolean) =>
+    updateRule.mutate({ id, patch: { active: !active } });
+  const toggleSeverity = (id: number, severity: "error" | "warning") =>
+    updateRule.mutate({ id, patch: { severity: severity === "error" ? "warning" : "error" } });
 
 
   return (
@@ -29,6 +36,8 @@ export function AdminRules() {
       </div>
 
       {/* Rules table */}
+      <AsyncSection query={query} label="validation rules">
+        {() => (
       <div style={{ background: "white", border: "1px solid var(--gray-200)", borderRadius: 10, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 2fr 100px 90px 60px", padding: "10px 18px", background: "var(--gray-50)", borderBottom: "1px solid var(--gray-200)" }}>
           {["Field", "Category", "Type", "Rule / Pattern", "Severity", "Status", ""].map((h, i) => (
@@ -49,7 +58,7 @@ export function AdminRules() {
             <div>
               <span
                 style={{ cursor: "pointer", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 20, background: r.severity === "error" ? "#FEECEC" : "#FEF9EC", color: r.severity === "error" ? "var(--red)" : "#B07800" }}
-                onClick={() => toggleSeverity(r.id)}
+                onClick={() => toggleSeverity(r.id, r.severity)}
                 title="Click to toggle severity"
               >
                 {r.severity === "error" ? "⛔ Hard" : "⚠ Soft"}
@@ -58,7 +67,7 @@ export function AdminRules() {
             <div>
               <button
                 style={{ background: r.active ? "#E8FAF1" : "var(--gray-100)", color: r.active ? "var(--green)" : "var(--gray-400)", border: "none", borderRadius: 20, padding: "3px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
-                onClick={() => toggleActive(r.id)}
+                onClick={() => toggleActive(r.id, r.active)}
               >
                 {r.active ? "● Active" : "○ Off"}
               </button>
@@ -69,6 +78,8 @@ export function AdminRules() {
           </div>
         ))}
       </div>
+        )}
+      </AsyncSection>
 
       <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--blue-pale)", borderRadius: 8, fontSize: 12, color: "var(--blue)" }}>
         <strong>Tip:</strong> Hard rules block submission until fixed. Soft warnings allow the user to proceed with a confirmation. Click the severity badge to toggle between them.

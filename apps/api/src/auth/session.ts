@@ -35,6 +35,7 @@ export async function createSession(userId: string, userAgent?: string) {
 type UserRow = {
   id: string; email: string; name: string; initials: string; partner: string;
   color: string; status: string; roles: string[]; issuer: string;
+  lastLoginAt?: Date | null;
 };
 
 /** Shape a database row the way the client expects, deriving permissions from roles. */
@@ -51,6 +52,7 @@ export function toAuthUser(user: UserRow): AuthUser {
     roles,
     permissions: permissionsFor(roles),
     issuer: user.issuer,
+    lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : null,
   };
 }
 
