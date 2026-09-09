@@ -8,7 +8,9 @@ import {
 
 import type { ProjectStatus, RouteStaticData } from "./types";
 import { WIZARD_STEPS } from "./data/wizardSteps";
+import { getSession, knownAddresses } from "./api";
 import { RootLayout } from "./components/RootLayout";
+import { LoginView } from "./modules/auth/LoginView";
 import { LandingHub } from "./modules/landing/LandingHub";
 import { OnboardingLayout } from "./modules/onboarding/OnboardingLayout";
 import { DashboardView } from "./modules/onboarding/views/DashboardView";
@@ -33,10 +35,35 @@ const PROJECT_STATUSES: (ProjectStatus | "all")[] = [
 
 const rootRoute = createRootRoute({ component: RootLayout });
 
+/**
+ * Everything except the login screen needs a session, and the session is put
+ * into route context so layouts can read the signed-in user without asking for
+ * it again. This gates navigation, not data — it is an identity check, and once
+ * there is a real backend the server has to enforce access for itself.
+ */
+async function requireSession() {
+  const session = await getSession();
+  if (!session) throw redirect({ to: "/login" });
+  return { session };
+}
+
+// ─── Sign in ────────────────────────────────────────────────────────────────
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "login",
+  beforeLoad: async () => {
+    if (await getSession()) throw redirect({ to: "/" });
+  },
+  loader: () => knownAddresses(),
+  component: LoginView,
+  staticData: { title: "Sign in" } satisfies RouteStaticData,
+});
+
 // ─── Landing hub ────────────────────────────────────────────────────────────
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
+  beforeLoad: requireSession,
   component: LandingHub,
 });
 
@@ -44,6 +71,7 @@ const indexRoute = createRoute({
 const onboardingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "onboarding",
+  beforeLoad: requireSession,
   component: OnboardingLayout,
 });
 
@@ -155,6 +183,7 @@ const adminSettingsRoute = createRoute({
 const patchRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "patch",
+  beforeLoad: requireSession,
   component: PatchLayout,
 });
 
@@ -202,6 +231,7 @@ const patchPremiumRoute = createRoute({
 });
 
 export const routeTree = rootRoute.addChildren([
+  loginRoute,
   indexRoute,
   onboardingRoute.addChildren([
     onboardingIndexRoute,

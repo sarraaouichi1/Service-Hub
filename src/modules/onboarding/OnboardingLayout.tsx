@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import { Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
+import { Link, Outlet, getRouteApi, useMatches, useNavigate } from "@tanstack/react-router";
 import { PROJECTS, projectCountByStatus } from "../../data/projects";
 import { PLATFORM_USERS } from "../../data/users";
 import { Icon } from "../../components/Icon";
 import { clickable } from "../../components/clickable";
 import { OnboardingProvider } from "./context/OnboardingProvider";
 import { useOnboarding } from "./context/onboardingContext";
+import { signOut } from "../../api";
 import type { IconName, RouteStaticData } from "../../types";
 import "../../styles/onboarding.css";
+
+const route = getRouteApi("/onboarding");
 
 interface NavLink {
   to: string;
@@ -19,8 +22,9 @@ interface NavLink {
 }
 
 export function OnboardingLayout() {
+  const { session } = route.useRouteContext();
   return (
-    <OnboardingProvider>
+    <OnboardingProvider initialUser={session.user}>
       <OnboardingShell />
     </OnboardingProvider>
   );
@@ -34,6 +38,11 @@ function OnboardingShell() {
   } = useOnboarding();
   const [showNotifs, setShowNotifs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    await navigate({ to: "/login" });
+  };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -189,7 +198,7 @@ function OnboardingShell() {
                   <div className="profile-menu-item"><Icon name="settings" size={15} /> Account Settings</div>
                   <div className="profile-menu-item"><Icon name="shield" size={15} /> Privacy & Security</div>
                   <div className="profile-menu-item"><Icon name="bell" size={15} /> Notification Preferences</div>
-                  <div className="profile-menu-item" style={{ color: "var(--red)" }}><Icon name="zap" size={15} color="var(--red)" /> Sign Out</div>
+                  <div className="profile-menu-item" style={{ color: "var(--red)" }} {...clickable(() => void handleSignOut())}><Icon name="zap" size={15} color="var(--red)" /> Sign Out</div>
                 </div>
                 <div className="profile-switch">
                   <div className="profile-switch-label">Switch Profile</div>

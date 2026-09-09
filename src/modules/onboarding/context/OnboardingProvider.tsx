@@ -4,7 +4,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AppNotification, OnboardingForm, PlatformUser } from "../../../types";
-import { PLATFORM_USERS } from "../../../data/users";
 import { INITIAL_NOTIFS } from "../../../data/notifications";
 import { DEMO_ONBOARDING_DRAFT } from "../../../data/onboardingDraft";
 import { onboardingDraftSchema } from "../../../schemas/onboarding";
@@ -22,8 +21,12 @@ import { OnboardingContext } from "./onboardingContext";
  */
 const resolver = zodResolver(onboardingDraftSchema) as unknown as Resolver<OnboardingForm>;
 
-export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<PlatformUser>(PLATFORM_USERS[0]);
+export function OnboardingProvider(
+  { children, initialUser }: { children: ReactNode; initialUser: PlatformUser },
+) {
+  // Seeded from the session rather than a hardcoded profile: whoever signed in
+  // is who the hub reports you as.
+  const [currentUser, setCurrentUser] = useState<PlatformUser>(initialUser);
   const [notifs, setNotifs] = useState<AppNotification[]>(INITIAL_NOTIFS);
   const [declared, setDeclared] = useState(false);
   const [submitted, setSubmitted] = useState(false);

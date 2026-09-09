@@ -1,4 +1,5 @@
-// Mock data. Replace with API calls when a backend exists.
+// Seed data for the in-memory API store. Components read this through
+// src/api/, never directly; when real endpoints land, only src/api/ changes.
 
 import type { AuditLogEntry, PlatformConfig } from "../types";
 

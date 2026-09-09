@@ -1,4 +1,5 @@
-// Mock data. Replace with API calls when a backend exists.
+// Static UI configuration, not server state — it stays here rather than
+// moving behind src/api/.
 
 import type { WizardStepDef } from "../types";
 

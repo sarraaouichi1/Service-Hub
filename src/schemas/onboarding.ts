@@ -185,11 +185,19 @@ export function isDraftComplete(data: OnboardingForm): boolean {
 }
 
 /**
- * Everything still standing between the draft and submission, as messages.
- * The review step lists these rather than restating which fields matter.
+ * Everything still standing between the draft and submission, keyed by field.
+ * The API layer rejects a submission with these as its 422 body.
+ */
+export function draftFieldErrors(data: OnboardingForm): FormErrors {
+  const result = onboardingDraftSchema.safeParse(data);
+  return result.success ? {} : toFormErrors(result.error);
+}
+
+/**
+ * The same thing as a plain list of messages. The review step shows these
+ * rather than restating which fields matter.
  */
 export function draftIssues(data: OnboardingForm): string[] {
-  const result = onboardingDraftSchema.safeParse(data);
-  return result.success ? [] : Object.values(toFormErrors(result.error));
+  return Object.values(draftFieldErrors(data));
 }
 
