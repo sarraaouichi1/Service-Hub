@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-servicehub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-servicehub}
+      POSTGRES_DB: ${POSTGRES_DB:-servicehub}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-servicehub}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-servicehub}:${POSTGRES_PASSWORD:-servicehub}@db:5432/${POSTGRES_DB:-servicehub}
+      # Must be set for real deployments; the default only exists so `up` works locally.
+      SESSION_SECRET: ${SESSION_SECRET:-dev-only-secret-change-me-at-least-32-chars}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:8080}
+      AUTH_PROVIDER: ${AUTH_PROVIDER:-local}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-3001}:3001"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+
+volumes:
+  db-data:

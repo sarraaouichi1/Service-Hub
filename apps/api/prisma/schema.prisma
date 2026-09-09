@@ -1,0 +1,58 @@
+// The app owns its users, whoever vouches for them.
+//
+// A local account carries a password hash and issuer "local". An account from
+// an identity provider carries issuer + externalId and no password. Either way
+// there is a row here, and roles hang off that row rather than off the token —
+// so switching to OIDC never means trusting someone else with authorisation.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  name         String
+  initials     String
+  partner      String    @default("")
+  color        String    @default("#1A6FD4")
+  status       String    @default("active")
+  roles        String[]  @default([])
+
+  /// Null for accounts that can only sign in through an identity provider.
+  passwordHash String?
+  /// "local", or the OIDC issuer URL that vouches for this user.
+  issuer       String    @default("local")
+  /// The provider's stable subject claim. Never the email — addresses get reassigned.
+  externalId   String?
+
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions     Session[]
+
+  @@unique([issuer, externalId])
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  /// The cookie carries the token; only its hash is stored, so a leaked
+  /// database does not hand over live sessions.
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
