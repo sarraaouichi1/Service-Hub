@@ -1,0 +1,88 @@
+/* Landing hub. All selectors are `hub-` prefixed. */
+
+@keyframes hubFadeIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes hubPulse { 0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(26,184,112,0.4); } 50% { opacity:0.7; box-shadow: 0 0 0 6px rgba(26,184,112,0); } }
+
+.hub-root {
+  width: 100vw; height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #0B1F3A;
+  overflow: hidden; position: relative;
+  font-family: 'DM Sans', sans-serif;
+}
+.hub-bg-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 55% at 25% 15%, rgba(26,111,212,0.32) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 45% at 78% 80%, rgba(26,184,112,0.22) 0%, transparent 55%);
+}
+.hub-grid-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+.hub-inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 100%; padding: 0 24px; }
+
+.hub-logo { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; animation: hubFadeIn 0.5s ease both; }
+.hub-logo-icon { width: 46px; height: 46px; background: linear-gradient(135deg, #1A6FD4, #0B4FA8); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(26,111,212,0.4); border: 1px solid rgba(255,255,255,0.15); }
+.hub-logo-text { color: #FFFFFF; font-size: 20px; font-weight: 800; letter-spacing: -0.4px; }
+.hub-logo-sub { color: rgba(255,255,255,0.42); font-size: 12px; font-weight: 500; margin-top: 2px; }
+
+.hub-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.16); border-radius: 100px; padding: 6px 16px; color: rgba(255,255,255,0.65); font-size: 12px; font-weight: 600; letter-spacing: 0.4px; margin-bottom: 18px; animation: hubFadeIn 0.5s 0.05s ease both; }
+.hub-pill-dot { width: 7px; height: 7px; border-radius: 50%; background: #1AB870; animation: hubPulse 2.5s infinite; flex-shrink: 0; }
+
+.hub-headline { font-size: 46px; font-weight: 800; color: #FFFFFF; letter-spacing: -1.5px; text-align: center; line-height: 1.1; margin-bottom: 12px; animation: hubFadeIn 0.5s 0.1s ease both; }
+.hub-headline em { font-style: normal; color: #5DE8A8; }
+.hub-sub { font-size: 16px; color: rgba(255,255,255,0.45); text-align: center; margin-bottom: 48px; line-height: 1.65; max-width: 380px; animation: hubFadeIn 0.5s 0.15s ease both; }
+
+.hub-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 740px; width: 100%; animation: hubFadeIn 0.5s 0.2s ease both; }
+
+.hub-card {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.13);
+  border-radius: 22px; padding: 30px 26px;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: transform 0.28s cubic-bezier(.25,.46,.45,.94), box-shadow 0.28s, border-color 0.28s, background 0.28s;
+}
+.hub-card:hover { transform: translateY(-8px); box-shadow: 0 30px 64px rgba(0,0,0,0.5); }
+.hub-card.onboarding:hover { border-color: rgba(26,111,212,0.6); background: rgba(26,111,212,0.10); }
+.hub-card.patch:hover { border-color: rgba(26,184,112,0.55); background: rgba(26,184,112,0.08); }
+.hub-card:hover .hub-card-btn { opacity: 1; transform: translateY(0px); }
+.hub-card:hover .hub-card-arrow-icon { transform: translateX(4px); }
+
+.hub-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.hub-card-icon { width: 58px; height: 58px; border-radius: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hub-card-icon.blue { background: linear-gradient(135deg, #1A6FD4 0%, #0D4A99 100%); box-shadow: 0 8px 22px rgba(26,111,212,0.45); }
+.hub-card-icon.green { background: linear-gradient(135deg, #1AB870 0%, #0D7A46 100%); box-shadow: 0 8px 22px rgba(26,184,112,0.45); }
+.hub-module-badge { font-size: 10px; font-weight: 800; letter-spacing: 0.8px; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; }
+.hub-module-badge.blue { background: rgba(26,111,212,0.22); color: #8ECAFF; border: 1px solid rgba(26,111,212,0.3); }
+.hub-module-badge.green { background: rgba(26,184,112,0.22); color: #5DE8A8; border: 1px solid rgba(26,184,112,0.3); }
+
+.hub-card-title { font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.4px; margin-bottom: 8px; }
+.hub-card-desc { font-size: 13.5px; color: rgba(255,255,255,0.50); line-height: 1.65; margin-bottom: 22px; }
+
+.hub-divider { height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 18px; }
+.hub-card-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+.hub-card-feat { display: flex; align-items: center; gap: 10px; font-size: 13px; color: rgba(255,255,255,0.72); font-weight: 500; }
+.hub-feat-check { width: 20px; height: 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; font-weight: 800; }
+.hub-feat-check.blue { background: rgba(26,111,212,0.28); color: #7DBBF8; }
+.hub-feat-check.green { background: rgba(26,184,112,0.28); color: #5DE8A8; }
+
+.hub-card-btn {
+  width: 100%; padding: 13px 20px; border-radius: 12px; border: none;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.22s; opacity: 0.82; transform: translateY(3px);
+}
+.hub-card-btn.blue { background: linear-gradient(135deg, #1A6FD4, #1152A0); color: #fff; }
+.hub-card-btn.blue:hover { background: linear-gradient(135deg, #2280E8, #1A6FD4); box-shadow: 0 4px 16px rgba(26,111,212,0.5); }
+.hub-card-btn.green { background: linear-gradient(135deg, #1AB870, #0D8A53); color: #fff; }
+.hub-card-btn.green:hover { background: linear-gradient(135deg, #22D982, #1AB870); box-shadow: 0 4px 16px rgba(26,184,112,0.5); }
+.hub-card-arrow-icon { transition: transform 0.22s; display: inline-block; }
+
+.hub-footer { margin-top: 36px; font-size: 12px; color: rgba(255,255,255,0.22); animation: hubFadeIn 0.5s 0.3s ease both; }
+
+.hub-wordmark { width: 190px; }
+.hub-logo-divider { width: 1px; height: 34px; background: rgba(255, 255, 255, 0.16); }
