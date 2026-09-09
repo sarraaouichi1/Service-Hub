@@ -8,7 +8,11 @@ const envSchema = z.object({
   /** Signs session tokens. Rotating it logs everyone out, which is the point. */
   SESSION_SECRET: z.string().min(32, "SESSION_SECRET must be at least 32 characters"),
   SESSION_TTL_HOURS: z.coerce.number().positive().default(12),
-  /** Where the browser app is served from; the only origin allowed to send credentials. */
+  /**
+   * Extra browser origins allowed to send credentials, comma-separated. Only
+   * needed when the app is served from a different origin than the API — when
+   * they share one (nginx or the Vite proxy), the same-origin check covers it.
+   */
   WEB_ORIGIN: z.string().default("http://localhost:5173"),
   /** Which identity provider backs sign-in. See src/auth/providers. */
   AUTH_PROVIDER: z.enum(["local", "oidc"]).default("local"),
@@ -26,3 +30,8 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export const isProduction = env.NODE_ENV === "production";
+
+/** WEB_ORIGIN as a list; it accepts several, comma-separated. */
+export const allowedOrigins = env.WEB_ORIGIN.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);

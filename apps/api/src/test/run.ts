@@ -125,6 +125,29 @@ async function main() {
   });
   check("a cross-origin write is refused", foreign.status, 403);
 
+  // Same-origin is decided by the request's own host, so reaching the API on
+  // any address it actually answers on works without configuration.
+  const sameHost = await fetch(base + "/api/auth/login", {
+    method: "POST",
+    headers: { origin: base, "content-type": "application/json" },
+    body: JSON.stringify({ email: ADMIN, password: PASSWORD }),
+  });
+  check("an origin matching the request host is allowed", sameHost.status, 200);
+
+  const noOrigin = await fetch(base + "/api/auth/login", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: ADMIN, password: PASSWORD }),
+  });
+  check("a request with no Origin is allowed (non-browser client)", noOrigin.status, 200);
+
+  const wrongPort = await fetch(base + "/api/users", {
+    method: "POST",
+    headers: { origin: "http://127.0.0.1:9", "content-type": "application/json", cookie: admin.cookie },
+    body: JSON.stringify({ email: "e@v.il", name: "Evil", roles: ["Admin"] }),
+  });
+  check("a different port on the same machine is still cross-origin", wrongPort.status, 403);
+
   // ── Sign out ────────────────────────────────────────────────────────────
   check("logout succeeds", (await call("/api/auth/logout", { method: "POST", cookie: admin.cookie })).status, 200);
   check("the session is dead afterwards", (await call("/api/auth/me", { cookie: admin.cookie })).status, 401);

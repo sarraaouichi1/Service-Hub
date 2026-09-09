@@ -4,7 +4,7 @@ import Fastify from "fastify";
 import type { FastifyError } from "fastify";
 import { authRoutes } from "./auth/routes.js";
 import { SESSION_COOKIE, readSession } from "./auth/session.js";
-import { env, isProduction } from "./env.js";
+import { allowedOrigins, env, isProduction } from "./env.js";
 import { userRoutes } from "./routes/users.js";
 
 /** Requests that change something must come from the app's own origin. */
@@ -19,7 +19,7 @@ export async function buildServer() {
   });
 
   await app.register(cors, {
-    origin: env.WEB_ORIGIN,
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   });
@@ -28,13 +28,37 @@ export async function buildServer() {
   /**
    * The session cookie is SameSite=lax, which already blocks cross-site form
    * posts. This is the belt to that pair of braces: a state-changing request
-   * whose Origin isn't the app is refused outright, so a cookie riding along
-   * from somewhere else buys nothing.
+   * whose Origin isn't ours is refused outright, so a cookie riding along from
+   * somewhere else buys nothing.
+   *
+   * "Ours" is decided by comparing the Origin against the host the request was
+   * actually sent to, rather than against a configured string. Behind nginx or
+   * the Vite proxy the app and the API share an origin, so this is true without
+   * anyone configuring anything — and it stays true whether you reach the app
+   * on localhost, 127.0.0.1, a LAN address or a real hostname. WEB_ORIGIN then
+   * only has to list origins that genuinely differ from the API's own.
+   *
+   * A missing Origin is allowed through: browsers always send it on a
+   * state-changing request, so its absence means a non-browser client, which
+   * carries no ambient cookie to abuse.
    */
+  function isTrustedOrigin(origin: string | undefined, host: string | undefined): boolean {
+    if (!origin) return true;
+    if (allowedOrigins.includes(origin)) return true;
+    try {
+      return Boolean(host) && new URL(origin).host === host;
+    } catch {
+      return false;
+    }
+  }
+
   app.addHook("onRequest", async (request, reply) => {
     if (!SAFE_METHODS.has(request.method)) {
-      const origin = request.headers.origin;
-      if (origin && origin !== env.WEB_ORIGIN) {
+      if (!isTrustedOrigin(request.headers.origin, request.headers.host)) {
+        request.log.warn(
+          { origin: request.headers.origin, host: request.headers.host },
+          "refused a cross-origin write",
+        );
         return reply.code(403).send({ message: "Cross-origin request refused" });
       }
     }
