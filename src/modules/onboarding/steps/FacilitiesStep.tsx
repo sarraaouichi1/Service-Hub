@@ -1,15 +1,24 @@
-import type { Facility, StepProps } from "../../../types";
+import type { Facility, ValidatedStepProps } from "../../../types";
 import { Icon } from "../../../components/Icon";
+import { createFieldBinder } from "./fieldBinder";
 
-export function FacilitiesStep({ data, setData }: StepProps) {
-  const facilities: Facility[] = data.facilities || [{ id: "", name: "", city: "", inpayEntry: 30, inpayPayment: 30 }];
-  const update = (i: number, key: keyof Facility, val: string) => {
-    const f = [...facilities];
-    f[i] = { ...f[i], [key]: val };
-    setData({ ...data, facilities: f });
+const EMPTY_ROW: Facility = { id: "", name: "", city: "", inpayEntry: 30, inpayPayment: 30 };
+
+export function FacilitiesStep({ data, setData, errors, setErrors, step }: ValidatedStepProps) {
+  const { recheck } = createFieldBinder(step, data, setData, errors, setErrors);
+  const facilities: Facility[] = data.facilities || [EMPTY_ROW];
+
+  /** Apply a change to the rows and re-check the one message they share. */
+  const commit = (rows: Facility[]) => {
+    const next = { ...data, facilities: rows };
+    setData(next);
+    recheck("facilities", next);
   };
-  const addRow = () => setData({ ...data, facilities: [...facilities, { id: "", name: "", city: "", inpayEntry: 30, inpayPayment: 30 }] });
-  const removeRow = (i: number) => setData({ ...data, facilities: facilities.filter((_, idx) => idx !== i) });
+
+  const update = (i: number, key: keyof Facility, val: string) =>
+    commit(facilities.map((row, idx) => (idx === i ? { ...row, [key]: val } : row)));
+  const addRow = () => commit([...facilities, { ...EMPTY_ROW }]);
+  const removeRow = (i: number) => commit(facilities.filter((_, idx) => idx !== i));
 
   return (
     <div className="slide-in">
@@ -31,6 +40,7 @@ export function FacilitiesStep({ data, setData }: StepProps) {
           <button className="del-btn" onClick={() => removeRow(i)} title="Remove">×</button>
         </div>
       ))}
+      {errors.facilities && <div className="error-msg" role="alert" style={{ marginTop: 10 }}>⚠ {errors.facilities}</div>}
       <button className="btn btn-secondary" style={{ marginTop: 12 }} onClick={addRow}>
         <Icon name="plus" /> Add Facility
       </button>

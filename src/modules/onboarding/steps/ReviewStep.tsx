@@ -1,17 +1,25 @@
 import type { DeclarationReviewStepProps } from "../../../types";
 import { PSP_LIST } from "../../../data/psps";
 import { Icon } from "../../../components/Icon";
+import { draftIssues } from "../../../schemas/onboarding";
 
 export function ReviewStep({ data, declared, onDeclaredChange }: DeclarationReviewStepProps) {
   const pspLabel = PSP_LIST.find(p => p.id === data.psp)?.name || "Not selected";
   const facs = data.facilities || [];
-  const allValid = data.opName && data.ip && data.port && data.psp;
+  // Named against the schema, so this can't claim the draft is ready when the
+  // submit button disagrees — both ask the same question.
+  const issues = draftIssues(data);
   return (
     <div className="slide-in">
-      {!allValid && (
-        <div style={{ background: "#FEECEC", border: "1px solid #F0AAAA", borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#B03030", display: "flex", gap: 10, alignItems: "center" }}>
-          <Icon name="zap" size={14} color="#B03030" />
-          Some required fields are incomplete. Please go back and fill them in before submitting.
+      {issues.length > 0 && (
+        <div style={{ background: "#FEECEC", border: "1px solid #F0AAAA", borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#B03030" }}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", fontWeight: 600 }}>
+            <Icon name="zap" size={14} color="#B03030" />
+            {issues.length} {issues.length === 1 ? "item needs" : "items need"} attention before you can submit
+          </div>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 32, lineHeight: 1.7 }}>
+            {issues.map((issue, i) => <li key={i}>{issue}</li>)}
+          </ul>
         </div>
       )}
       <div className="review-section">

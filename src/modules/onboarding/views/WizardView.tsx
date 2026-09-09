@@ -10,6 +10,7 @@ import { AppPaymentStep } from "../steps/AppPaymentStep";
 import { SalesApprovalStep } from "../steps/SalesApprovalStep";
 import { ReviewStep } from "../steps/ReviewStep";
 import { useOnboarding } from "../context/onboardingContext";
+import { isDraftComplete, validateStep } from "../../../schemas/onboarding";
 
 const route = getRouteApi("/onboarding/wizard/$step");
 
@@ -36,20 +37,42 @@ export function WizardView() {
     });
 
   /**
+   * Continue is the gate: the step is checked against its schema, and the user
+   * only moves on once it passes. Back and the step nav stay free, so a partly
+   * filled step is never a trap.
+   */
+  const advance = () => {
+    const errors = validateStep(wizardStep, formData);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length === 0) goToStep(wizardStep + 1);
+  };
+
+  const stepProps = {
+    data: formData,
+    setData: setFormData,
+    errors: fieldErrors,
+    setErrors: setFieldErrors,
+    step: wizardStep,
+  };
+
+  /**
    * Render the active step. A switch rather than an array, so only the step in
    * view is constructed.
    */
   const renderStep = () => {
     switch (wizardStep) {
-      case 0: return <ProductSelectionStep data={formData} setData={setFormData} />;
-      case 1: return <OperatorStep data={formData} setData={setFormData} errors={fieldErrors} setErrors={setFieldErrors} />;
-      case 2: return <CellComputerStep data={formData} setData={setFormData} />;
-      case 3: return <FacilitiesStep data={formData} setData={setFormData} />;
-      case 4: return <AppPaymentStep data={formData} setData={setFormData} />;
-      case 5: return <SalesApprovalStep data={formData} setData={setFormData} />;
+      case 0: return <ProductSelectionStep {...stepProps} />;
+      case 1: return <OperatorStep {...stepProps} />;
+      case 2: return <CellComputerStep {...stepProps} />;
+      case 3: return <FacilitiesStep {...stepProps} />;
+      case 4: return <AppPaymentStep {...stepProps} />;
+      case 5: return <SalesApprovalStep {...stepProps} />;
       default: return <ReviewStep data={formData} declared={declared} onDeclaredChange={setDeclared} />;
     }
   };
+
+  // Submission needs both the declaration ticked and every step's rules met.
+  const canSubmit = declared && isDraftComplete(formData);
 
   if (submitted) {
     return (
@@ -120,15 +143,15 @@ export function WizardView() {
               )}
               <button className="btn btn-secondary">Save Draft</button>
               {wizardStep < LAST_STEP ? (
-                <button className="btn btn-primary" onClick={() => goToStep(wizardStep + 1)}>
+                <button className="btn btn-primary" onClick={advance}>
                   Continue <Icon name="chevronRight" />
                 </button>
               ) : (
                 <button
                   className="btn btn-primary"
-                  style={{ background: declared ? "var(--green)" : "var(--gray-200)", color: declared ? "white" : "var(--gray-400)", cursor: declared ? "pointer" : "not-allowed" }}
-                  disabled={!declared}
-                  title={declared ? undefined : "Tick the confirmation above to submit"}
+                  style={{ background: canSubmit ? "var(--green)" : "var(--gray-200)", color: canSubmit ? "white" : "var(--gray-400)", cursor: canSubmit ? "pointer" : "not-allowed" }}
+                  disabled={!canSubmit}
+                  title={canSubmit ? undefined : declared ? "Some steps are still incomplete" : "Tick the confirmation above to submit"}
                   onClick={() => setSubmitted(true)}>
                   <Icon name="check" /> Submit for Review
                 </button>

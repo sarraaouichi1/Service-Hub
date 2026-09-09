@@ -1,8 +1,16 @@
-import type { StepProps } from "../../../types";
+import type { ValidatedStepProps } from "../../../types";
 import { PRODUCTS } from "../../../data/products";
 import { clickable } from "../../../components/clickable";
+import { createFieldBinder } from "./fieldBinder";
 
-export function ProductSelectionStep({ data, setData }: StepProps) {
+export function ProductSelectionStep({ data, setData, errors, setErrors, step }: ValidatedStepProps) {
+  const { clear } = createFieldBinder(step, data, setData, errors, setErrors);
+
+  const selectProduct = (id: string, name: string) => {
+    setData({ ...data, product: id, productName: name });
+    clear("product");
+  };
+
   return (
     <div className="slide-in">
       <div style={{ marginBottom: 20, padding: "12px 16px", background: "var(--blue-pale)", border: "1px solid var(--blue-mid)", borderRadius: 8, fontSize: 13, color: "var(--blue)" }}>
@@ -11,7 +19,7 @@ export function ProductSelectionStep({ data, setData }: StepProps) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         {PRODUCTS.map(p => (
           <div key={p.id}
-            {...clickable(() => setData({ ...data, product: p.id, productName: p.name }))}
+            {...clickable(() => selectProduct(p.id, p.name))}
             style={{
               border: `2px solid ${data.product === p.id ? p.color : "var(--gray-200)"}`,
               borderRadius: 12,
@@ -47,7 +55,12 @@ export function ProductSelectionStep({ data, setData }: StepProps) {
           </div>
         ))}
       </div>
-      {!data.product && (
+      {/* One slot: a neutral prompt until the user tries to advance without choosing. */}
+      {errors.product ? (
+        <div className="error-msg" role="alert" style={{ marginTop: 20, justifyContent: "center", textAlign: "center" }}>
+          ⚠ {errors.product}
+        </div>
+      ) : !data.product && (
         <div style={{ marginTop: 20, padding: "10px 16px", background: "var(--gray-50)", border: "1px solid var(--gray-200)", borderRadius: 8, fontSize: 12, color: "var(--gray-400)", textAlign: "center" }}>
           Please select a product above to continue
         </div>

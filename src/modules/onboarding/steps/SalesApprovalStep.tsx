@@ -1,9 +1,14 @@
-import type { StepProps } from "../../../types";
+import type { ValidatedStepProps } from "../../../types";
+import { createFieldBinder } from "./fieldBinder";
 
 /** Wizard step 05 — Sales confirms payment before the submission is reviewed. */
-export function SalesApprovalStep({ data, setData }: StepProps) {
+export function SalesApprovalStep({ data, setData, errors, setErrors, step }: ValidatedStepProps) {
+  const { clear } = createFieldBinder(step, data, setData, errors, setErrors);
   const approved = data.salesApproved ?? false;
-  const setApproved = (value: boolean) => setData({ ...data, salesApproved: value });
+  const setApproved = (value: boolean) => {
+    setData({ ...data, salesApproved: value });
+    if (value) clear("salesApproved");
+  };
   return (
     <div className="slide-in">
       <div style={{ marginBottom: 20, padding: "12px 16px", background: "#FFF0F6", border: "1px solid #F5A7C7", borderRadius: 8, fontSize: 13, color: "#C0185A" }}>
@@ -54,6 +59,9 @@ export function SalesApprovalStep({ data, setData }: StepProps) {
           </div>
         )}
       </div>
+      {errors.salesApproved && (
+        <div className="error-msg" role="alert">⚠ {errors.salesApproved}</div>
+      )}
     </div>
   );
 }

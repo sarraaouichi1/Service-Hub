@@ -179,12 +179,20 @@ export interface ReviewStepProps {
   data: OnboardingForm;
 }
 
-/** Validation messages keyed by the field that produced them. */
-export type FormErrors = Partial<Record<FormTextKey, string>>;
+/**
+ * Validation messages keyed by the field that produced them. Facilities are a
+ * repeating row rather than a single control, so they share one key.
+ */
+export type FormErrors = Partial<
+  Record<FormTextKey | FormBoolKey | "facilities", string>
+>;
 
-export interface OperatorStepProps extends StepProps {
+/** Props for a wizard step that renders validation messages against its fields. */
+export interface ValidatedStepProps extends StepProps {
   errors: FormErrors;
   setErrors: Dispatch<SetStateAction<FormErrors>>;
+  /** The step's own index, so a field can be re-checked in the right context. */
+  step: number;
 }
 
 export interface DeclarationReviewStepProps extends ReviewStepProps {
@@ -230,7 +238,8 @@ export type RuleCategory =
   | "System"
   | "Localisation"
   | "Security"
-  | "Finance";
+  | "Finance"
+  | "Contact";
 export type RuleSeverity = "error" | "warning";
 
 export interface ValidationRule {
