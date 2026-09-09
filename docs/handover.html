@@ -1,0 +1,588 @@
+<title>Service Hub Handover</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --ground: #F7F9FB;
+    --surface: #FFFFFF;
+    --surface-sunk: #EEF2F6;
+    --ink: #0E1B2A;
+    --ink-soft: #46596D;
+    --ink-faint: #78899A;
+    --line: #D8E1EA;
+    --line-soft: #E7EDF3;
+    --accent: #1A6FD4;
+    --accent-deep: #0F4C97;
+    --accent-wash: #E8F0FB;
+    --ok: #0F7A40;
+    --ok-wash: #E4F6EC;
+    --warn: #9A6800;
+    --warn-wash: #FBF2DC;
+    --crit: #B3352A;
+    --crit-wash: #FBEAE8;
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0B1520;
+      --surface: #12202E;
+      --surface-sunk: #0E1926;
+      --ink: #E8EFF5;
+      --ink-soft: #A6B8C8;
+      --ink-faint: #7B8DA0;
+      --line: #24384B;
+      --line-soft: #1B2C3D;
+      --accent: #5EA3F0;
+      --accent-deep: #8DC0F7;
+      --accent-wash: #16283C;
+      --ok: #4FCB8A;
+      --ok-wash: #102C1F;
+      --warn: #E0B44E;
+      --warn-wash: #2C2413;
+      --crit: #F08074;
+      --crit-wash: #331A18;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0B1520;
+    --surface: #12202E;
+    --surface-sunk: #0E1926;
+    --ink: #E8EFF5;
+    --ink-soft: #A6B8C8;
+    --ink-faint: #7B8DA0;
+    --line: #24384B;
+    --line-soft: #1B2C3D;
+    --accent: #5EA3F0;
+    --accent-deep: #8DC0F7;
+    --accent-wash: #16283C;
+    --ok: #4FCB8A;
+    --ok-wash: #102C1F;
+    --warn: #E0B44E;
+    --warn-wash: #2C2413;
+    --crit: #F08074;
+    --crit-wash: #331A18;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 28px 96px;
+  }
+
+  .col { max-width: 68ch; }
+
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  code, .mono { font-family: var(--mono); font-size: 0.9em; }
+
+  p code, li code, td code {
+    background: var(--surface-sunk);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 0.5px 5px;
+    white-space: nowrap;
+  }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+  header {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    padding: 48px 0 34px;
+    margin-bottom: 52px;
+  }
+  header .wrap { padding-bottom: 0; }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .kicker::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+    max-width: 220px;
+  }
+
+  h1 {
+    font-size: clamp(30px, 4.4vw, 43px);
+    font-weight: 600;
+    letter-spacing: -0.021em;
+    line-height: 1.1;
+    margin: 16px 0 14px;
+  }
+
+  .standfirst {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    line-height: 1.6;
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 34px;
+    margin-top: 30px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .fact { display: flex; flex-direction: column; gap: 3px; }
+  .fact dt {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .fact dd {
+    margin: 0;
+    font-size: 14.5px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Sections ─────────────────────────────────────────────── */
+  section { margin-bottom: 64px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 9px;
+  }
+
+  h2 {
+    font-size: 25px;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    margin-bottom: 12px;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 30px 0 8px;
+  }
+
+  section > p, section > .col > p { margin: 0 0 14px; }
+
+  .lede { color: var(--ink-soft); }
+
+  /* ── Tables ───────────────────────────────────────────────── */
+  .scroller {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--surface);
+  }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+
+  th, td {
+    text-align: left;
+    padding: 9px 15px;
+    border-bottom: 1px solid var(--line-soft);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  thead th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    background: var(--surface-sunk);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+  }
+
+  .accounts td:first-child { font-weight: 600; }
+  .accounts .addr { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); }
+
+  /* ── Permission matrix ────────────────────────────────────── */
+  .matrix th.perm, .matrix td.perm {
+    position: sticky;
+    left: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 12px;
+    z-index: 1;
+  }
+  .matrix thead th.perm { background: var(--surface-sunk); z-index: 2; }
+  .matrix td:not(.perm), .matrix th:not(.perm) { text-align: center; }
+  .matrix thead th:not(.perm) { font-size: 10px; letter-spacing: 0.06em; }
+  .matrix tbody tr:hover td { background: var(--accent-wash); }
+  .matrix tbody tr:hover td.perm { background: var(--accent-wash); }
+
+  .yes { color: var(--accent); font-weight: 700; }
+  .no { color: var(--line); }
+
+  .group-row td {
+    background: var(--surface-sunk);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 6px 15px;
+  }
+
+  /* ── Code ─────────────────────────────────────────────────── */
+  pre {
+    margin: 0 0 14px;
+    background: var(--surface-sunk);
+    border: 1px solid var(--line-soft);
+    border-radius: 7px;
+    padding: 15px 17px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.8px;
+    line-height: 1.75;
+  }
+  pre .c { color: var(--ink-faint); }
+
+  /* ── Notes ────────────────────────────────────────────────── */
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-wash);
+    padding: 13px 17px;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+    margin: 0 0 16px;
+  }
+  .note.caution { border-left-color: var(--warn); background: var(--warn-wash); }
+  .note strong { font-weight: 600; }
+
+  /* ── Decision list ────────────────────────────────────────── */
+  .decisions { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+  .decision { background: var(--surface); padding: 16px 19px; }
+  .decision h3 { margin: 0 0 5px; font-size: 15px; }
+  .decision p { margin: 0; font-size: 14px; color: var(--ink-soft); }
+
+  /* ── Status list ──────────────────────────────────────────── */
+  .status { list-style: none; padding: 0; margin: 0; display: grid; gap: 9px; }
+  .status li { display: grid; grid-template-columns: auto 1fr; gap: 11px; align-items: start; font-size: 14.5px; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-top: 2px;
+    white-space: nowrap;
+  }
+  .tag.done { background: var(--ok-wash); color: var(--ok); }
+  .tag.open { background: var(--warn-wash); color: var(--warn); }
+  .tag.gap { background: var(--crit-wash); color: var(--crit); }
+
+  /* ── Flow ─────────────────────────────────────────────────── */
+  .flow { font-family: var(--mono); font-size: 12.5px; line-height: 2; color: var(--ink-soft); }
+  .flow b { color: var(--ink); font-weight: 600; }
+
+  ul.plain { padding-left: 20px; margin: 0 0 14px; }
+  ul.plain li { margin-bottom: 7px; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 620px) {
+    .facts { gap: 0 22px; }
+    .wrap { padding: 0 18px 64px; }
+  }
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="kicker">Handover &middot; 2026-09-09</div>
+    <h1>Service Hub: sign-in, roles, and running it</h1>
+    <p class="standfirst">
+      The entervo Service Hub now has a real backend. People sign in with a password,
+      every screen and endpoint is gated by permission, and the whole stack — Postgres,
+      API, web — comes up with one command.
+    </p>
+    <dl class="facts">
+      <div class="fact"><dt>Branch</dt><dd class="mono">phase-7-zod-validation</dd></div>
+      <div class="fact"><dt>Head</dt><dd class="mono">61e4405</dd></div>
+      <div class="fact"><dt>Seeded accounts</dt><dd>7 &mdash; one per role</dd></div>
+      <div class="fact"><dt>Assertions passing</dt><dd>125</dd></div>
+      <div class="fact"><dt>Auth provider</dt><dd class="mono">local</dd></div>
+    </dl>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section>
+    <div class="eyebrow">Accounts</div>
+    <h2>Signing in</h2>
+    <div class="col">
+      <p class="lede">
+        One account per role, so every permission path can be seen working. All seven share
+        the same password, set by <code>SEED_PASSWORD</code>.
+      </p>
+      <div class="note caution">
+        <strong>Local and demo only.</strong> This password is the default committed in
+        <code>.env.example</code>. It is not a secret and must not survive into any deployed
+        environment — set <code>SEED_PASSWORD</code> and <code>SESSION_SECRET</code> to real
+        values there, or don't seed at all.
+      </div>
+    </div>
+    <div class="scroller">
+      <table class="accounts">
+        <thead>
+          <tr><th>Role</th><th>Email</th><th>Name</th><th>Password</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Admin</td><td class="addr">k.harperscheidt@scheidt-bachmann.de</td><td>Kai Harperscheidt</td><td class="mono">ChangeMe123!dev</td></tr>
+          <tr><td>Project Manager</td><td class="addr">m.delvaux@scheidt-bachmann.de</td><td>Marc Delvaux</td><td class="mono">ChangeMe123!dev</td></tr>
+          <tr><td>Sales</td><td class="addr">a.krueger@scheidt-bachmann.de</td><td>Anna Kr&uuml;ger</td><td class="mono">ChangeMe123!dev</td></tr>
+          <tr><td>Reviewer</td><td class="addr">l.meissner@scheidt-bachmann.de</td><td>Laura Meissner</td><td class="mono">ChangeMe123!dev</td></tr>
+          <tr><td>DevOps</td><td class="addr">devops@scheidt-bachmann.de</td><td>DevOps Bot</td><td class="mono">ChangeMe123!dev</td></tr>
+          <tr><td>Partner</td><td class="addr">j.vandijk@scheidt-bachmann.de</td><td>Joost van Dijk</td><td class="mono">ChangeMe123!dev</td></tr>
+          <tr><td>Customer</td><td class="addr">medwayft.carparking@nhs.net</td><td>Medway IT</td><td class="mono">ChangeMe123!dev</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Authorisation</div>
+    <h2>Who can do what</h2>
+    <div class="col">
+      <p class="lede">
+        Roles say who someone is; permissions say what they may do. Every check in the system —
+        the API's route guards and the UI's gating — asks about a permission, never a role, so
+        moving a capability between roles is a change to this one table and nothing else.
+      </p>
+      <p>
+        It lives in <code>packages/shared/src/rbac.ts</code>, imported by both the browser and the
+        server. The server re-derives permissions from the database on every request; the client
+        uses the same table only to decide what to draw.
+      </p>
+    </div>
+    <div class="scroller">
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th class="perm">Permission</th>
+            <th>Admin</th><th>Project&nbsp;Mgr</th><th>Sales</th><th>Reviewer</th><th>DevOps</th><th>Partner</th><th>Customer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="group-row"><td colspan="8">Projects</td></tr>
+          <tr><td class="perm">project:read</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td></tr>
+          <tr><td class="perm">project:create</td><td class="yes">●</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="yes">●</td><td class="no">–</td></tr>
+          <tr><td class="perm">project:update</td><td class="yes">●</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="yes">●</td><td class="no">–</td></tr>
+          <tr><td class="perm">project:submit</td><td class="yes">●</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="yes">●</td><td class="no">–</td></tr>
+          <tr><td class="perm">project:review</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr><td class="perm">project:approve</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr class="group-row"><td colspan="8">Payment</td></tr>
+          <tr><td class="perm">payment:confirm</td><td class="yes">●</td><td class="no">–</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr class="group-row"><td colspan="8">Patch management</td></tr>
+          <tr><td class="perm">patch:read</td><td class="yes">●</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="yes">●</td><td class="yes">●</td><td class="no">–</td></tr>
+          <tr><td class="perm">patch:schedule</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr class="group-row"><td colspan="8">Administration</td></tr>
+          <tr><td class="perm">template:read</td><td class="yes">●</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr><td class="perm">template:write</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr><td class="perm">rule:read</td><td class="yes">●</td><td class="yes">●</td><td class="no">–</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr><td class="perm">rule:write</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr><td class="perm">user:read</td><td class="yes">●</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr><td class="perm">user:write</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr><td class="perm">settings:read</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr><td class="perm">settings:write</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr><td class="perm">audit:read</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="yes">●</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col" style="margin-top:16px">
+      <div class="note">
+        <strong>Hiding a button is a courtesy, not a control.</strong> Sign in as the Customer and
+        the admin navigation is gone — but calling <code>GET /api/users</code> from the console still
+        returns 403. Both are tested.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Operations</div>
+    <h2>Running it</h2>
+    <div class="col">
+      <h3>Everything, in containers</h3>
+      <pre><span class="c"># set SESSION_SECRET in .env first</span>
+cp .env.example .env
+docker compose up -d --build
+docker compose exec api pnpm --filter @service-hub/api db:seed</pre>
+      <p>
+        The app is on <a href="http://localhost:8080">localhost:8080</a>. nginx serves the built
+        app and proxies <code>/api</code> to the API container, so the session cookie is
+        first-party and CORS never comes into it.
+      </p>
+
+      <h3>Locally, against containerised Postgres</h3>
+      <pre>pnpm install
+docker compose up -d db
+pnpm --filter @service-hub/shared build
+pnpm --filter @service-hub/api db:migrate
+pnpm --filter @service-hub/api db:seed
+pnpm dev            <span class="c"># api :3001, web :5173</span></pre>
+      <p>Vite proxies <code>/api</code> the same way nginx does, so the cookie behaves identically.</p>
+
+      <h3>Checking it still works</h3>
+      <pre>pnpm typecheck &amp;&amp; pnpm lint &amp;&amp; pnpm build
+pnpm --filter @service-hub/api test   <span class="c"># needs Postgres up</span></pre>
+      <p>
+        The API tests run the real server against a real database. The parts worth testing here
+        live in Fastify hooks, cookies and Prisma queries — replacing those would test nothing.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Structure</div>
+    <h2>How it fits together</h2>
+    <div class="col">
+      <pre>apps/web         <span class="c">React 19 · Vite · TanStack Router · React Hook Form</span>
+apps/api         <span class="c">Fastify · Prisma · Postgres</span>
+packages/shared  <span class="c">Zod schemas · domain types · the RBAC table</span></pre>
+      <p>
+        The shared package is the reason for the split. A validation rule or a role's permissions
+        are written once and used by both sides, so the browser and the server cannot disagree
+        about what a rule means or what a role allows.
+      </p>
+      <h3>What a signed-in request does</h3>
+      <p class="flow">
+        browser <b>→</b> nginx <b>→</b> Fastify <code>onRequest</code><br>
+        &nbsp;&nbsp;<b>1.</b> reject the write if <code>Origin</code> isn't ours<br>
+        &nbsp;&nbsp;<b>2.</b> HMAC the cookie token, look up the session<br>
+        &nbsp;&nbsp;<b>3.</b> re-derive permissions from the user's current roles<br>
+        &nbsp;&nbsp;<b>4.</b> route guard checks one permission &rarr; <b>403</b> or handler
+      </p>
+      <p>
+        Because step 3 happens per request rather than being baked into the session, a role change
+        takes effect immediately — and changing someone's roles also revokes their sessions outright.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Security</div>
+    <h2>Decisions worth knowing</h2>
+    <div class="decisions">
+      <div class="decision">
+        <h3>Passwords use scrypt from Node's standard library</h3>
+        <p>A proper memory-hard KDF, and no native module to compile in the image. Each hash stores its own parameters, so they can be raised later without invalidating existing passwords.</p>
+      </div>
+      <div class="decision">
+        <h3>The database never stores a usable session token</h3>
+        <p>The cookie carries a random token; only its HMAC is stored. A dumped database contains no live sessions, and rotating <code>SESSION_SECRET</code> revokes every session at once.</p>
+      </div>
+      <div class="decision">
+        <h3>Sign-in failures give nothing away</h3>
+        <p>A wrong password and an unknown address return the same message, and the unknown case still burns the hashing time — so neither the wording nor the response timing reveals who has an account.</p>
+      </div>
+      <div class="decision">
+        <h3>The session cookie is httpOnly</h3>
+        <p>Script cannot read it, so an XSS bug cannot walk off with a session. Set <code>SameSite=lax</code>, backed by an <code>Origin</code> check on every state-changing request.</p>
+      </div>
+      <div class="decision">
+        <h3>The last administrator cannot be locked out</h3>
+        <p>The final active Admin can't be demoted, deactivated, or deleted, and nobody can delete their own account.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Next</div>
+    <h2>Switching to single sign-on</h2>
+    <div class="col">
+      <p class="lede">
+        Everything around the identity check is already provider-agnostic: sessions, the user
+        table, roles, and the guards do not care where a person came from.
+      </p>
+      <p>Turning OIDC on means three things, all inside <code>apps/api/src/auth/providers/</code>:</p>
+      <ul class="plain">
+        <li>Install <code>openid-client</code> and fill in <code>beginLogin</code> and <code>completeLogin</code> with an Authorization Code + PKCE flow.</li>
+        <li>Set <code>AUTH_PROVIDER=oidc</code> plus the four <code>OIDC_*</code> variables.</li>
+        <li>Nothing else. <code>signIn</code> in the web app already follows a redirect if the server returns one.</li>
+      </ul>
+      <p>
+        <code>linkOrCreateUser</code> maps an external identity onto our own user row — matching on
+        issuer + subject first, then a <em>verified</em> email, otherwise creating an account with
+        the weakest roles. That is what makes "their user directory or ours" a non-question: there
+        is always a row here, and the provider supplies identity without ever supplying authorisation.
+      </p>
+      <div class="note caution">
+        <strong>Never match on an unverified email</strong>, and never key a user on the email
+        instead of the subject claim. Addresses get reassigned; doing either would hand one person
+        another's account.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">State of play</div>
+    <h2>What's done, and what isn't</h2>
+    <div class="col">
+      <ul class="status">
+        <li><span class="tag done">Done</span><span>Password sign-in, sessions, sign-out, password change — 40 API assertions against a real Postgres.</span></li>
+        <li><span class="tag done">Done</span><span>RBAC end to end: server guards, UI gating, role changes revoking sessions, lockout protection.</span></li>
+        <li><span class="tag done">Done</span><span>Docker compose for Postgres, API and web; 25 browser assertions run against the containers.</span></li>
+        <li><span class="tag done">Done</span><span>pnpm workspace with schemas shared by both sides.</span></li>
+        <li><span class="tag open">Next</span><span>Views still read from the in-memory store in <code>apps/web/src/api/</code>. Moving them onto real endpoints wants TanStack Query — that's the next slice, and it's what finally fixes admin edits being lost on navigation.</span></li>
+        <li><span class="tag open">Next</span><span>Only the user endpoints exist on the server. Projects, templates, rules and settings still need porting.</span></li>
+        <li><span class="tag gap">Gap</span><span>PSP secrets still sit in browser state. When those endpoints are built, make the secret fields write-only — accepted on a write, never returned by a read.</span></li>
+        <li><span class="tag gap">Gap</span><span>No rate limiting on sign-in. Worth adding before this is reachable from anywhere but a laptop.</span></li>
+        <li><span class="tag gap">Gap</span><span>No password reset flow. Deliberate — if SSO lands first, it never needs building.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <div class="col">
+      Commit <span class="mono">61e4405</span> on <span class="mono">phase-7-zod-validation</span>,
+      three commits ahead of <span class="mono">main</span>. The branch name predates the work in it.
+    </div>
+  </footer>
+
+</div>
