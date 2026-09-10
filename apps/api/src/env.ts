@@ -14,6 +14,9 @@ const envSchema = z.object({
    * they share one (nginx or the Vite proxy), the same-origin check covers it.
    */
   WEB_ORIGIN: z.string().default("http://localhost:5173"),
+  /** Sign-in attempts allowed per window, per address and per client IP. */
+  LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(10),
+  LOGIN_RATE_WINDOW_MINUTES: z.coerce.number().positive().default(15),
   /** Which identity provider backs sign-in. See src/auth/providers. */
   AUTH_PROVIDER: z.enum(["local", "oidc"]).default("local"),
   OIDC_ISSUER: z.string().optional(),

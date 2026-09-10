@@ -7,6 +7,7 @@
  */
 import { buildServer } from "../server.js";
 import { prisma } from "../db.js";
+import { resetLoginRateLimits } from "../auth/rateLimit.js";
 
 let failed = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -20,6 +21,7 @@ const CUSTOMER = "medwayft.carparking@nhs.net";
 const SALES = "a.krueger@scheidt-bachmann.de";
 const REVIEWER = "l.meissner@scheidt-bachmann.de";
 const PM = "m.delvaux@scheidt-bachmann.de";
+import { DEMO_ONBOARDING_DRAFT } from "../data/seed-data.js";
 const PASSWORD = process.env.SEED_PASSWORD ?? "ChangeMe123!dev";
 
 async function main() {
@@ -167,7 +169,10 @@ async function main() {
   // ── Drafts are per person ───────────────────────────────────────────────
   await call("/api/draft", { method: "PUT", cookie: admin.cookie, body: JSON.stringify({ opName: "Admin's draft" }) });
   check("a saved draft reads back", ((await call("/api/draft", { cookie: admin.cookie })).body?.draft as { opName: string }).opName, "Admin's draft");
-  check("another person doesn't see it", (await call("/api/draft", { cookie: auditor.cookie })).body?.draft, null);
+  // Every seeded account has its own demo draft, so the check is that another
+  // person sees *theirs* rather than this one — not that they see nothing.
+  const othersDraft = (await call("/api/draft", { cookie: auditor.cookie })).body?.draft as { opName?: string };
+  check("another person sees their own draft, not this one", othersDraft?.opName, "Medway Hospital");
   await call("/api/draft", { method: "DELETE", cookie: admin.cookie });
 
   // ── Submitting still re-checks the schema server-side ───────────────────
@@ -175,6 +180,58 @@ async function main() {
   check("an incomplete submission is 422", badSubmit.status, 422);
   check("the 422 names the missing fields", Object.keys((badSubmit.body?.fieldErrors ?? {}) as object).length > 3, true);
   check("a customer may not submit at all", (await call("/api/projects/submit", { method: "POST", cookie: customer.cookie, body: JSON.stringify({}) })).status, 403);
+
+  // ── Rules an administrator turned off stop being enforced ───────────────
+  const ipRule = ((await call("/api/rules", { cookie: admin.cookie })).body?.rules as { id: number; field: string; active: boolean }[])
+    .find(r => r.field === "IP Address")!;
+
+  const badIp = { ...DEMO_ONBOARDING_DRAFT, product: "smart-web-pay", salesApproved: true, ip: "999.1.1.1" };
+  const rejected = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(badIp) });
+  check("a bad IP is rejected while the rule is on", rejected.status, 422);
+  check("and the message names the rule", (rejected.body?.fieldErrors as Record<string, string>)?.ip, "Must be a valid IPv4 address");
+
+  await call(`/api/rules/${ipRule.id}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ active: false }) });
+  const allowed = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(badIp) });
+  check("switching the rule off stops the server enforcing it", allowed.status, 201);
+  await prisma.project.deleteMany({ where: { id: (allowed.body?.project as { id: number }).id } });
+
+  await call(`/api/rules/${ipRule.id}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ severity: "warning" }) });
+  const softened = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify({ ...badIp, ip: "999.1.1.1" }) });
+  check("a rule softened to a warning stops blocking too", softened.status, 201);
+  await prisma.project.deleteMany({ where: { id: (softened.body?.project as { id: number }).id } });
+  await call(`/api/rules/${ipRule.id}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ active: true, severity: "error" }) });
+  check("and turning it back on restores the block", (await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(badIp) })).status, 422);
+
+  check("the enforcement flags are readable without rule:read", (await call("/api/rules/enforcement", { cookie: customer.cookie })).status, 200);
+  check("the full rule table is not", (await call("/api/rules", { cookie: customer.cookie })).status, 403);
+
+  // ── Credentials are write-only ──────────────────────────────────────────
+  await call("/api/draft", { method: "PUT", cookie: admin.cookie, body: JSON.stringify({ opName: "Secretive Ltd", pspSecret: "super-secret-value", pspKey: "key-123" }) });
+  const readBack = await call("/api/draft", { cookie: admin.cookie });
+  const draftBody = readBack.body as { draft: Record<string, unknown>; secretsOnFile: string[] };
+  check("the draft comes back", draftBody.draft.opName, "Secretive Ltd");
+  check("but the secret does not", draftBody.draft.pspSecret, undefined);
+  check("nor the API key", draftBody.draft.pspKey, undefined);
+  check("the response says which are on file", draftBody.secretsOnFile.sort(), ["pspKey", "pspSecret"]);
+  check("no secret appears anywhere in the payload", JSON.stringify(readBack.body).includes("super-secret-value"), false);
+
+  // Saving again without them must not wipe what is stored.
+  await call("/api/draft", { method: "PUT", cookie: admin.cookie, body: JSON.stringify({ opName: "Secretive Ltd v2" }) });
+  const after = (await call("/api/draft", { cookie: admin.cookie })).body as { secretsOnFile: string[] };
+  check("a save that omits them keeps them", after.secretsOnFile.sort(), ["pspKey", "pspSecret"]);
+  await call("/api/draft", { method: "DELETE", cookie: admin.cookie });
+
+  // ── Sign-in throttling ──────────────────────────────────────────────────
+  resetLoginRateLimits();
+  const victim = "l.meissner@scheidt-bachmann.de";
+  let lastStatus = 0;
+  for (let i = 0; i < 11; i++) {
+    lastStatus = (await call("/api/auth/login", { method: "POST", body: JSON.stringify({ email: victim, password: "wrong-guess" }) })).status;
+  }
+  check("repeated guesses are eventually refused", lastStatus, 429);
+  check("a different account is unaffected", (await login(ADMIN)).status, 200);
+  resetLoginRateLimits();
+  check("a correct password is never throttled", (await login(victim)).status, 200);
 
   // ── CSRF ────────────────────────────────────────────────────────────────
   const foreign = await fetch(base + "/api/users", {

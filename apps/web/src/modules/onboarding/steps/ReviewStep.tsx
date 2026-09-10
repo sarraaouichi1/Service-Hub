@@ -1,19 +1,19 @@
 import { useWatch } from "react-hook-form";
 import type { DeclarationReviewStepProps, OnboardingForm } from "../../../types";
 import { Icon } from "../../../components/Icon";
-import { draftIssues } from "@service-hub/shared";
-import { usePsps } from "../../../queries";
+import { useOnboardingSchemas, usePsps } from "../../../queries";
 
 export function ReviewStep({ declared, onDeclaredChange }: DeclarationReviewStepProps) {
   const data = useWatch<OnboardingForm>() as OnboardingForm;
   const psps = usePsps();
+  const schemas = useOnboardingSchemas();
   // Falls back to the stored id rather than "Not selected" while the list loads,
   // so a chosen provider never briefly reads as unchosen.
   const pspLabel = psps.data?.find(p => p.id === data.psp)?.name ?? data.psp ?? "Not selected";
   const facs = data.facilities || [];
   // Named against the schema, so this can't claim the draft is ready when the
   // submit button disagrees — both ask the same question.
-  const issues = draftIssues(data);
+  const issues = schemas.draftIssues(data);
   return (
     <div className="slide-in">
       {issues.length > 0 && (

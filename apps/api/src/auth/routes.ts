@@ -7,6 +7,7 @@ import { hashPassword, verifyPassword } from "./password.js";
 import { authenticateLocal } from "./providers/local.js";
 import { beginLogin, isOidcConfigured } from "./providers/oidc.js";
 import { AuthenticationError } from "./providers/types.js";
+import { checkLoginRate, clearLoginAttempts, recordFailedLogin } from "./rateLimit.js";
 import { linkOrCreateUser } from "./provisioning.js";
 import {
   SESSION_COOKIE, cookieOptions, createSession,
@@ -32,8 +33,15 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(200).send({ redirectUrl });
     }
 
+    // Throttled before the password is checked, so a blocked caller learns
+    // nothing and costs nothing to turn away.
+    const attempted = (request.body as { email?: string } | undefined)?.email;
+    const throttled = checkLoginRate(request, reply, attempted);
+    if (throttled) return throttled;
+
     const parsed = loginSchema.safeParse(request.body);
     if (!parsed.success) {
+      recordFailedLogin(request, attempted);
       const fieldErrors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
         const key = String(issue.path[0]);
@@ -52,10 +60,12 @@ export async function authRoutes(app: FastifyInstance) {
         data: { lastLoginAt: new Date() },
       });
 
+      clearLoginAttempts(parsed.data.email);
       reply.setCookie(SESSION_COOKIE, token, { ...cookieOptions, expires: expiresAt });
       return { user: toAuthUser(user), expiresAt };
     } catch (error) {
       if (error instanceof AuthenticationError) {
+        recordFailedLogin(request, parsed.data.email);
         return reply.code(error.status).send({
           message: error.message,
           fieldErrors: error.fieldErrors,

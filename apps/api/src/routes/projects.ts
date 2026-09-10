@@ -1,12 +1,23 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { onboardingDraftSchema } from "@service-hub/shared";
+import { createOnboardingSchemas } from "@service-hub/shared";
+import type { RuleOverrides } from "@service-hub/shared";
 import type { OnboardingForm } from "@service-hub/shared";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { requirePermission, requireSignedIn } from "../rbac/guard.js";
 
 const STATUSES = ["draft", "progress", "review", "approved", "sales-approval", "onboarded"] as const;
+
+/**
+ * Credentials the draft carries. They are accepted on a write and never
+ * returned by a read, so they stop round-tripping through the browser.
+ *
+ * This is a floor, not a solution: they are still stored in the draft's JSON
+ * rather than encrypted in a secret store, which is what a real PSP integration
+ * needs. Anything added here must be added to that store too.
+ */
+const SECRET_FIELDS = ["pspKey", "pspSecret", "uiPassword"] as const;
 
 const updateProjectSchema = z.object({
   name: z.string().min(1).optional(),
@@ -66,6 +77,14 @@ export async function projectRoutes(app: FastifyInstance) {
    * renders — so a server rejection and a client-side error share one slot.
    */
   app.post("/projects/submit", { preHandler: requirePermission("project:submit") }, async (request, reply) => {
+    // Validated against the rules as an administrator has them configured, so
+    // the server enforces what the admin screen promises rather than whatever
+    // was compiled in.
+    const rows = await prisma.rule.findMany({ select: { id: true, active: true, severity: true } });
+    const overrides: RuleOverrides = Object.fromEntries(
+      rows.map((r) => [r.id, { active: r.active, severity: r.severity as "error" | "warning" }]),
+    );
+    const { onboardingDraftSchema } = createOnboardingSchemas(overrides);
     const result = onboardingDraftSchema.safeParse(request.body);
     if (!result.success) {
       return reply.code(422).send({
@@ -91,23 +110,61 @@ export async function projectRoutes(app: FastifyInstance) {
     return reply.code(201).send({ project });
   });
 
-  /** The signed-in person's working draft — what makes "Save Draft" real. */
+  /**
+   * The signed-in person's working draft — what makes "Save Draft" real.
+   *
+   * Credentials are write-only: they can be set, never read back. The response
+   * says *which* are on file so the wizard can show "stored" rather than an
+   * empty box, but the values never leave the server. Until there is somewhere
+   * proper to keep them, this at least stops them travelling to every browser
+   * that opens the draft.
+   */
   app.get("/draft", { preHandler: requireSignedIn }, async (request) => {
     const row = await prisma.onboardingDraft.findUnique({ where: { userId: request.authUser!.id } });
-    return { draft: (row?.data as OnboardingForm | undefined) ?? null, updatedAt: row?.updatedAt ?? null };
+    if (!row) return { draft: null, secretsOnFile: [], updatedAt: null };
+
+    const stored = row.data as OnboardingForm;
+    const draft = { ...stored };
+    const secretsOnFile: string[] = [];
+    for (const key of SECRET_FIELDS) {
+      if (typeof stored[key] === "string" && stored[key]!.length > 0) secretsOnFile.push(key);
+      delete draft[key];
+    }
+    return { draft, secretsOnFile, updatedAt: row.updatedAt };
   });
 
   app.put("/draft", { preHandler: requirePermission("project:update") }, async (request) => {
-    // The draft is stored whole as JSON. Prisma's Json input type can't express
-    // OnboardingForm's template-literal keys, so the shape is asserted here —
-    // it is validated on submit, which is where correctness actually matters.
-    const data = (request.body ?? {}) as unknown as Prisma.InputJsonObject;
+    const incoming = (request.body ?? {}) as OnboardingForm;
+    const existing = await prisma.onboardingDraft.findUnique({ where: { userId: request.authUser!.id } });
+    const stored = (existing?.data as OnboardingForm | undefined) ?? {};
+
+    // A blank credential means "leave it alone", not "clear it" — the client is
+    // never sent the current value, so it cannot echo one back.
+    const merged: OnboardingForm = { ...incoming };
+    for (const key of SECRET_FIELDS) {
+      const supplied = incoming[key];
+      if (typeof supplied === "string" && supplied.length > 0) continue;
+      if (typeof stored[key] === "string") merged[key] = stored[key];
+      else delete merged[key];
+    }
+
+    // Prisma's Json input type can't express OnboardingForm's template-literal
+    // keys, so the shape is asserted here; it is validated on submit, which is
+    // where correctness actually matters.
+    const data = merged as unknown as Prisma.InputJsonObject;
     const row = await prisma.onboardingDraft.upsert({
       where: { userId: request.authUser!.id },
       update: { data },
       create: { userId: request.authUser!.id, data },
     });
-    return { draft: row.data as OnboardingForm, updatedAt: row.updatedAt };
+
+    const saved = { ...(row.data as OnboardingForm) };
+    const secretsOnFile: string[] = [];
+    for (const key of SECRET_FIELDS) {
+      if (typeof saved[key] === "string" && saved[key]!.length > 0) secretsOnFile.push(key);
+      delete saved[key];
+    }
+    return { draft: saved, secretsOnFile, updatedAt: row.updatedAt };
   });
 
   app.delete("/draft", { preHandler: requireSignedIn }, async (request, reply) => {

@@ -6,6 +6,8 @@ import type {
   CountryTemplate, OnboardingForm, PlatformConfig, ProductDefinition, Project,
   TemplateDraft, UserRole,
 } from "@service-hub/shared";
+import { createOnboardingSchemas } from "@service-hub/shared";
+import type { OnboardingSchemas, RuleOverrides } from "@service-hub/shared";
 import * as api from "../api";
 
 /**
@@ -30,6 +32,7 @@ export const keys = {
   serviceTiers: ["patch", "tiers"] as const,
   templates: ["templates"] as const,
   rules: ["rules"] as const,
+  ruleEnforcement: ["rules", "enforcement"] as const,
   settings: ["settings"] as const,
   auditLog: ["audit-log"] as const,
   notifications: ["notifications"] as const,
@@ -48,11 +51,33 @@ export const usePatchStages = () => useQuery({ queryKey: keys.patchStages, query
 export const useServiceTiers = () => useQuery({ queryKey: keys.serviceTiers, queryFn: api.listServiceTiers, ...REFERENCE });
 export const useTemplates = () => useQuery({ queryKey: keys.templates, queryFn: api.listTemplates });
 export const useRules = () => useQuery({ queryKey: keys.rules, queryFn: api.listRules });
+export const useRuleEnforcement = () =>
+  useQuery({ queryKey: keys.ruleEnforcement, queryFn: api.listRuleEnforcement });
+
+/**
+ * The wizard's schemas, built against the rules as an administrator has them
+ * configured. Falls back to the registry's defaults until the flags arrive, so
+ * the form is never unvalidated — only, briefly, validated as shipped.
+ */
+export function useOnboardingSchemas(): OnboardingSchemas {
+  const enforcement = useRuleEnforcement();
+  const rules = enforcement.data;
+  return useMemo(() => {
+    if (!rules) return createOnboardingSchemas();
+    const overrides: RuleOverrides = Object.fromEntries(
+      rules.map((r) => [r.id, { active: r.active, severity: r.severity }]),
+    );
+    return createOnboardingSchemas(overrides);
+  }, [rules]);
+}
 export const useSettings = () => useQuery({ queryKey: keys.settings, queryFn: api.getSettings });
 export const useAuditLog = () => useQuery({ queryKey: keys.auditLog, queryFn: api.listAuditLog });
 export const useNotifications = () => useQuery({ queryKey: keys.notifications, queryFn: api.listNotifications });
 export const useUsers = () => useQuery({ queryKey: keys.users, queryFn: api.listUsers });
 export const useSavedDraft = () => useQuery({ queryKey: keys.draft, queryFn: api.getDraft });
+
+/** Which credentials the server holds. Their values never reach the browser. */
+export const useSecretsOnFile = (): string[] => useSavedDraft().data?.secretsOnFile ?? [];
 
 /**
  * Products keyed by id — the lookup every project view needs to render a
@@ -92,6 +117,9 @@ function useInvalidating<TData, TVars>(
   });
 }
 
+export const useUpdateProject = (options?: UseMutationOptions<Project, Error, { id: number; patch: Partial<Project> }>) =>
+  useInvalidating(({ id, patch }) => api.updateProject(id, patch), [keys.projects], options);
+
 export const useCreateTemplate = (options?: UseMutationOptions<CountryTemplate, Error, TemplateDraft>) =>
   useInvalidating(api.createTemplate, [keys.templates], options);
 
@@ -102,7 +130,7 @@ export const useDeleteTemplate = (options?: UseMutationOptions<void, Error, numb
   useInvalidating(api.deleteTemplate, [keys.templates], options);
 
 export const useUpdateRule = (options?: UseMutationOptions<unknown, Error, { id: number; patch: { active?: boolean; severity?: "error" | "warning" } }>) =>
-  useInvalidating(({ id, patch }) => api.updateRule(id, patch), [keys.rules], options);
+  useInvalidating(({ id, patch }) => api.updateRule(id, patch), [keys.rules, keys.ruleEnforcement], options);
 
 export const useUpdateSettings = (options?: UseMutationOptions<PlatformConfig, Error, Partial<PlatformConfig>>) =>
   useInvalidating(api.updateSettings, [keys.settings], options);

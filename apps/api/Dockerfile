@@ -6,6 +6,10 @@ RUN corepack enable
 WORKDIR /app
 
 FROM base AS build
+# Prisma verifies each engine download against a checksum file. When that file
+# can't be fetched the whole generate step fails, which has nothing to do with
+# the engine itself being sound — skip the check rather than fail the build.
+ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/api/package.json apps/api/

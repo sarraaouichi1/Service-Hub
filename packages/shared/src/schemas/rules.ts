@@ -176,14 +176,32 @@ export const VALIDATION_RULES: RuleDefinition[] = [
 ];
 
 /**
+ * An administrator's changes to the rule table.
+ *
+ * A rule's pattern and check are fixed here in code — those are the definition,
+ * and the admin screen shows exactly what the wizard runs. What an admin *can*
+ * change is whether a rule applies and how hard it bites, and those flags are
+ * stored server-side. Passing them in is what makes the toggles on the admin
+ * screen actually change enforcement rather than just the table.
+ */
+export type RuleOverrides = Record<number, { active?: boolean; severity?: RuleSeverity }>;
+
+/**
  * Rules that block progress for a given field: active, hard, and enforceable.
  * Warnings are carried in the registry and shown in the admin table, but they
  * do not stop the user advancing.
  */
-export function blockingRulesFor(key: FormTextKey): RuleDefinition[] {
-  return VALIDATION_RULES.filter(
-    (rule) => rule.key === key && rule.active && rule.severity === "error" && rule.check,
-  );
+export function blockingRulesFor(
+  key: FormTextKey,
+  overrides?: RuleOverrides,
+): RuleDefinition[] {
+  return VALIDATION_RULES.filter((rule) => {
+    if (rule.key !== key || !rule.check) return false;
+    const override = overrides?.[rule.id];
+    const active = override?.active ?? rule.active;
+    const severity = override?.severity ?? rule.severity;
+    return active && severity === "error";
+  });
 }
 
 export type { RuleCategory, RuleSeverity };

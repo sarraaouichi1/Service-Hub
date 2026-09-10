@@ -5,21 +5,10 @@ import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AuthUser } from "@service-hub/shared";
 import type { OnboardingForm } from "../../../types";
-import { useMarkAllRead, useNotifications, useSavedDraft } from "../../../queries";
-import { onboardingDraftSchema } from "@service-hub/shared";
+import { useMarkAllRead, useNotifications, useOnboardingSchemas, useSavedDraft } from "../../../queries";
+
 import { OnboardingContext } from "./onboardingContext";
 
-/**
- * The draft resolves against the whole schema; the wizard narrows that to one
- * step at a time by triggering only that step's fields.
- *
- * The cast is needed because the schema's parsed output has every key present
- * (each field normalises undefined to a blank value), while the draft type
- * keeps them optional — the wizard lets you move between steps before anything
- * is filled in. The two agree on field names and value types, which is what the
- * resolver actually uses.
- */
-const resolver = zodResolver(onboardingDraftSchema) as unknown as Resolver<OnboardingForm>;
 
 export function OnboardingProvider(
   { children, currentUser }: { children: ReactNode; currentUser: AuthUser },
@@ -44,6 +33,23 @@ export function OnboardingProvider(
   // The form is seeded from whatever was last saved, then owns the values until
   // the next save.
   const savedDraft = useSavedDraft();
+  /**
+   * Resolved against the rules as an administrator has them configured, not the
+   * ones compiled in — so switching a rule off on the admin screen actually
+   * stops the wizard enforcing it.
+   *
+   * The cast is needed because the schema's parsed output has every key present
+   * (each field normalises undefined to a blank value), while the draft type
+   * keeps them optional — the wizard lets you move between steps before
+   * anything is filled in. The two agree on field names and value types, which
+   * is what the resolver actually uses.
+   */
+  const schemas = useOnboardingSchemas();
+  const resolver = useMemo(
+    () => zodResolver(schemas.onboardingDraftSchema) as unknown as Resolver<OnboardingForm>,
+    [schemas],
+  );
+
   const form = useForm<OnboardingForm>({
     resolver,
     defaultValues: {},

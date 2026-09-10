@@ -32,13 +32,20 @@ export const submitDraft = (draft: OnboardingForm) =>
   }).then((r) => r.project);
 
 // ─── The signed-in person's working draft ───────────────────────────────────
-export const getDraft = () =>
-  request<{ draft: OnboardingForm | null; updatedAt: string | null }>("/draft");
+/**
+ * Credentials are never returned — `secretsOnFile` names the ones held so the
+ * wizard can say "stored" instead of showing an empty box.
+ */
+export interface DraftResponse {
+  draft: OnboardingForm | null;
+  secretsOnFile: string[];
+  updatedAt: string | null;
+}
+
+export const getDraft = () => request<DraftResponse>("/draft");
 
 export const saveDraft = (draft: OnboardingForm) =>
-  request<{ draft: OnboardingForm; updatedAt: string }>("/draft", {
-    method: "PUT", body: JSON.stringify(draft),
-  });
+  request<DraftResponse>("/draft", { method: "PUT", body: JSON.stringify(draft) });
 
 export const discardDraft = () => request<void>("/draft", { method: "DELETE" });
 
@@ -85,6 +92,12 @@ export const updateRule = (id: number, patch: { active?: boolean; severity?: "er
   request<{ rule: ValidationRule }>(`/rules/${id}`, {
     method: "PATCH", body: JSON.stringify(patch),
   }).then((r) => r.rule);
+
+/** Just the enforcement flags — available to anyone signed in, unlike the full table. */
+export const listRuleEnforcement = () =>
+  request<{ rules: { id: number; active: boolean; severity: "error" | "warning" }[] }>(
+    "/rules/enforcement",
+  ).then((r) => r.rules);
 
 // ─── Platform settings ──────────────────────────────────────────────────────
 export const getSettings = () =>

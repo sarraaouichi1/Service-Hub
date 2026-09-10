@@ -3,10 +3,11 @@ import { Toggle } from "../../../components/Toggle";
 import { clickable } from "../../../components/clickable";
 import { useStepFields } from "./useStepFields";
 import { AsyncSection } from "../../../components/AsyncSection";
-import { usePsps } from "../../../queries";
+import { usePsps, useSecretsOnFile } from "../../../queries";
 
 export function AppPaymentStep() {
   const psps = usePsps();
+  const secretsOnFile = useSecretsOnFile();
   const { values, input, toggle, choose, message } = useStepFields();
   const psp = values.psp;
 
@@ -52,8 +53,18 @@ export function AppPaymentStep() {
           <div className="form-grid">
             <Field label="Merchant ID" required error={message("pspMid")}><input {...input("pspMid", "mono")} placeholder="MID-xxxxx" /></Field>
             <Field label="Terminal ID" error={message("pspTid")}><input {...input("pspTid", "mono")} placeholder="TID-xxxxx" /></Field>
-            <Field label="API Key / Client ID"><input {...input("pspKey", "mono")} placeholder="••••••••••••" type="password" /></Field>
-            <Field label="API Secret"><input {...input("pspSecret", "mono")} placeholder="••••••••••••" type="password" /></Field>
+            {/* Write-only: the server accepts these but never sends them back,
+                so a blank box means "already stored", not "not set". */}
+            <Field
+              label="API Key / Client ID"
+              hint={secretsOnFile.includes("pspKey") ? "Stored — type to replace" : undefined}>
+              <input {...input("pspKey", "mono")} placeholder={secretsOnFile.includes("pspKey") ? "•••••••• stored" : "••••••••••••"} type="password" autoComplete="off" />
+            </Field>
+            <Field
+              label="API Secret"
+              hint={secretsOnFile.includes("pspSecret") ? "Stored — type to replace" : undefined}>
+              <input {...input("pspSecret", "mono")} placeholder={secretsOnFile.includes("pspSecret") ? "•••••••• stored" : "••••••••••••"} type="password" autoComplete="off" />
+            </Field>
           </div>
           <div style={{ marginTop: 14, display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr 1fr" }}>
             {["Visa", "Mastercard", "Apple Pay", "Google Pay", "PayPal", "SEPA"].map(pm => (

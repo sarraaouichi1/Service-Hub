@@ -1,10 +1,31 @@
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { STATUS_MAP } from "../../../data/display";
 import { Icon } from "../../../components/Icon";
-import { useProjects } from "../../../queries";
+import { Can } from "../../auth/Can";
+import { AsyncSection } from "../../../components/AsyncSection";
+import { useProjects, useUpdateProject } from "../../../queries";
 
 export function ReviewQueueView() {
+  const navigate = useNavigate();
   const projects = useProjects();
+  const [failure, setFailure] = useState<string | null>(null);
   const inStatus = (status: string) => (projects.data ?? []).filter(p => p.status === status);
+
+  /**
+   * Advancing a submission is a status change, and the API decides who may make
+   * one: approving needs `project:approve`, confirming payment needs
+   * `payment:confirm`. The buttons are hidden from anyone without them, and the
+   * server refuses regardless.
+   */
+  const advance = useUpdateProject({
+    onSuccess: () => setFailure(null),
+    onError: (error) => setFailure(error.message),
+  });
+
+  const openProject = (id: number, step: number) =>
+    navigate({ to: "/onboarding/wizard/$step", params: { step: String(step) }, search: { project: id } });
+
   return (
   <div className="fade-in">
     <div className="page-header">
@@ -26,8 +47,18 @@ export function ReviewQueueView() {
           <div className="project-meta"><span>Partner: {p.partner}</span><span>PSP: {p.psp}</span></div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-secondary" style={{ fontSize: 12 }}><Icon name="eye" size={12} /> Review</button>
-          <button className="btn btn-primary" style={{ fontSize: 12, background: "var(--green)" }}><Icon name="check" size={12} /> Approve</button>
+          <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={() => openProject(p.id, p.step)}>
+            <Icon name="eye" size={12} /> Review
+          </button>
+          <Can permission="project:approve">
+            <button
+              className="btn btn-primary"
+              style={{ fontSize: 12, background: "var(--green)" }}
+              disabled={advance.isPending}
+              onClick={() => advance.mutate({ id: p.id, patch: { status: "approved" } })}>
+              <Icon name="check" size={12} /> {advance.isPending ? "Approving…" : "Approve"}
+            </button>
+          </Can>
         </div>
       </div>
     ))}
@@ -47,12 +78,30 @@ export function ReviewQueueView() {
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <span style={{ fontSize: 11, color: "var(--gray-400)" }}>⏳ Waiting for payment confirmation</span>
-          <button className="btn btn-primary" style={{ fontSize: 12, background: "#C0185A", border: "none" }}>
-            💳 Confirm Payment
-          </button>
+          <Can
+            permission="payment:confirm"
+            fallback={<span style={{ fontSize: 11, color: "var(--gray-400)" }}>Sales confirms this</span>}>
+            <button
+              className="btn btn-primary"
+              style={{ fontSize: 12, background: "#C0185A", border: "none" }}
+              disabled={advance.isPending}
+              onClick={() => advance.mutate({ id: p.id, patch: { status: "review" } })}>
+              💳 {advance.isPending ? "Confirming…" : "Confirm Payment"}
+            </button>
+          </Can>
         </div>
       </div>
     ))}
+
+    {failure && <div className="error-msg" role="alert" style={{ marginTop: 12 }}>⚠ {failure}</div>}
+
+    <AsyncSection query={projects} label="the queue">
+      {(list) => (
+        list.some(p => p.status === "review" || p.status === "sales-approval")
+          ? <></>
+          : <div className="async-state">Nothing is waiting for review.</div>
+      )}
+    </AsyncSection>
   </div>
   );
 }

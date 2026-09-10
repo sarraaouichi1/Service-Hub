@@ -14,9 +14,8 @@ import { useFormContext } from "react-hook-form";
 import type { FieldPath } from "react-hook-form";
 import type { OnboardingForm } from "../../../types";
 import { useOnboarding } from "../context/onboardingContext";
-import { fieldsForStep } from "@service-hub/shared";
 import { ApiError } from "../../../api";
-import { useSaveDraft, useSubmitDraft } from "../../../queries";
+import { useOnboardingSchemas, useSaveDraft, useSubmitDraft } from "../../../queries";
 
 const route = getRouteApi("/onboarding/wizard/$step");
 
@@ -29,6 +28,7 @@ export function WizardView() {
   const { declared, setDeclared, submitted, setSubmitted } = useOnboarding();
   const { trigger, formState, getValues, setError } = useFormContext<OnboardingForm>();
   const [failure, setFailure] = useState<string | null>(null);
+  const schemas = useOnboardingSchemas();
 
   const saveDraft = useSaveDraft({ onError: (error) => setFailure(error.message) });
 
@@ -66,7 +66,7 @@ export function WizardView() {
    * filled step is never a trap.
    */
   const advance = async () => {
-    const fields = fieldsForStep(wizardStep) as FieldPath<OnboardingForm>[];
+    const fields = schemas.fieldsForStep(wizardStep) as FieldPath<OnboardingForm>[];
     if (await trigger(fields)) goToStep(wizardStep + 1);
   };
 

@@ -93,6 +93,24 @@ export async function adminRoutes(app: FastifyInstance) {
     rules: await prisma.rule.findMany({ orderBy: { id: "asc" } }),
   }));
 
+  /**
+   * Just the enforcement flags, for anyone signed in.
+   *
+   * The wizard needs these to validate against what an admin configured, and
+   * everyone fills in the wizard — gating them behind `rule:read` would mean a
+   * Sales or Customer account silently enforcing different rules from an
+   * Admin's. Which rules are switched on is configuration, not a secret; the
+   * full table, with its descriptions and categories, stays privileged.
+   */
+  app.get("/rules/enforcement", async (request, reply) => {
+    if (!request.authUser) return reply.code(401).send({ message: "Not signed in" });
+    const rules = await prisma.rule.findMany({
+      select: { id: true, active: true, severity: true },
+      orderBy: { id: "asc" },
+    });
+    return { rules };
+  });
+
   app.patch<{ Params: { id: string } }>(
     "/rules/:id",
     { preHandler: requirePermission("rule:write") },
