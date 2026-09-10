@@ -16,11 +16,11 @@ const check = (label: string, got: unknown, want: unknown) => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${label}${ok ? "" : `\n        got:  ${JSON.stringify(got)}\n        want: ${JSON.stringify(want)}`}`);
 };
 
-const ADMIN = "k.harperscheidt@scheidt-bachmann.de";
-const CUSTOMER = "medwayft.carparking@nhs.net";
-const SALES = "a.krueger@scheidt-bachmann.de";
-const REVIEWER = "l.meissner@scheidt-bachmann.de";
-const PM = "m.delvaux@scheidt-bachmann.de";
+const ADMIN = "admin@scheidt-bachmann.de";
+const CUSTOMER = "customer@scheidt-bachmann.de";
+const SALES = "sales@scheidt-bachmann.de";
+const REVIEWER = "reviewer@scheidt-bachmann.de";
+const PM = "manager@scheidt-bachmann.de";
 import { DEMO_ONBOARDING_DRAFT } from "../data/seed-data.js";
 const PASSWORD = process.env.SEED_PASSWORD ?? "ChangeMe123!dev";
 
@@ -223,7 +223,7 @@ async function main() {
 
   // ── Sign-in throttling ──────────────────────────────────────────────────
   resetLoginRateLimits();
-  const victim = "l.meissner@scheidt-bachmann.de";
+  const victim = "reviewer@scheidt-bachmann.de";
   let lastStatus = 0;
   for (let i = 0; i < 11; i++) {
     lastStatus = (await call("/api/auth/login", { method: "POST", body: JSON.stringify({ email: victim, password: "wrong-guess" }) })).status;

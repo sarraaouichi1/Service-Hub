@@ -43,6 +43,32 @@ pnpm dev                                     # api :3001, web :5173
 
 Vite proxies `/api` to the API, matching what nginx does in the container.
 
+## Signing in
+
+`db:seed` creates one account per role so every permission path can be exercised.
+All seven share the password in `SEED_PASSWORD` (`ChangeMe123!dev` by default).
+
+| Role | Email | Can do |
+|---|---|---|
+| Admin | `admin@scheidt-bachmann.de` | everything |
+| Project Manager | `manager@scheidt-bachmann.de` | create, edit and submit projects; read templates, rules and users |
+| Sales | `sales@scheidt-bachmann.de` | read projects; confirm payment |
+| Reviewer | `reviewer@scheidt-bachmann.de` | read projects; review, approve; read rules and the audit log |
+| DevOps | `devops@scheidt-bachmann.de` | read projects; read and schedule patches |
+| Partner | `partner@scheidt-bachmann.de` | create, edit and submit projects; read patches |
+| Customer | `customer@scheidt-bachmann.de` | read projects |
+
+The addresses are role-based so they're easy to remember; the display names stay
+human so the demo data reads naturally. One shared domain keeps them uniform —
+they are not real mailboxes.
+
+**Local and demo only.** That password is the default committed in
+`.env.example`. Set `SEED_PASSWORD` and `SESSION_SECRET` to real values in any
+deployed environment, or don't seed at all.
+
+`packages/shared/src/rbac.ts` is the authority on what each role may do; the
+table above summarises it.
+
 ## Verifying
 
 ```bash

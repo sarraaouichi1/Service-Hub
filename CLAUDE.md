@@ -51,8 +51,10 @@ pnpm typecheck && pnpm lint && pnpm build
 pnpm --filter @service-hub/api test  # needs Postgres up and migrated
 ```
 
-The app is on :8080 in containers, :5173 locally. Seeded accounts are one per
-role; the password is `SEED_PASSWORD` (local and demo only).
+The app is on :8080 in containers, :5173 locally. `db:seed` creates one account
+per role — `admin@`, `manager@`, `sales@`, `reviewer@`, `devops@`, `partner@`
+and `customer@` at `scheidt-bachmann.de`, all sharing `SEED_PASSWORD`. The full
+table, with what each role may do, is in `README.md`. Local and demo only.
 
 ## How the pieces fit
 
