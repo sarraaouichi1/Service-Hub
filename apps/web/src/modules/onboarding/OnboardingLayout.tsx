@@ -37,7 +37,7 @@ export function OnboardingLayout() {
 function OnboardingShell() {
   const navigate = useNavigate();
   const matches = useMatches();
-  const { currentUser, notifs, markAllRead, resetDraft } = useOnboarding();
+  const { currentUser, notifs, markAllRead, markRead, resetDraft } = useOnboarding();
   const projects = useProjects().data ?? [];
   const { can } = useAuth();
   const [showNotifs, setShowNotifs] = useState(false);
@@ -172,7 +172,7 @@ function OnboardingShell() {
                 </div>
                 <div style={{ maxHeight: 380, overflowY: "auto" }}>
                   {notifs.map(n => (
-                    <div key={n.id} className={`notif-item${n.read ? "" : " unread"}`} >
+                    <div key={n.id} className={`notif-item${n.read ? "" : " unread"}`} {...clickable(() => { if (!n.read) markRead(n.id); })}>
                       <div className="notif-icon" style={{ background: n.color }}>
                         {n.type === "submit" && <Icon name="plus" size={16} color={n.iconColor} />}
                         {n.type === "approve" && <Icon name="check" size={16} color={n.iconColor} />}

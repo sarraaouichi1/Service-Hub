@@ -115,6 +115,10 @@ export const listAuditLog = () =>
 export const listNotifications = () =>
   request<{ notifications: AppNotification[] }>("/notifications").then((r) => r.notifications);
 
+export const markRead = (id: number) =>
+  request<{ notification: AppNotification }>(`/notifications/${id}/read`, { method: "POST" })
+    .then((r) => r.notification);
+
 export const markAllRead = () =>
   request<{ notifications: AppNotification[] }>("/notifications/read-all", { method: "POST" })
     .then((r) => r.notifications);

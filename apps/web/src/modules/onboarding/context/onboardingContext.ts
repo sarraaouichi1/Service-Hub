@@ -18,6 +18,8 @@ export interface OnboardingContextValue {
   notifs: AppNotification[];
   /** Marks every notification read on the server; the list refreshes from it. */
   markAllRead: () => void;
+  /** Marks one read, for when the user opens it. */
+  markRead: (id: number) => void;
 
   /** The final declaration tick. Not part of the draft, so not a form field. */
   declared: boolean;

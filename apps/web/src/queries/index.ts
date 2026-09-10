@@ -136,6 +136,7 @@ export const useUpdateSettings = (options?: UseMutationOptions<PlatformConfig, E
   useInvalidating(api.updateSettings, [keys.settings], options);
 
 export const useMarkAllRead = () => useInvalidating<unknown, void>(() => api.markAllRead(), [keys.notifications]);
+export const useMarkRead = () => useInvalidating<unknown, number>((id) => api.markRead(id), [keys.notifications]);
 
 export const useCreateUser = (options?: UseMutationOptions<unknown, Error, { email: string; name: string; partner?: string; roles: UserRole[]; password?: string }>) =>
   useInvalidating(api.createUser, [keys.users], options);

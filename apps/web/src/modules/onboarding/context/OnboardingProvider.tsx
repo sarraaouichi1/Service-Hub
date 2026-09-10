@@ -5,7 +5,7 @@ import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AuthUser } from "@service-hub/shared";
 import type { OnboardingForm } from "../../../types";
-import { useMarkAllRead, useNotifications, useOnboardingSchemas, useSavedDraft } from "../../../queries";
+import { useMarkAllRead, useMarkRead, useNotifications, useOnboardingSchemas, useSavedDraft } from "../../../queries";
 
 import { OnboardingContext } from "./onboardingContext";
 
@@ -14,7 +14,8 @@ export function OnboardingProvider(
   { children, currentUser }: { children: ReactNode; currentUser: AuthUser },
 ) {
   const notifsQuery = useNotifications();
-  const markRead = useMarkAllRead();
+  const markAllMutation = useMarkAllRead();
+  const markOneMutation = useMarkRead();
   // Memoised so an empty list isn't a fresh array on every render, which
   // would make the context value change constantly.
   const notifsData = notifsQuery.data;
@@ -56,7 +57,8 @@ export function OnboardingProvider(
     mode: "onTouched",
   });
 
-  const markAllRead = useCallback(() => markRead.mutate(), [markRead]);
+  const markAllRead = useCallback(() => markAllMutation.mutate(), [markAllMutation]);
+  const markRead = useCallback((id: number) => markOneMutation.mutate(id), [markOneMutation]);
 
   const { reset: resetForm } = form;
   const loadedDraft = savedDraft.data?.draft;
@@ -74,12 +76,12 @@ export function OnboardingProvider(
   const value = useMemo(
     () => ({
       currentUser,
-      notifs, markAllRead,
+      notifs, markAllRead, markRead,
       declared, setDeclared,
       submitted, setSubmitted,
       resetDraft,
     }),
-    [currentUser, notifs, markAllRead, declared, submitted, resetDraft],
+    [currentUser, notifs, markAllRead, markRead, declared, submitted, resetDraft],
   );
 
   return (

@@ -149,6 +149,15 @@ export async function adminRoutes(app: FastifyInstance) {
     return { notifications: await prisma.notification.findMany({ orderBy: { id: "asc" } }) };
   });
 
+  app.post<{ Params: { id: string } }>("/notifications/:id/read", async (request, reply) => {
+    if (!request.authUser) return reply.code(401).send({ message: "Not signed in" });
+    const id = Number(request.params.id);
+    if (!(await prisma.notification.findUnique({ where: { id } }))) {
+      return reply.code(404).send({ message: "No such notification" });
+    }
+    return { notification: await prisma.notification.update({ where: { id }, data: { read: true } }) };
+  });
+
   app.post("/notifications/read-all", async (request, reply) => {
     if (!request.authUser) return reply.code(401).send({ message: "Not signed in" });
     await prisma.notification.updateMany({ data: { read: true } });
