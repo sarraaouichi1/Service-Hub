@@ -108,7 +108,6 @@ function OnboardingShell() {
           <img src="/sb-logo.svg" alt="Scheidt &amp; Bachmann" className="brand-wordmark" />
           <div className="logo-mark">
             <div>
-              <div className="logo-text">entervo smart</div>
               <div className="logo-sub">Onboarding Platform</div>
             </div>
           </div>
@@ -210,9 +209,9 @@ function OnboardingShell() {
                   <div className="profile-email">{currentUser.email}</div>
                 </div>
                 <div>
-                  <div className="profile-menu-item"><Icon name="settings" size={15} /> Account Settings</div>
-                  <div className="profile-menu-item"><Icon name="shield" size={15} /> Privacy & Security</div>
-                  <div className="profile-menu-item"><Icon name="bell" size={15} /> Notification Preferences</div>
+                  <Link to="/onboarding/settings/account" className="profile-menu-item" onClick={() => setShowProfile(false)}><Icon name="users" size={15} /> Account Settings</Link>
+                  <Link to="/onboarding/settings/privacy" className="profile-menu-item" onClick={() => setShowProfile(false)}><Icon name="shield" size={15} /> Privacy & Security</Link>
+                  <Link to="/onboarding/settings/notifications" className="profile-menu-item" onClick={() => setShowProfile(false)}><Icon name="bell" size={15} /> Notification Preferences</Link>
                   <div className="profile-menu-item" style={{ color: "var(--red)" }} {...clickable(() => void handleSignOut())}><Icon name="zap" size={15} color="var(--red)" /> Sign Out</div>
                 </div>
               </div>

@@ -7,7 +7,15 @@
 export type ProjectStatus =
   | "draft" | "progress" | "review" | "approved" | "sales-approval" | "onboarded";
 
-export type ProductId = "smart-web-pay" | "smart-validation" | "econnect" | "eaccess";
+export type ProductId =
+  | "smart-web-pay"
+  | "entervo-connect"
+  | "smart-validation"
+  | "mobility-connect"
+  | "smart-select"
+  | "smart-tenant"
+  | "econnect"
+  | "eaccess";
 
 export interface Project {
   id: number;

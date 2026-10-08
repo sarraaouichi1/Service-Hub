@@ -53,7 +53,6 @@ export function LoginView() {
           <img src="/sb-logo.svg" alt="Scheidt &amp; Bachmann" />
           <div className="auth-brand-divider" />
           <div>
-            <div className="auth-brand-text">entervo smart</div>
             <div className="auth-brand-sub">Service Hub</div>
           </div>
         </div>

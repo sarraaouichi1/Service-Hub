@@ -79,3 +79,22 @@ export async function changePassword(currentPassword: string, newPassword: strin
   // Changing a password ends every session, including this one.
   forgetSession();
 }
+
+export async function updateMyProfile(patch: {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  phone?: string;
+  jobTitle?: string;
+  company?: string;
+  department?: string;
+  language?: string;
+  timezone?: string;
+}): Promise<AuthUser> {
+  const body = await request<{ user: AuthUser }>("/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+  cached = Promise.resolve({ user: body.user });
+  return body.user;
+}

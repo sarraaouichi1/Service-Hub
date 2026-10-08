@@ -28,6 +28,13 @@ export interface AuthUser {
   issuer: string;
   /** ISO timestamp of the last successful sign-in, or null for an account that never has. */
   lastLoginAt?: string | null;
+  username?: string | null;
+  phone?: string | null;
+  jobTitle?: string | null;
+  company?: string | null;
+  department?: string | null;
+  language?: string | null;
+  timezone?: string | null;
 }
 
 export interface SessionInfo {

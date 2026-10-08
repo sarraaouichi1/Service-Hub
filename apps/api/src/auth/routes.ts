@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { changePasswordSchema, loginSchema } from "@service-hub/shared";
 import { prisma } from "../db.js";
 import { env } from "../env.js";
@@ -14,6 +15,19 @@ import {
   revokeAllSessions, revokeSession, toAuthUser,
 } from "./session.js";
 
+const updateProfileSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  name: z.string().optional(),
+  username: z.string().optional(),
+  phone: z.string().optional(),
+  jobTitle: z.string().optional(),
+  company: z.string().optional(),
+  department: z.string().optional(),
+  language: z.string().optional(),
+  timezone: z.string().optional(),
+});
+
 export async function authRoutes(app: FastifyInstance) {
   /** What the login screen needs to know before drawing itself. */
   app.get("/auth/config", async () => ({
@@ -25,6 +39,50 @@ export async function authRoutes(app: FastifyInstance) {
     if (!request.authUser) return reply.code(401).send({ message: "Not signed in" });
     return { user: request.authUser };
   });
+
+  app.patch(
+    "/auth/me",
+    { preHandler: requireSignedIn },
+    async (request, reply) => {
+      const parsed = updateProfileSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(422).send({ message: "Invalid profile data" });
+      }
+
+      const { firstName, lastName, name: rawName, username, phone, jobTitle, company, department, language, timezone } = parsed.data;
+
+      let name = request.authUser!.name;
+      let initials = request.authUser!.initials;
+
+      if (rawName) {
+        name = rawName.trim();
+        initials = name.split(/\s+/).slice(0, 2).map((p) => p[0] ?? "").join("").toUpperCase() || "U";
+      } else if (firstName !== undefined || lastName !== undefined) {
+        const currentParts = request.authUser!.name.split(" ");
+        const newFirst = firstName !== undefined ? firstName.trim() : (currentParts[0] ?? "");
+        const newLast = lastName !== undefined ? lastName.trim() : currentParts.slice(1).join(" ");
+        name = `${newFirst} ${newLast}`.trim();
+        initials = name.split(/\s+/).slice(0, 2).map((p) => p[0] ?? "").join("").toUpperCase() || "U";
+      }
+
+      const updated = await prisma.user.update({
+        where: { id: request.authUser!.id },
+        data: {
+          name,
+          initials,
+          ...(username !== undefined ? { username: username.trim() } : {}),
+          ...(phone !== undefined ? { phone: phone.trim() } : {}),
+          ...(jobTitle !== undefined ? { jobTitle: jobTitle.trim() } : {}),
+          ...(company !== undefined ? { company: company.trim() } : {}),
+          ...(department !== undefined ? { department: department.trim() } : {}),
+          ...(language !== undefined ? { language } : {}),
+          ...(timezone !== undefined ? { timezone } : {}),
+        },
+      });
+
+      return { user: toAuthUser(updated) };
+    },
+  );
 
   app.post("/auth/login", async (request, reply) => {
     if (env.AUTH_PROVIDER === "oidc") {

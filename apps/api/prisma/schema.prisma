@@ -24,6 +24,14 @@ model User {
   status       String    @default("active")
   roles        String[]  @default([])
 
+  username     String?
+  phone        String?
+  jobTitle     String?
+  company      String?
+  department   String?
+  language     String?   @default("en-GB")
+  timezone     String?   @default("Europe/Berlin")
+
   /// Null for accounts that can only sign in through an identity provider.
   passwordHash String?
   /// "local", or the OIDC issuer URL that vouches for this user.

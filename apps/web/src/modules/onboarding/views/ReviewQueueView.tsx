@@ -74,7 +74,7 @@ export function ReviewQueueView() {
             <div className="project-name">{p.name}</div>
             <span className={`badge ${STATUS_MAP[p.status].cls}`}>{STATUS_MAP[p.status].label}</span>
           </div>
-          <div className="project-meta"><span>Partner: {p.partner}</span><span>PSP: {p.psp}</span><span>Assigned to: Anna Krüger (Sales)</span></div>
+          <div className="project-meta"><span>Partner: {p.partner}</span><span>PSP: {p.psp}</span><span>Assigned to: Sales Test (Sales)</span></div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <span style={{ fontSize: 11, color: "var(--gray-400)" }}>⏳ Waiting for payment confirmation</span>

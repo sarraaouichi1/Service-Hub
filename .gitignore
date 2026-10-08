@@ -26,3 +26,7 @@ dist-ssr
 # Local docker compose overrides
 .env
 .env.local
+
+scratch_pptx/
+presentation.zip
+
