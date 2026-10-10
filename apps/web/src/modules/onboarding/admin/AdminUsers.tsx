@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { InviteDraft, InviteDraftTextKey, UserRole } from "../../../types";
 import { ROLE_COLORS, USER_ROLES } from "../../../data/display";
+import { Icon } from "../../../components/Icon";
 import { AsyncSection } from "../../../components/AsyncSection";
 import { ApiError } from "../../../api";
 import { useCreateUser, useUpdateUser, useUsers } from "../../../queries";
@@ -154,7 +155,7 @@ export function AdminUsers() {
             </div>
             <div style={{ fontSize: 12.5, color: "var(--gray-600)" }}>{u.email}</div>
             <div>
-              <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: ROLE_COLORS[u.roles[0]]?.bg, color: ROLE_COLORS[u.roles[0]]?.color }}>
+              <span className="badge plain" style={{ background: ROLE_COLORS[u.roles[0]]?.bg, color: ROLE_COLORS[u.roles[0]]?.color }}>
                 {u.roles[0]}
               </span>
             </div>
@@ -163,7 +164,7 @@ export function AdminUsers() {
             <div style={{ display: "flex", gap: 6 }}>
               <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--gray-400)", fontWeight: 600, padding: "3px 6px", borderRadius: 5 }}
                 onClick={() => toggleUserStatus(u.id, u.status)} title={u.status === "active" ? "Deactivate" : "Activate"}>
-                {u.status === "active" ? "🔒" : "🔓"}
+                <Icon name={u.status === "active" ? "lock" : "check"} size={14} />
               </button>
             </div>
           </div>

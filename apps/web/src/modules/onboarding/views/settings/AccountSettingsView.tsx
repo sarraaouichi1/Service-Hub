@@ -394,7 +394,7 @@ export function AccountSettingsView() {
             </div>
 
             {saveError && (
-              <div style={{ padding: "10px 14px", background: "#FEECEC", border: "1px solid #F87171", borderRadius: 8, color: "var(--red)", fontSize: 13, fontWeight: 500, marginTop: 16 }}>
+              <div style={{ padding: "10px 14px", background: "var(--color-danger-soft)", border: "1px solid var(--color-danger)", borderRadius: 8, color: "var(--red)", fontSize: 13, fontWeight: 500, marginTop: 16 }}>
                 ⚠️ {saveError}
               </div>
             )}
@@ -432,7 +432,7 @@ export function AccountSettingsView() {
             </div>
 
             {passwordError && (
-              <div style={{ padding: "10px 14px", background: "#FEECEC", border: "1px solid #F87171", borderRadius: 8, color: "var(--red)", fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
+              <div style={{ padding: "10px 14px", background: "var(--color-danger-soft)", border: "1px solid var(--color-danger)", borderRadius: 8, color: "var(--red)", fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
                 ⚠️ {passwordError}
               </div>
             )}
@@ -637,16 +637,16 @@ export function AccountSettingsView() {
           {/* DEACTIVATE ACCOUNT DANGER ZONE */}
           <div
             style={{
-              background: "#FFF5F5",
-              border: "1px solid #FCA5A5",
+              background: "var(--color-danger-soft)",
+              border: "1px solid var(--color-danger)",
               borderRadius: 12,
               padding: 20,
             }}
           >
-            <h4 style={{ fontSize: 15, fontWeight: 700, color: "#991B1B", marginBottom: 4 }}>
+            <h4 style={{ fontSize: 15, fontWeight: 700, color: "var(--color-danger-text)", marginBottom: 4 }}>
               Deactivate Account
             </h4>
-            <p style={{ fontSize: 12, color: "#7F1D1D", marginBottom: 14, lineHeight: 1.4 }}>
+            <p style={{ fontSize: 12, color: "var(--color-danger-text)", marginBottom: 14, lineHeight: 1.4 }}>
               Temporarily disable your profile and revoke all platform permissions for your role ({currentUser.roles.join(", ")}).
             </p>
 
@@ -658,7 +658,7 @@ export function AccountSettingsView() {
               <button
                 type="button"
                 className="btn"
-                style={{ width: "100%", justifyContent: "center", background: "#DC2626", color: "white" }}
+                style={{ width: "100%", justifyContent: "center", background: "var(--color-danger)", color: "white" }}
                 onClick={() => setShowDeactivateModal(true)}
               >
                 Deactivate My Account
@@ -694,7 +694,7 @@ export function AccountSettingsView() {
               border: "1px solid var(--gray-200)",
             }}
           >
-            <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#FEECEC", color: "var(--red)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--color-danger-soft)", color: "var(--red)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
               <Icon name="trash" size={24} color="var(--red)" />
             </div>
             <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--navy)", marginBottom: 8 }}>

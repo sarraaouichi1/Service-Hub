@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RULE_CATEGORY_BG, RULE_CATEGORY_FG } from "../../../data/display";
+import { RULE_CATEGORY_TONE } from "../../../data/display";
 import { AsyncSection } from "../../../components/AsyncSection";
 import { useRules, useUpdateRule } from "../../../queries";
 
@@ -26,10 +26,10 @@ export function AdminRules() {
           <div className="page-desc">Configure field-level rules enforced during onboarding. Changes take effect immediately.</div>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
-          <div style={{ padding: "8px 14px", background: "#FEECEC", borderRadius: 7, fontSize: 12, color: "var(--red)", fontWeight: 600 }}>
+          <div style={{ padding: "8px 14px", background: "var(--color-danger-soft)", borderRadius: 7, fontSize: 12, color: "var(--red)", fontWeight: 600 }}>
             {rules.filter(r => r.severity === "error" && r.active).length} Hard rules
           </div>
-          <div style={{ padding: "8px 14px", background: "#FEF9EC", borderRadius: 7, fontSize: 12, color: "#B07800", fontWeight: 600 }}>
+          <div style={{ padding: "8px 14px", background: "var(--color-warning-soft)", borderRadius: 7, fontSize: 12, color: "var(--color-warning-text)", fontWeight: 600 }}>
             {rules.filter(r => r.severity === "warning" && r.active).length} Soft warnings
           </div>
         </div>
@@ -51,25 +51,25 @@ export function AdminRules() {
               <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 2 }}>{r.description}</div>
             </div>
             <div>
-              <span style={{ background: RULE_CATEGORY_BG[r.category], color: RULE_CATEGORY_FG[r.category], fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20 }}>{r.category}</span>
+              <span className="badge plain" style={{ background: RULE_CATEGORY_TONE[r.category].bg, color: RULE_CATEGORY_TONE[r.category].color }}>{r.category}</span>
             </div>
             <div style={{ fontSize: 12, color: "var(--gray-600)" }}>{r.type}</div>
             <div style={{ fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--gray-600)", background: "var(--gray-50)", padding: "3px 8px", borderRadius: 5 }}>{r.pattern}</div>
             <div>
               <span
-                style={{ cursor: "pointer", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 20, background: r.severity === "error" ? "#FEECEC" : "#FEF9EC", color: r.severity === "error" ? "var(--red)" : "#B07800" }}
+                style={{ cursor: "pointer", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 20, background: r.severity === "error" ? "var(--color-danger-soft)" : "var(--color-warning-soft)", color: r.severity === "error" ? "var(--red)" : "var(--color-warning-text)" }}
                 onClick={() => toggleSeverity(r.id, r.severity)}
                 title="Click to toggle severity"
               >
-                {r.severity === "error" ? "⛔ Hard" : "⚠ Soft"}
+                {r.severity === "error" ? "Hard" : "Soft"}
               </span>
             </div>
             <div>
               <button
-                style={{ background: r.active ? "#E8FAF1" : "var(--gray-100)", color: r.active ? "var(--green)" : "var(--gray-400)", border: "none", borderRadius: 20, padding: "3px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                style={{ background: r.active ? "var(--color-success-soft)" : "var(--gray-100)", color: r.active ? "var(--green)" : "var(--gray-400)", border: "none", borderRadius: 20, padding: "3px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
                 onClick={() => toggleActive(r.id, r.active)}
               >
-                {r.active ? "● Active" : "○ Off"}
+                {r.active ? "Active" : "Off"}
               </button>
             </div>
             <div>

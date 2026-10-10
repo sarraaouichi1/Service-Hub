@@ -102,7 +102,7 @@ export function DynamicProductStep({ stepIndex }: Props) {
       </div>
 
       <div className="notif-bar">
-        <Icon name="zap" size={14} color="#B07800" />
+        <Icon name="zap" size={14} color="var(--color-warning-text)" />
         Fields marked with a red asterisk are required for <strong>{schema.productName}</strong> before you can advance.
       </div>
 

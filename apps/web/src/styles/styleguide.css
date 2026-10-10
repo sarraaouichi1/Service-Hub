@@ -1,0 +1,32 @@
+/* Style guide (/design-system) — layout for the specimens only. */
+
+.styleguide-index { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin-bottom: var(--space-10); padding-bottom: var(--space-5); border-bottom: 1px solid var(--color-border); }
+.styleguide-index a { font-size: var(--text-small); color: var(--color-accent); }
+.styleguide-index a:hover { text-decoration: underline; }
+.styleguide-section { margin-bottom: var(--space-12); }
+.styleguide-section > .card > .section-header { margin-top: var(--space-8); }
+
+.palette { display: grid; grid-template-columns: 90px 1fr; gap: var(--space-4); align-items: start; padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border-subtle); }
+.palette:last-child { border-bottom: none; }
+.palette-name { font-size: var(--text-overline); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-overline); text-transform: uppercase; color: var(--color-text-subtle); padding-top: var(--space-3); }
+.palette-swatches { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+.swatch { width: 92px; font-size: var(--text-overline); color: var(--color-text-muted); }
+.swatch.wide { width: auto; display: grid; grid-template-columns: 36px 1fr; grid-template-rows: auto auto; column-gap: var(--space-3); align-items: center; }
+.swatch.wide .swatch-chip { grid-row: span 2; width: 36px; height: 36px; margin: 0; }
+.swatch-chip { height: 48px; border-radius: var(--radius-sm); border: 1px solid rgba(0, 0, 0, 0.08); margin-bottom: var(--space-2); }
+.swatch code { display: block; font-family: var(--font-mono); color: var(--color-text); font-size: var(--text-overline); word-break: break-all; }
+.swatch span { font-family: var(--font-mono); }
+.swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--space-4); }
+
+.status-sample { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; margin-right: var(--space-5); }
+
+.type-specimens { display: flex; flex-direction: column; gap: var(--space-6); }
+.type-specimens .eyebrow { margin-bottom: var(--space-1); }
+
+.token-rows { display: flex; flex-direction: column; gap: var(--space-2); }
+.token-row { display: grid; grid-template-columns: 110px 1fr 60px; align-items: center; gap: var(--space-4); font-size: var(--text-caption); }
+.token-row code { font-family: var(--font-mono); }
+.space-bar { height: 10px; background: var(--color-accent); border-radius: 2px; }
+.shape-sample { width: 130px; height: 80px; display: flex; align-items: flex-end; padding: var(--space-2); border: 1px solid var(--color-border-strong); background: var(--color-surface); font-size: var(--text-overline); }
+.shape-sample code { font-family: var(--font-mono); color: var(--color-text-muted); }

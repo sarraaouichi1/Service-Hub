@@ -1,7 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
 import { STATUS_MAP } from "../../../data/display";
 import { Icon } from "../../../components/Icon";
-import { useProductLookup, useProjects } from "../../../queries";
+import { useProjects } from "../../../queries";
+import { ProjectMeta } from "../components/ProjectMeta";
 import { clickable } from "../../../components/clickable";
 import type { Project, ProjectStatus } from "../../../types";
 
@@ -11,7 +12,6 @@ const APPROVED_STATUSES: ProjectStatus[] = ["approved", "onboarded"];
 export function ApprovedView() {
   const navigate = useNavigate();
   const allProjects = useProjects();
-  const productById = useProductLookup();
   const openProject = (p: Project) =>
     navigate({ to: "/onboarding/wizard/$step", params: { step: String(p.step) }, search: { project: p.id } });
 
@@ -39,14 +39,9 @@ export function ApprovedView() {
                   <div className="project-name">{p.name}</div>
                   <span className={`badge ${STATUS_MAP[p.status].cls}`}>{STATUS_MAP[p.status].label}</span>
                 </div>
-                <div className="project-meta">
-                  <span>🏢 {p.partner}</span>
-                  <span>💳 {p.psp}</span>
-                  <span>👤 {p.pm}</span>
-                  <span style={{ fontWeight: 700, color: productById[p.product]?.color }}>{productById[p.product]?.name ?? p.product}</span>
-                </div>
+                <ProjectMeta project={p} />
               </div>
-              <Icon name="chevronRight" color="var(--gray-400)" />
+              <Icon name="chevronRight" color="var(--color-text-subtle)" />
             </div>
           ))}
         </div>

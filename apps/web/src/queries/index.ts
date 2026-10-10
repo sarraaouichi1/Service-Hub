@@ -46,7 +46,8 @@ const REFERENCE = { staleTime: Infinity, gcTime: Infinity };
 export const useProjects = () => useQuery({ queryKey: keys.projects, queryFn: api.listProjects });
 export const useProducts = () => useQuery({ queryKey: keys.products, queryFn: api.listProducts, ...REFERENCE });
 export const usePsps = () => useQuery({ queryKey: keys.psps, queryFn: api.listPsps, ...REFERENCE });
-export const useBulletins = () => useQuery({ queryKey: keys.bulletins, queryFn: api.listBulletins });
+/** `enabled: false` for a caller who may not read bulletins, so it doesn't fetch a 403. */
+export const useBulletins = (enabled = true) => useQuery({ queryKey: keys.bulletins, queryFn: api.listBulletins, enabled });
 export const usePatchStages = () => useQuery({ queryKey: keys.patchStages, queryFn: api.listPatchStages, ...REFERENCE });
 export const useServiceTiers = () => useQuery({ queryKey: keys.serviceTiers, queryFn: api.listServiceTiers, ...REFERENCE });
 export const useTemplates = () => useQuery({ queryKey: keys.templates, queryFn: api.listTemplates });

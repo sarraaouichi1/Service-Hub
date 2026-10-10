@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { TemplateDraft, TemplateDraftTextKey } from "../../../types";
 import { clickable } from "../../../components/clickable";
+import { Icon } from "../../../components/Icon";
 import { AsyncSection } from "../../../components/AsyncSection";
 import {
   useCreateTemplate, useDeleteTemplate, usePsps, useTemplates, useUpdateTemplate,
@@ -107,10 +108,9 @@ export function AdminTemplates() {
                   <span className={`badge ${t.status === "active" ? "badge-approved" : "badge-draft"}`}>{t.status === "active" ? "Active" : "Draft"}</span>
                 </div>
                 <div style={{ fontSize: 12, color: "var(--gray-400)", marginTop: 3, display: "flex", gap: 16 }}>
-                  <span>🌐 {t.lang}</span>
-                  <span>💱 {t.currency} · VAT {t.vat}%</span>
-                  <span>💳 {t.psp}</span>
-                  <span>📁 {t.projects} project{t.projects !== 1 ? "s" : ""}</span>
+                  <span className="row" style={{ gap: 5 }}><Icon name="globe" size={12} /> {t.lang}</span>
+                  <span className="row" style={{ gap: 5 }}><Icon name="creditCard" size={12} /> {t.currency} · VAT {t.vat}% · {t.psp}</span>
+                  <span className="row" style={{ gap: 5 }}><Icon name="list" size={12} /> {t.projects} project{t.projects !== 1 ? "s" : ""}</span>
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8 }} onClick={e => e.stopPropagation()}>

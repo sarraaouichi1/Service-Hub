@@ -33,6 +33,7 @@ import { PatchProcessView } from "./modules/patch/views/PatchProcessView";
 import { PatchSystemsView } from "./modules/patch/views/PatchSystemsView";
 import { PatchAutomoxView } from "./modules/patch/views/PatchAutomoxView";
 import { PatchServiceTiersView } from "./modules/patch/views/PatchServiceTiersView";
+import { StyleGuideView } from "./modules/design-system/StyleGuideView";
 
 const LAST_WIZARD_STEP = WIZARD_STEPS.length - 1;
 
@@ -71,6 +72,15 @@ const indexRoute = createRoute({
   path: "/",
   beforeLoad: requireSession,
   component: LandingHub,
+});
+
+// ─── Design system style guide ──────────────────────────────────────────────
+const styleGuideRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "design-system",
+  beforeLoad: requireSession,
+  component: StyleGuideView,
+  staticData: { title: "Design system" } satisfies RouteStaticData,
 });
 
 // ─── Onboarding module ──────────────────────────────────────────────────────
@@ -288,6 +298,7 @@ const patchPremiumRoute = createRoute({
 export const routeTree = rootRoute.addChildren([
   loginRoute,
   indexRoute,
+  styleGuideRoute,
   onboardingRoute.addChildren([
     onboardingIndexRoute,
     dashboardRoute,

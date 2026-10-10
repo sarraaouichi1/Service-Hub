@@ -17,9 +17,9 @@ export function ReviewStep({ declared, onDeclaredChange }: DeclarationReviewStep
   return (
     <div className="slide-in">
       {issues.length > 0 && (
-        <div style={{ background: "#FEECEC", border: "1px solid #F0AAAA", borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#B03030" }}>
+        <div style={{ background: "var(--color-danger-soft)", border: "1px solid var(--color-danger)", borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "var(--color-danger-text)" }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", fontWeight: 600 }}>
-            <Icon name="zap" size={14} color="#B03030" />
+            <Icon name="zap" size={14} color="var(--color-danger-text)" />
             {issues.length} {issues.length === 1 ? "item needs" : "items need"} attention before you can submit
           </div>
           <ul style={{ margin: "8px 0 0", paddingLeft: 32, lineHeight: 1.7 }}>

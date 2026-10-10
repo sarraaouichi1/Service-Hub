@@ -6,6 +6,7 @@ import { loginSchema, type LoginInput } from "@service-hub/shared";
 import { ApiError, signIn } from "../../api";
 import { Field } from "../../components/Field";
 import { Icon } from "../../components/Icon";
+import { HUB_MODULES } from "../../data/modules";
 import "../../styles/auth.css";
 
 export function LoginView() {
@@ -48,57 +49,80 @@ export function LoginView() {
 
   return (
     <div className="auth-root">
-      <div className="auth-card">
-        <div className="auth-brand">
-          <img src="/sb-logo.svg" alt="Scheidt &amp; Bachmann" />
-          <div className="auth-brand-divider" />
-          <div>
-            <div className="auth-brand-sub">Service Hub</div>
+      <aside className="auth-panel on-inverse">
+        <img src="/sb-logo.svg" alt="Scheidt &amp; Bachmann" className="brand-wordmark inverse" />
+        <div>
+          <div className="eyebrow">entervo smart</div>
+          <h1 className="display">Service Hub</h1>
+          <p className="lead">
+            One place to bring customers onto entervo smart and keep every installation patched and secure.
+          </p>
+        </div>
+        <div className="auth-panel-modules">
+          {HUB_MODULES.map(m => (
+            <div key={m.to} className="auth-panel-module">
+              <div className="icon-tile sm"><Icon name={m.icon} size={18} /></div>
+              <div>
+                <div className="auth-panel-module-title">{m.label}</div>
+                <div className="auth-panel-module-desc">{m.highlights[0]}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      <main className="auth-form-side">
+        <div className="auth-card">
+          <div className="eyebrow accent">Welcome</div>
+          <h2 className="page-title">Sign in</h2>
+          <p className="auth-desc">
+            Use the email address and password for your Service Hub account.
+          </p>
+
+          <form onSubmit={onSubmit} noValidate>
+            <Field label="Email address" required error={errors.email?.message}>
+              <input
+                {...register("email")}
+                type="email"
+                autoComplete="username"
+                autoFocus
+                placeholder="name@scheidt-bachmann.de"
+                className={`form-input${errors.email ? " error" : ""}`}
+              />
+            </Field>
+
+            <Field label="Password" required error={errors.password?.message}>
+              <input
+                {...register("password")}
+                type="password"
+                autoComplete="current-password"
+                placeholder="••••••••••••"
+                className={`form-input${errors.password ? " error" : ""}`}
+              />
+            </Field>
+
+            {failure && (
+              <div className="callout callout-danger" role="alert">
+                <Icon name="alert" size={16} />
+                <div>{failure}</div>
+              </div>
+            )}
+
+            <button type="submit" className="btn btn-primary btn-lg btn-block auth-submit" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in…" : <>Sign in <Icon name="arrowRight" /></>}
+            </button>
+          </form>
+
+          <div className="callout callout-neutral auth-note">
+            <Icon name="lock" size={16} />
+            <div>
+              <strong>Single sign-on</strong> replaces this screen once the identity provider is
+              connected. Accounts, roles and permissions stay where they are — only how you prove who
+              you are changes.
+            </div>
           </div>
         </div>
-
-        <div className="auth-title">Sign in</div>
-        <div className="auth-desc">
-          Use the email address and password for your Service Hub account.
-        </div>
-
-        <form onSubmit={onSubmit} noValidate>
-          <Field label="Email address" required error={errors.email?.message}>
-            <input
-              {...register("email")}
-              type="email"
-              autoComplete="username"
-              autoFocus
-              placeholder="name@scheidt-bachmann.de"
-              className={`form-input${errors.email ? " error" : ""}`}
-            />
-          </Field>
-
-          <Field label="Password" required error={errors.password?.message}>
-            <input
-              {...register("password")}
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••••••"
-              className={`form-input${errors.password ? " error" : ""}`}
-            />
-          </Field>
-
-          {failure && (
-            <div className="error-msg" role="alert" style={{ marginTop: 10 }}>⚠ {failure}</div>
-          )}
-
-          <button type="submit" className="btn btn-primary auth-submit" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in…" : <>Sign in <Icon name="chevronRight" /></>}
-          </button>
-        </form>
-
-        <div className="auth-note">
-          <Icon name="lock" size={12} /> <strong>Single sign-on</strong> replaces this screen once
-          the identity provider is connected. Accounts, roles and permissions stay where they are —
-          only how you prove who you are changes.
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

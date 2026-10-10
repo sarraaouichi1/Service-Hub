@@ -68,7 +68,7 @@ export function ReviewQueueView() {
       Awaiting Sales Payment Confirmation
     </div>
     {inStatus("sales-approval").map(p => (
-      <div key={p.id} className="project-card" style={{ marginBottom: 10, cursor: "default", borderLeft: "3px solid #C0185A" }}>
+      <div key={p.id} className="project-card" style={{ marginBottom: 10, cursor: "default", borderLeft: "3px solid var(--status-sales)" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
             <div className="project-name">{p.name}</div>
@@ -77,16 +77,15 @@ export function ReviewQueueView() {
           <div className="project-meta"><span>Partner: {p.partner}</span><span>PSP: {p.psp}</span><span>Assigned to: Sales Test (Sales)</span></div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <span style={{ fontSize: 11, color: "var(--gray-400)" }}>⏳ Waiting for payment confirmation</span>
+          <span className="row" style={{ gap: 5, fontSize: 11, color: "var(--color-text-subtle)" }}><Icon name="clock" size={12} /> Waiting for payment confirmation</span>
           <Can
             permission="payment:confirm"
             fallback={<span style={{ fontSize: 11, color: "var(--gray-400)" }}>Sales confirms this</span>}>
             <button
-              className="btn btn-primary"
-              style={{ fontSize: 12, background: "#C0185A", border: "none" }}
+              className="btn btn-primary btn-sm"
               disabled={advance.isPending}
               onClick={() => advance.mutate({ id: p.id, patch: { status: "review" } })}>
-              💳 {advance.isPending ? "Confirming…" : "Confirm Payment"}
+              <Icon name="creditCard" /> {advance.isPending ? "Confirming…" : "Confirm payment"}
             </button>
           </Can>
         </div>

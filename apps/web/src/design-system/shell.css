@@ -1,0 +1,180 @@
+/*
+ * Application chrome shared by the hub and both modules: the white header with
+ * the black wordmark (as on scheidt-bachmann.de), the module switcher, the
+ * section sub-navigation, and the footer. A module that draws its own header
+ * is how the two halves of the product drift apart — use these instead.
+ */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  height: var(--header-height);
+  flex-shrink: 0;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-header);
+}
+.app-header-inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: 0 var(--space-6);
+}
+.app-header.contained .app-header-inner { max-width: var(--content-max); margin: 0 auto; padding: 0 var(--space-8); }
+
+.app-brand { display: flex; align-items: center; gap: var(--space-4); text-decoration: none; flex-shrink: 0; }
+.app-brand img { height: 21px; width: auto; display: block; }
+.app-brand-divider { width: 1px; height: 26px; background: var(--color-border-strong); }
+.app-brand-product {
+  font-size: var(--text-overline);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+}
+
+/* Module switcher — plain text links, like the site's main navigation */
+.app-modules { display: flex; align-items: stretch; height: 100%; gap: var(--space-1); }
+.app-module-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  font-size: var(--text-body);
+  color: var(--color-text);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  border-top: 2px solid transparent;
+  transition: border-color var(--duration-fast), color var(--duration-fast);
+}
+.app-module-link:hover { border-bottom-color: var(--sb-grey-300); }
+.app-module-link.active { font-weight: var(--weight-semibold); border-bottom-color: var(--sb-ink); }
+.app-module-link:focus-visible { outline: none; box-shadow: inset var(--ring-focus); }
+
+.app-header-actions { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); }
+
+.icon-button {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+.icon-button:hover { background: var(--sb-grey-100); }
+.icon-button:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+.icon-button-badge {
+  position: absolute;
+  top: 3px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--sb-ink);
+  color: var(--sb-sky-300);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-surface);
+}
+
+/* Account menu header — the one ink panel in the chrome */
+.account-card { padding: var(--space-5); background: var(--sb-ink); color: var(--sb-grey-0); display: flex; gap: var(--space-3); align-items: center; }
+.account-card .avatar { background: var(--sb-slate-500); cursor: default; }
+.account-name { font-size: var(--text-body); font-weight: var(--weight-semibold); }
+.account-role { font-size: var(--text-caption); color: var(--sb-sky-300); margin-top: 2px; }
+.account-email { font-size: var(--text-overline); color: rgba(255, 255, 255, 0.6); margin-top: 2px; }
+
+/* ── Section sub-navigation (a module's own pages) ─────────────────────── */
+
+.subnav {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 110;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+.subnav-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+.subnav-title {
+  font-size: var(--text-overline);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+  padding-right: var(--space-6);
+  border-right: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+.subnav-links { display: flex; gap: var(--space-1); overflow-x: auto; }
+.subnav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 15px var(--space-3) 13px;
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color var(--duration-fast), border-color var(--duration-fast);
+}
+.subnav-link:hover { color: var(--color-text); }
+.subnav-link.active { color: var(--color-text); font-weight: var(--weight-semibold); border-bottom-color: var(--sb-ink); }
+.subnav-link:focus-visible { outline: none; box-shadow: inset var(--ring-focus); }
+.subnav-aside { margin-left: auto; display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
+
+.live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-overline);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--color-success-text);
+}
+.live-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 0 3px var(--color-success-soft); }
+
+/* ── Page body for scrolling (non-app-shell) layouts ───────────────────── */
+
+/* White, like the S&B site, so grey panels and tiles read as panels. The app
+   shell keeps the grey canvas because its content sits on white cards. */
+.page-shell { min-height: 100vh; display: flex; flex-direction: column; background: var(--color-surface); }
+.page-body { flex: 1; width: 100%; max-width: var(--content-max); margin: 0 auto; padding: var(--space-10) var(--space-8) var(--space-16); }
+.page-section { margin-bottom: var(--space-16); scroll-margin-top: 140px; }
+
+/* ── Footer ────────────────────────────────────────────────────────────── */
+
+.app-footer { background: var(--color-surface); border-top: 1px solid var(--color-border); }
+.app-footer-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-8);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+.app-footer-inner img { height: 15px; width: auto; }
+.app-footer-links { margin-left: auto; display: flex; gap: var(--space-5); }
+.app-footer-links a { color: var(--color-text-muted); text-decoration: none; }
+.app-footer-links a:hover { color: var(--color-text); text-decoration: underline; }

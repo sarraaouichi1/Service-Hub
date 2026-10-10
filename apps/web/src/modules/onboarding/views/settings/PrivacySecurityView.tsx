@@ -236,7 +236,7 @@ export function PrivacySecurityView() {
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "#E8FAF1", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--color-success-soft)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Icon name="shield" size={20} color="var(--green)" />
                 </div>
                 <button
@@ -328,7 +328,7 @@ export function PrivacySecurityView() {
                       <Icon name="server" size={16} color="var(--blue-bright)" />
                       {s.device}
                       {s.current && (
-                        <span style={{ fontSize: 10, fontWeight: 700, background: "#E8FAF1", color: "var(--green)", padding: "2px 8px", borderRadius: 12 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, background: "var(--color-success-soft)", color: "var(--green)", padding: "2px 8px", borderRadius: 12 }}>
                           This Device
                         </span>
                       )}
@@ -635,7 +635,7 @@ export function PrivacySecurityView() {
             <button
               type="button"
               className="btn"
-              style={{ background: "#DC2626", color: "white" }}
+              style={{ background: "var(--color-danger)", color: "white" }}
               onClick={() => alert("Permanent Account Data Deletion Request submitted to Privacy Officer.")}
             >
               Request Account Data Deletion

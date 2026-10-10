@@ -1,0 +1,236 @@
+/*
+ * Design tokens — the one place colour, type, spacing, radius and elevation are
+ * defined. Both modules and the hub draw from these, which is what makes them
+ * read as one product.
+ *
+ * The language is taken from scheidt-bachmann.de: white canvas, black wordmark
+ * and black pill buttons, light uppercase headlines in graphite, a slate band
+ * that carries the sky-blue accent, and flat light-grey panels. It is a
+ * corporate, quiet look — colour is reserved for status and for the accent.
+ *
+ * Three layers:
+ *   1. Palettes   — raw ramps (--sb-*). Never used directly by a view.
+ *   2. Semantic   — what a colour is for (--color-*, --status-*). Views use these.
+ *   3. Legacy     — the pre-design-system names (--navy, --blue-bright, …),
+ *                   pointed at semantic tokens so older inline styles follow.
+ *
+ * The style guide at /design-system reads these at runtime, so adding a token
+ * here is all it takes for it to show up there.
+ */
+
+:root {
+  /* ── 1. Palettes ─────────────────────────────────────────────────────── */
+
+  /* Brand anchors, sampled from scheidt-bachmann.de */
+  --sb-ink: #000000;          /* wordmark, primary buttons */
+  --sb-graphite: #4D4D4D;     /* headlines */
+  --sb-slate: #51565D;        /* feature bands */
+  --sb-sky: #8ADDFF;          /* accent on slate */
+  --sb-cloud: #F4F4F4;        /* alternating panels */
+
+  /* Neutral — warm-free greys, from white to ink */
+  --sb-grey-0: #FFFFFF;
+  --sb-grey-25: #FAFAFA;
+  --sb-grey-50: #F4F4F4;
+  --sb-grey-100: #EBEBEB;
+  --sb-grey-200: #E1E1E1;
+  --sb-grey-300: #CCCCCC;
+  --sb-grey-400: #ACACAC;
+  --sb-grey-500: #7F7F7F;
+  --sb-grey-600: #5E6268;
+  --sb-grey-700: #4D4D4D;
+  --sb-grey-800: #333333;
+  --sb-grey-900: #1A1A1A;
+
+  /* Slate — the band colour and its neighbours */
+  --sb-slate-300: #A3A7AD;
+  --sb-slate-400: #73787F;
+  --sb-slate-500: #51565D;
+  --sb-slate-600: #45494F;
+  --sb-slate-700: #383C41;
+  --sb-slate-800: #2B2E32;
+
+  /* Sky — the accent. 300 is the brand tone, readable only on slate or ink;
+     600–800 carry it on white with AA contrast. */
+  --sb-sky-50: #EEF9FF;
+  --sb-sky-100: #DDF4FF;
+  --sb-sky-200: #BCEAFF;
+  --sb-sky-300: #8ADDFF;
+  --sb-sky-400: #4CC7F5;
+  --sb-sky-500: #14A7DC;
+  --sb-sky-600: #0587BA;
+  --sb-sky-700: #076C95;
+  --sb-sky-800: #0B5879;
+
+  /* Functional — muted to sit in a corporate palette */
+  --sb-green-50: #EAF5EE;
+  --sb-green-500: #2E8B57;
+  --sb-green-700: #1F6B41;
+  --sb-amber-50: #FFF4E0;
+  --sb-amber-500: #E39B17;
+  --sb-amber-700: #9A5B00;
+  --sb-red-50: #FDECEC;
+  --sb-red-500: #D03A3A;
+  --sb-red-700: #A82424;
+
+  /* Categorical — for statuses and data series that need telling apart */
+  --sb-plum-50: #F4EDF7;
+  --sb-plum-500: #7B3F8C;
+  --sb-rose-50: #FBEBF1;
+  --sb-rose-500: #B4285B;
+  --sb-teal-50: #E6F4F3;
+  --sb-teal-500: #0F7C78;
+
+  /* ── 2. Semantic ─────────────────────────────────────────────────────── */
+
+  /* Surfaces */
+  --color-canvas: var(--sb-grey-50);          /* app background */
+  --color-surface: var(--sb-grey-0);          /* cards, header, panels */
+  --color-surface-muted: var(--sb-grey-25);   /* inset rows, table stripes */
+  --color-surface-sunken: var(--sb-cloud);    /* grey feature panels */
+  --color-surface-inverse: var(--sb-slate-500);
+  --color-surface-ink: var(--sb-grey-900);
+
+  /* Lines */
+  --color-border: var(--sb-grey-200);
+  --color-border-subtle: var(--sb-grey-100);
+  --color-border-strong: var(--sb-grey-300);
+
+  /* Text */
+  --color-text: var(--sb-grey-900);           /* body */
+  --color-text-heading: var(--sb-graphite);   /* light uppercase headlines */
+  --color-text-muted: var(--sb-grey-600);
+  --color-text-subtle: var(--sb-grey-500);
+  --color-text-on-inverse: var(--sb-grey-0);
+  --color-text-on-inverse-muted: rgba(255, 255, 255, 0.72);
+
+  /* Action — S&B leads with black, not colour */
+  --color-action: var(--sb-ink);
+  --color-action-hover: var(--sb-grey-800);
+  --color-action-text: var(--sb-grey-0);
+
+  /* Accent — links, selection, focus, progress */
+  --color-accent: var(--sb-sky-700);
+  --color-accent-strong: var(--sb-sky-800);
+  --color-accent-soft: var(--sb-sky-50);
+  --color-accent-line: var(--sb-sky-200);
+  --color-accent-on-inverse: var(--sb-sky-300);
+  --color-focus: var(--sb-sky-600);
+
+  /* Feedback */
+  --color-success: var(--sb-green-500);
+  --color-success-text: var(--sb-green-700);
+  --color-success-soft: var(--sb-green-50);
+  --color-warning: var(--sb-amber-500);
+  --color-warning-text: var(--sb-amber-700);
+  --color-warning-soft: var(--sb-amber-50);
+  --color-danger: var(--sb-red-500);
+  --color-danger-text: var(--sb-red-700);
+  --color-danger-soft: var(--sb-red-50);
+  --color-info: var(--sb-sky-600);
+  --color-info-text: var(--sb-sky-800);
+  --color-info-soft: var(--sb-sky-50);
+
+  /* Project lifecycle — one colour per status, used by badges and progress */
+  --status-draft: var(--sb-grey-500);
+  --status-draft-soft: var(--sb-grey-100);
+  --status-progress: var(--sb-amber-500);
+  --status-progress-text: var(--sb-amber-700);
+  --status-progress-soft: var(--sb-amber-50);
+  --status-review: var(--sb-sky-600);
+  --status-review-text: var(--sb-sky-800);
+  --status-review-soft: var(--sb-sky-50);
+  --status-sales: var(--sb-rose-500);
+  --status-sales-soft: var(--sb-rose-50);
+  --status-approved: var(--sb-green-500);
+  --status-approved-text: var(--sb-green-700);
+  --status-approved-soft: var(--sb-green-50);
+  --status-onboarded: var(--sb-plum-500);
+  --status-onboarded-soft: var(--sb-plum-50);
+
+  /* Typography — Open Sans, as on scheidt-bachmann.de */
+  --font-sans: 'Open Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-display-xl: 52px;   /* hub and landing headlines */
+  --text-display: 38px;
+  --text-h1: 28px;           /* page titles */
+  --text-h2: 20px;           /* section titles */
+  --text-h3: 16px;           /* card titles */
+  --text-body: 14px;
+  --text-small: 13px;
+  --text-caption: 12px;
+  --text-overline: 11px;
+
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --tracking-display: 0.04em;  /* uppercase headlines */
+  --tracking-overline: 0.12em;
+
+  --leading-tight: 1.2;
+  --leading-body: 1.6;
+
+  /* Space — 4px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius — pills for actions, small radii for containers */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  /* Elevation — kept shallow; the S&B site is almost flat */
+  --shadow-header: 0 0 3px rgba(0, 0, 0, 0.3);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.14);
+  --ring-focus: 0 0 0 3px rgba(5, 135, 186, 0.35);
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+
+  /* Layout */
+  --header-height: 64px;
+  --sidebar-width: 248px;
+  --content-max: 1280px;
+
+  /* ── 3. Legacy aliases ───────────────────────────────────────────────── */
+  /* Older views style inline with these names; they now resolve to the
+     system above. Prefer the semantic names in new code. */
+  --navy: var(--color-text);
+  --blue: var(--color-accent);
+  --blue-bright: var(--color-focus);
+  --blue-pale: var(--color-accent-soft);
+  --blue-mid: var(--color-accent-line);
+  --teal: var(--sb-teal-500);
+  --amber: var(--color-warning);
+  --red: var(--color-danger);
+  --green: var(--color-success);
+  --white: var(--sb-grey-0);
+  --gray-50: var(--sb-grey-25);
+  --gray-100: var(--sb-grey-50);
+  --gray-200: var(--sb-grey-200);
+  --gray-400: var(--sb-grey-500);
+  --gray-600: var(--sb-grey-600);
+  --gray-800: var(--sb-grey-800);
+  --font: var(--font-sans);
+  --mono: var(--font-mono);
+  --radius: var(--radius-md);
+  --shadow: var(--shadow-md);
+}

@@ -4,7 +4,10 @@ import { RouterProvider } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { router } from './router'
+import './design-system/tokens.css'
 import './styles/base.css'
+import './design-system/components.css'
+import './design-system/shell.css'
 
 /**
  * An internal desktop tool on a fast network: refetching on every window focus

@@ -12,9 +12,12 @@ export type * from "@service-hub/shared";
 export type ModuleId = "onboarding" | "patch";
 
 export type IconName =
-  | "grid" | "plus" | "check" | "chevronRight" | "chevronLeft" | "bell"
+  | "grid" | "plus" | "check" | "chevronRight" | "chevronLeft" | "chevronDown" | "bell"
   | "building" | "settings" | "list" | "trash" | "creditCard" | "shield"
-  | "eye" | "download" | "server" | "mapPin" | "zap" | "users" | "lock";
+  | "eye" | "download" | "server" | "mapPin" | "zap" | "users" | "user" | "lock"
+  | "search" | "cloud" | "monitor" | "fileText" | "refresh" | "activity" | "mail"
+  | "phone" | "arrowRight" | "info" | "alert" | "package" | "cpu" | "trendingUp"
+  | "logOut" | "clock" | "calendar" | "layers" | "terminal" | "externalLink" | "globe";
 
 export interface IconProps {
   name: IconName;

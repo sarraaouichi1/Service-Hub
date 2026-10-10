@@ -9,7 +9,7 @@ export function OperatorStep() {
   return (
     <div className="slide-in">
       <div className="notif-bar">
-        <Icon name="zap" size={14} color="#B07800" />
+        <Icon name="zap" size={14} color="var(--color-warning-text)" />
         Fields marked with a red asterisk are required before you can advance to the next step.
       </div>
       <div className="form-grid">
