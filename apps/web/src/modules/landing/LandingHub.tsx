@@ -15,7 +15,6 @@ export function LandingHub() {
           <img src="/sb-logo.svg" alt="Scheidt &amp; Bachmann" className="brand-wordmark hub-wordmark" />
           <div className="hub-logo-divider" />
           <div>
-            <div className="hub-logo-text">entervo smart</div>
             <div className="hub-logo-sub">IT Security Platform</div>
           </div>
         </div>
@@ -27,7 +26,7 @@ export function LandingHub() {
         </div>
 
         {/* Headline */}
-        <div className="hub-headline">Welcome to the<br /><em>entervo</em> Platform Hub</div>
+        <div className="hub-headline">Welcome to the<br />Platform Hub</div>
         <div className="hub-sub">Choose a module below to get started with your workflow.</div>
 
         {/* Cards */}

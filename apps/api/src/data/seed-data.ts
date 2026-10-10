@@ -4,9 +4,9 @@
 import type { AppNotification, AuditLogEntry, CountryTemplate, PlatformConfig, Project } from "@service-hub/shared";
 
 export const PROJECTS: Project[] = [
-  { id: 1, name: "Medway Hospital", partner: "S&B UK", pm: "Marc Delvaux", step: 4, total: 6, status: "progress", psp: "Fiserv", country: "UK", product: "smart-web-pay" },
+  { id: 1, name: "Medway Hospital", partner: "S&B UK", pm: "Manager Test", step: 4, total: 6, status: "progress", psp: "Fiserv", country: "UK", product: "smart-web-pay" },
   { id: 2, name: "Frankfurt Airport P3", partner: "S&B DE", pm: "Stefan Brandt", step: 6, total: 6, status: "review", psp: "Worldline", country: "DE", product: "econnect" },
-  { id: 3, name: "Geneva Centre Mall", partner: "S&B CH", pm: "Laura Meissner", step: 2, total: 6, status: "progress", psp: "CCV", country: "CH", product: "smart-validation" },
+  { id: 3, name: "Geneva Centre Mall", partner: "S&B CH", pm: "Reviewer Test", step: 2, total: 6, status: "progress", psp: "CCV", country: "CH", product: "smart-validation" },
   { id: 4, name: "Manchester Arena", partner: "S&B UK", pm: "James Hill", step: 5, total: 6, status: "sales-approval", psp: "Planet", country: "UK", product: "smart-web-pay" },
   { id: 5, name: "Rotterdam Harbour", partner: "S&B NL", pm: "Joost van Dijk", step: 5, total: 6, status: "sales-approval", psp: "NMI", country: "NL", product: "econnect" },
   { id: 6, name: "Brussels Central Station", partner: "S&B BE", pm: "Kai Harperscheidt", step: 6, total: 6, status: "onboarded", psp: "Worldline", country: "BE", product: "smart-validation" },
@@ -22,7 +22,7 @@ export const INITIAL_TEMPLATES: CountryTemplate[] = [
 
 export const INITIAL_NOTIFS: AppNotification[] = [
   { id: 1, type: "submit", title: "New Onboarding Request", desc: "Medway Hospital submitted Step 4 — App & Payment for review.", time: "5 min ago", read: false, color: "#E8F0FB", iconColor: "#1A6FD4" },
-  { id: 7, type: "approve", title: "Payment Confirmed by Sales", desc: "Anna Krüger confirmed payment received for Rotterdam Harbour.", time: "30 min ago", read: false, color: "#FFF0F6", iconColor: "#C0185A" },
+  { id: 7, type: "approve", title: "Payment Confirmed by Sales", desc: "Sales Test confirmed payment received for Rotterdam Harbour.", time: "30 min ago", read: false, color: "#FFF0F6", iconColor: "#C0185A" },
   { id: 2, type: "approve", title: "Onboarding Approved", desc: "Manchester Arena has been fully approved by Stefan Brandt.", time: "1 hour ago", read: false, color: "#E8FAF1", iconColor: "#1AB870" },
   { id: 3, type: "reject", title: "Correction Requested", desc: "Geneva Centre Mall — Step 2 was sent back with comments.", time: "2 hours ago", read: false, color: "#FEECEC", iconColor: "#E84040" },
   { id: 4, type: "submit", title: "New Onboarding Request", desc: "Rotterdam Harbour started a new onboarding (Step 1).", time: "Yesterday", read: true, color: "#E8F0FB", iconColor: "#1A6FD4" },
@@ -53,14 +53,14 @@ export const AUDIT_LOG: AuditLogEntry[] = [
   },
   {
     time: "Today 08:50",
-    user: "Marc Delvaux",
+    user: "Manager Test",
     action: "Submitted",
     target: "Medway Hospital — Step 4",
     color: "var(--blue-bright)",
   },
   {
     time: "Yesterday 16:32",
-    user: "Laura Meissner",
+    user: "Reviewer Test",
     action: "Requested correction",
     target: "Geneva Centre Mall",
     color: "var(--amber)",

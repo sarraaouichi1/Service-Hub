@@ -48,7 +48,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
   Reviewer: ["project:read", "project:review", "project:approve", "rule:read", "audit:read"],
   DevOps: ["project:read", "patch:read", "patch:schedule"],
   Partner: ["project:read", "project:create", "project:update", "project:submit", "patch:read"],
-  Customer: ["project:read"],
+  Customer: ["project:read", "project:create", "project:update", "project:submit"],
 };
 
 /** Everything the given roles allow, flattened and de-duplicated. */

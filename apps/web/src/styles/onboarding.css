@@ -13,7 +13,7 @@
 .logo-icon { width: 34px; height: 34px; background: var(--blue-bright); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 .logo-icon svg { width: 18px; height: 18px; }
 .logo-text { color: white; font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
-.logo-sub { color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 400; margin-top: 1px; letter-spacing: 0.3px; text-transform: uppercase; }
+.logo-sub { color: rgba(255,255,255,0.7); font-size: 11.5px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; }
 
 .sidebar-section { padding: 20px 12px 8px; }
 .sidebar-section-label { color: rgba(255,255,255,0.3); font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; padding: 0 8px; margin-bottom: 4px; }

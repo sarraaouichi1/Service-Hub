@@ -22,10 +22,17 @@ import { AdminTemplates } from "./modules/onboarding/admin/AdminTemplates";
 import { AdminRules } from "./modules/onboarding/admin/AdminRules";
 import { AdminUsers } from "./modules/onboarding/admin/AdminUsers";
 import { AdminSettings } from "./modules/onboarding/admin/AdminSettings";
+import { AccountSettingsView } from "./modules/onboarding/views/settings/AccountSettingsView";
+import { PrivacySecurityView } from "./modules/onboarding/views/settings/PrivacySecurityView";
+import { NotificationPreferencesView } from "./modules/onboarding/views/settings/NotificationPreferencesView";
 import { PatchLayout } from "./modules/patch/PatchLayout";
 import { PatchDashboardView } from "./modules/patch/views/PatchDashboardView";
 import { PatchBulletinsView } from "./modules/patch/views/PatchBulletinsView";
 import { PatchScheduleView } from "./modules/patch/views/PatchScheduleView";
+import { PatchProcessView } from "./modules/patch/views/PatchProcessView";
+import { PatchSystemsView } from "./modules/patch/views/PatchSystemsView";
+import { PatchAutomoxView } from "./modules/patch/views/PatchAutomoxView";
+import { PatchServiceTiersView } from "./modules/patch/views/PatchServiceTiersView";
 
 const LAST_WIZARD_STEP = WIZARD_STEPS.length - 1;
 
@@ -178,6 +185,27 @@ const adminSettingsRoute = createRoute({
   staticData: { title: "Admin — Platform Settings" } satisfies RouteStaticData,
 });
 
+const accountSettingsRoute = createRoute({
+  getParentRoute: () => onboardingRoute,
+  path: "settings/account",
+  component: AccountSettingsView,
+  staticData: { title: "Account Settings" } satisfies RouteStaticData,
+});
+
+const privacySecurityRoute = createRoute({
+  getParentRoute: () => onboardingRoute,
+  path: "settings/privacy",
+  component: PrivacySecurityView,
+  staticData: { title: "Privacy & Security" } satisfies RouteStaticData,
+});
+
+const notificationPreferencesRoute = createRoute({
+  getParentRoute: () => onboardingRoute,
+  path: "settings/notifications",
+  component: NotificationPreferencesView,
+  staticData: { title: "Notification Preferences" } satisfies RouteStaticData,
+});
+
 // ─── Patch module ───────────────────────────────────────────────────────────
 const patchRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -201,6 +229,34 @@ const patchDashboardRoute = createRoute({
   staticData: { title: "Patch Dashboard" } satisfies RouteStaticData,
 });
 
+const patchProcessRoute = createRoute({
+  getParentRoute: () => patchRoute,
+  path: "process",
+  component: PatchProcessView,
+  staticData: { title: "6-Step Patching Process" } satisfies RouteStaticData,
+});
+
+const patchSystemsRoute = createRoute({
+  getParentRoute: () => patchRoute,
+  path: "systems",
+  component: PatchSystemsView,
+  staticData: { title: "Supported Systems & Updates" } satisfies RouteStaticData,
+});
+
+const patchAutomoxRoute = createRoute({
+  getParentRoute: () => patchRoute,
+  path: "automox",
+  component: PatchAutomoxView,
+  staticData: { title: "Automox Cloud Engine" } satisfies RouteStaticData,
+});
+
+const patchTiersRoute = createRoute({
+  getParentRoute: () => patchRoute,
+  path: "tiers",
+  component: PatchServiceTiersView,
+  staticData: { title: "Service Tiers" } satisfies RouteStaticData,
+});
+
 const patchBulletinsRoute = createRoute({
   getParentRoute: () => patchRoute,
   path: "bulletins",
@@ -218,14 +274,14 @@ const patchScheduleRoute = createRoute({
 const patchBasicRoute = createRoute({
   getParentRoute: () => patchRoute,
   path: "services/basic",
-  component: () => <PatchDashboardView tier="basic" />,
+  component: () => <PatchDashboardView />,
   staticData: { title: "Basic Service" } satisfies RouteStaticData,
 });
 
 const patchPremiumRoute = createRoute({
   getParentRoute: () => patchRoute,
   path: "services/premium",
-  component: () => <PatchDashboardView tier="premium" />,
+  component: () => <PatchDashboardView />,
   staticData: { title: "Premium Service" } satisfies RouteStaticData,
 });
 
@@ -244,13 +300,21 @@ export const routeTree = rootRoute.addChildren([
     adminRulesRoute,
     adminUsersRoute,
     adminSettingsRoute,
+    accountSettingsRoute,
+    privacySecurityRoute,
+    notificationPreferencesRoute,
   ]),
   patchRoute.addChildren([
     patchIndexRoute,
     patchDashboardRoute,
+    patchProcessRoute,
+    patchSystemsRoute,
+    patchAutomoxRoute,
+    patchTiersRoute,
     patchBulletinsRoute,
     patchScheduleRoute,
     patchBasicRoute,
     patchPremiumRoute,
   ]),
 ]);
+

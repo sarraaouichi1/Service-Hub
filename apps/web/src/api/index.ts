@@ -8,5 +8,5 @@
  */
 export { ApiError } from "./client";
 export type { Session } from "./auth";
-export { getSession, signIn, signOut, forgetSession, changePassword } from "./auth";
+export { getSession, signIn, signOut, forgetSession, changePassword, updateMyProfile } from "./auth";
 export * from "./resources";

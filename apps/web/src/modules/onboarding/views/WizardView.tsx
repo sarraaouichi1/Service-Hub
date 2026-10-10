@@ -4,10 +4,7 @@ import { WIZARD_STEPS } from "../../../data/wizardSteps";
 import { Icon } from "../../../components/Icon";
 import { clickable } from "../../../components/clickable";
 import { ProductSelectionStep } from "../steps/ProductSelectionStep";
-import { OperatorStep } from "../steps/OperatorStep";
-import { CellComputerStep } from "../steps/CellComputerStep";
-import { FacilitiesStep } from "../steps/FacilitiesStep";
-import { AppPaymentStep } from "../steps/AppPaymentStep";
+import { DynamicProductStep } from "../steps/DynamicProductStep";
 import { SalesApprovalStep } from "../steps/SalesApprovalStep";
 import { ReviewStep } from "../steps/ReviewStep";
 import { useFormContext } from "react-hook-form";
@@ -77,10 +74,10 @@ export function WizardView() {
   const renderStep = () => {
     switch (wizardStep) {
       case 0: return <ProductSelectionStep />;
-      case 1: return <OperatorStep />;
-      case 2: return <CellComputerStep />;
-      case 3: return <FacilitiesStep />;
-      case 4: return <AppPaymentStep />;
+      case 1:
+      case 2:
+      case 3:
+      case 4: return <DynamicProductStep stepIndex={wizardStep} />;
       case 5: return <SalesApprovalStep />;
       default: return <ReviewStep declared={declared} onDeclaredChange={setDeclared} />;
     }

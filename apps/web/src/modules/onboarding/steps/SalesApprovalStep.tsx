@@ -33,12 +33,12 @@ export function SalesApprovalStep() {
           </div>
           <div style={{ background: "var(--gray-50)", borderRadius: 8, padding: "12px 14px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", marginBottom: 4 }}>Sales Contact</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>Anna Krüger</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>Sales Test</div>
           </div>
         </div>
         {!approved ? (
           <div style={{ padding: "14px 16px", background: "#FFF9EC", border: "1px solid #F4D78A", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ fontSize: 12, color: "#7A5000" }}>⏳ Waiting for Sales team to confirm payment receipt. An email notification has been sent to Anna Krüger.</div>
+            <div style={{ fontSize: 12, color: "#7A5000" }}>⏳ Waiting for Sales team to confirm payment receipt. An email notification has been sent to Sales Test.</div>
             <button onClick={() => setApproved(true)} style={{ marginLeft: 16, padding: "7px 16px", background: "#C0185A", color: "white", border: "none", borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "var(--font)" }}>
               Simulate Approval
             </button>
@@ -50,7 +50,7 @@ export function SalesApprovalStep() {
             </div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#0F7A40" }}>Payment confirmed by Sales</div>
-              <div style={{ fontSize: 11, color: "var(--gray-600)", marginTop: 2 }}>Anna Krüger confirmed payment received · Just now</div>
+              <div style={{ fontSize: 11, color: "var(--gray-600)", marginTop: 2 }}>Sales Test confirmed payment received · Just now</div>
             </div>
           </div>
         )}
