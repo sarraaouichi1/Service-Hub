@@ -90,18 +90,37 @@ export interface Facility {
   inpayPayment: string | number;
 }
 
-/** Free-text fields captured by the onboarding wizard. */
+/** Free-text fields captured by the onboarding wizard across all products. */
 export type FormTextKey =
   | "product" | "productName" | "siteName" | "opName" | "opId" | "opEmail"
   | "techEmail" | "phone" | "version" | "ip" | "port" | "domain" | "address"
   | "cellId" | "cellName" | "lang" | "country" | "currency" | "decimals"
   | "uiUserId" | "uiPassword" | "deviceId" | "vat" | "financialInfo"
-  | "tocUrl" | "tariff" | "psp" | "pspMid" | "pspTid" | "pspKey" | "pspSecret";
+  | "tocUrl" | "tariff" | "psp" | "pspMid" | "pspTid" | "pspKey" | "pspSecret"
+  // Connect additions
+  | "providerId" | "salutation" | "contactFirstname" | "contactSurname"
+  | "contactStreet" | "contactCity" | "contactEmail" | "contactPhone"
+  | "adminUsername" | "adminFirstname" | "adminSurname" | "adminEmail" | "adminPhone" | "sshPort"
+  // Smart Validation additions
+  | "tenantShortname" | "tenantDescription" | "subtechEmail" | "incidentEmail" | "onboardingEmail" | "mediatypes"
+  // Mobility Connect additions
+  | "carparkType" | "heightLimit" | "parkingLots" | "chargingStations" | "costCenter"
+  | "entryLanes" | "exitLanes" | "zipCode" | "city" | "latitude" | "longitude" | "dailyMax" | "taxId" | "mobilityProvider"
+  // Smart Select additions
+  | "portalUrl" | "projectName" | "senderEmail" | "senderDomain" | "brandColors" | "privacyUrl" | "paymentType"
+  | "totalSpaces" | "minParkingDuration" | "checkInterval" | "overstayDuration"
+  | "contractProductName" | "contractOneTimeFee" | "contractRecurringFee" | "contractMinLeaseMonths" | "contractNoticePeriod" | "contractMaxBookings"
+  | "timeCardProductName" | "timeCardFee" | "timeCardDuration"
+  | "bundleProductName" | "bundleFee" | "bundleSlotsCount" | "bundleSlotDuration" | "bundleOverstayFee"
+  | "prepaidProductName" | "prepaidPrice" | "prepaidCredit" | "prepaidMinBalance";
 
-/** Feature switches captured by the onboarding wizard. */
+/** Feature switches captured by the onboarding wizard across all products. */
 export type FormBoolKey =
   | "reachable" | "forwarding" | "lpr" | "barcode" | "lfk" | "freeflow"
-  | "vouchers" | "prepay" | "topup" | "salesApproved";
+  | "vouchers" | "prepay" | "topup" | "salesApproved"
+  | "onlineAuth" | "customerMedia" | "counting"
+  | "open247" | "accessOutsideHours"
+  | "mainAreaConcept" | "autoCheckout" | "boostFunction" | "productWebshop" | "autoDeactivation";
 
 /**
  * The onboarding wizard's working draft. Every field is optional because the

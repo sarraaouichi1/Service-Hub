@@ -34,6 +34,7 @@ export function AccountSettingsView() {
     department: currentUser.department || "entervo IT Security & Platform Solutions",
     language: currentUser.language || "en-GB",
     timezone: currentUser.timezone || "Europe/Berlin",
+    country: currentUser.country || "DE",
   });
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export function AccountSettingsView() {
       department: currentUser.department || "entervo IT Security & Platform Solutions",
       language: currentUser.language || "en-GB",
       timezone: currentUser.timezone || "Europe/Berlin",
+      country: currentUser.country || "DE",
     });
   }, [currentUser]);
 
@@ -123,6 +125,7 @@ export function AccountSettingsView() {
         department: profile.department,
         language: profile.language,
         timezone: profile.timezone,
+        country: profile.country,
       });
       setSavedSuccess(true);
       setTimeout(() => {
@@ -363,6 +366,25 @@ export function AccountSettingsView() {
                 Localization & Display Preferences
               </h4>
               <div className="form-grid">
+                <Field label="Country" required hint="Scopes recent projects to your country">
+                  <select
+                    className="form-select"
+                    value={profile.country}
+                    onChange={(e) => setProfile({ ...profile, country: e.target.value })}
+                  >
+                    <option value="DE">Germany (DE)</option>
+                    <option value="GB">United Kingdom (GB)</option>
+                    <option value="FR">France (FR)</option>
+                    <option value="NL">Netherlands (NL)</option>
+                    <option value="CH">Switzerland (CH)</option>
+                    <option value="AT">Austria (AT)</option>
+                    <option value="BE">Belgium (BE)</option>
+                    <option value="ES">Spain (ES)</option>
+                    <option value="US">United States (US)</option>
+                    <option value="CA">Canada (CA)</option>
+                  </select>
+                </Field>
+
                 <Field label="Language Selector">
                   <select
                     className="form-select"

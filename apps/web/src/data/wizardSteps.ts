@@ -8,7 +8,7 @@ export const WIZARD_STEPS: WizardStepDef[] = [
     num: 0,
     label: "Step 00",
     name: "Product Selection",
-    subtitle: "Select the entervo smart product you want to onboard.",
+    subtitle: "Select the entervo smart products you want to onboard.",
   },
   {
     num: 1,
@@ -41,7 +41,7 @@ export const WIZARD_STEPS: WizardStepDef[] = [
     num: 5,
     label: "Step 05",
     name: "Sales Approval",
-    subtitle: "Sales must confirm the customer payment before technical review.",
+    subtitle: "Sales must confirm that the delivery can be done.",
   },
   {
     num: 6,

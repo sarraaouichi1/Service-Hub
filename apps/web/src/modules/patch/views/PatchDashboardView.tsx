@@ -1,20 +1,23 @@
 import { Link } from "@tanstack/react-router";
-import type { PatchStatus } from "@service-hub/shared";
-import { AsyncSection } from "../../../components/AsyncSection";
-import { PATCH_STATUS } from "../../../data/display";
-import { useBulletins } from "../../../queries";
 import {
-  Badge, Card, CheckList, FeatureCard, Icon, IconTile, SectionHeader, StatBand, Tile, TileArt, buttonClass,
+  Badge, Card, CheckList, FeatureCard, Icon, SectionHeader, StatBand, Tile, TileArt, buttonClass,
 } from "../../../design-system";
 import type { IconName } from "../../../types";
 import {
-  AUTOMOX_PILLARS, CLIENT_SYSTEMS, PROCESS_STEPS, ROADMAP, SERVER_SYSTEMS, SERVICE_TIERS, UPDATE_TYPES, VALUE_DRIVERS,
+  AUTOMOX_PILLARS, CLIENT_SYSTEMS, PROCESS_STEPS, SERVER_SYSTEMS, SERVICE_TIERS, UPDATE_TYPES, VALUE_DRIVERS,
 } from "../data/content";
 import { ContactSection } from "../components/ContactSection";
+import { useReveal } from "../../../hooks/useReveal";
 
-const STATUS_ORDER: PatchStatus[] = ["pending", "testing", "scheduled", "deployed"];
-
-const EXPLORE: { to: "/patch/process" | "/patch/systems" | "/patch/automox"; icon: IconName; kicker: string; title: string; desc: string; cta: string }[] = [
+const EXPLORE: {
+  to: "/patch/process" | "/patch/systems" | "/patch/automox";
+  icon: IconName;
+  kicker: string;
+  title: string;
+  desc: string;
+  cta: string;
+  image: string;
+}[] = [
   {
     to: "/patch/process",
     icon: "refresh",
@@ -22,6 +25,7 @@ const EXPLORE: { to: "/patch/process" | "/patch/systems" | "/patch/automox"; ico
     title: "From Patch Tuesday to the monthly report",
     desc: PROCESS_STEPS.map(s => s.name).join(" · "),
     cta: "Explore the process",
+    image: "/patch/tile-process.jpg",
   },
   {
     to: "/patch/systems",
@@ -30,6 +34,7 @@ const EXPLORE: { to: "/patch/process" | "/patch/systems" | "/patch/automox"; ico
     title: "Supported systems & update types",
     desc: `${SERVER_SYSTEMS.length} Windows Server and ${CLIENT_SYSTEMS.length} Windows 10 versions, covered for ${UPDATE_TYPES.map(u => u.code).join(" and ")} updates.`,
     cta: "See what's covered",
+    image: "/patch/tile-scope.jpg",
   },
   {
     to: "/patch/automox",
@@ -38,14 +43,18 @@ const EXPLORE: { to: "/patch/process" | "/patch/systems" | "/patch/automox"; ico
     title: "Powered by Automox",
     desc: AUTOMOX_PILLARS.map(p => p.title).join(" · ") + " — patch orchestration without on-premise infrastructure.",
     cta: "How Automox works",
+    image: "/patch/tile-platform.jpg",
   },
 ];
 
 export function PatchDashboardView() {
-  const bulletins = useBulletins();
+  const whyRef = useReveal<HTMLDivElement>(".feature-card");
+  const tilesRef = useReveal<HTMLDivElement>(".tile");
+  const tiersRef = useReveal<HTMLDivElement>(".card");
 
   return (
     <>
+      {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section className="patch-hero page-section">
         <div>
           <div className="eyebrow accent">Patch Management · entervo smart</div>
@@ -56,8 +65,11 @@ export function PatchDashboardView() {
             Proactive patch management for entervo systems — Microsoft updates assessed, tested in our lab
             and rolled out in maintenance windows, with monitoring and a monthly compliance report.
           </p>
-          <div className="row" style={{ marginTop: "var(--space-8)" }}>
-            <Link to="/patch/bulletins" className={buttonClass("primary", "lg")}>
+          <div className="row" style={{ marginTop: "var(--space-8)", gap: 12 }}>
+            <Link to="/patch/tickets/new" className={buttonClass("primary", "lg")}>
+              <Icon name="plus" /> New Patch Ticket
+            </Link>
+            <Link to="/patch/bulletins" className={buttonClass("secondary", "lg")}>
               Review bulletins <Icon name="arrowRight" />
             </Link>
             <Link to="/patch/dashboard" hash="contact" className={buttonClass("secondary", "lg")}>
@@ -65,43 +77,23 @@ export function PatchDashboardView() {
             </Link>
           </div>
         </div>
-
-        <Card className="patch-hero-status">
-          <div className="card-header">
-            <div>
-              <div className="eyebrow">This month</div>
-              <div className="card-title">Bulletin status</div>
-            </div>
-            <IconTile name="activity" tone="ink" />
-          </div>
-          <AsyncSection query={bulletins} label="bulletins">
-            {(list) => (
-              <>
-                <div className="kv-list">
-                  {STATUS_ORDER.map(status => (
-                    <div key={status} className="kv-row">
-                      <Badge tone={PATCH_STATUS[status].tone}>{PATCH_STATUS[status].label}</Badge>
-                      <span className="patch-hero-count">{list.filter(b => b.status === status).length}</span>
-                    </div>
-                  ))}
-                </div>
-                <CriticalOutstanding count={list.filter(b => b.severity === "Critical" && b.status !== "deployed").length} />
-                <Link to="/patch/bulletins" className="link-arrow">All {list.length} bulletins <Icon name="arrowRight" size={14} /></Link>
-              </>
-            )}
-          </AsyncSection>
-        </Card>
       </section>
 
-      <section className="page-section">
-        <SectionHeader title="Why patch management matters" description="Proactive cyber hygiene that protects critical assets and keeps exposure low." />
-        <div className="grid-3">
+      {/* ── Why patch management matters — atmospheric dark section ─── */}
+      <section className="patch-why-section page-section">
+        <SectionHeader
+          title="Why patch management matters"
+          description="Proactive cyber hygiene that protects critical assets and keeps exposure low."
+        />
+        <div ref={whyRef} className="grid-3">
           {VALUE_DRIVERS.map(v => <FeatureCard key={v.title} icon={v.icon} title={v.title}>{v.desc}</FeatureCard>)}
         </div>
       </section>
 
+      {/* ── Numbers band ──────────────────────────────────────────────── */}
       <section className="page-section">
         <StatBand
+          animated
           items={[
             { value: PROCESS_STEPS.length, label: "Process stages, Patch Tuesday to report" },
             { value: SERVER_SYSTEMS.length + CLIENT_SYSTEMS.length, label: "Supported Windows versions" },
@@ -111,9 +103,10 @@ export function PatchDashboardView() {
         />
       </section>
 
-      <section className="page-section stack" style={{ gap: "var(--space-6)" }}>
+      {/* ── Explore tiles ─────────────────────────────────────────────── */}
+      <section ref={tilesRef} className="page-section stack" style={{ gap: "var(--space-6)" }}>
         {EXPLORE.map((e, i) => (
-          <Tile key={e.to} reverse={i % 2 === 1} media={<TileArt icon={e.icon} label={e.kicker} />}>
+          <Tile key={e.to} reverse={i % 2 === 1} media={<TileArt icon={e.icon} label={e.kicker} imageSrc={e.image} />}>
             <div className="eyebrow">{e.kicker}</div>
             <h2 className="display">{e.title}</h2>
             <p className="lead">{e.desc}</p>
@@ -122,18 +115,27 @@ export function PatchDashboardView() {
         ))}
       </section>
 
+      {/* ── Service tiers ─────────────────────────────────────────────── */}
       <section className="page-section">
         <SectionHeader
           title="Service tiers"
           description="Two packages, matched to how much of patching the customer's IT team wants to run itself."
           actions={<Link to="/patch/tiers" className="link-arrow">Compare tiers <Icon name="arrowRight" size={14} /></Link>}
         />
-        <div className="grid-2">
+        <div ref={tiersRef} className="grid-2">
           {SERVICE_TIERS.map(t => (
-            <Card key={t.id} variant={t.recommended ? "ink" : "default"}>
+            <Card
+              key={t.id}
+              variant={t.recommended ? "ink" : "default"}
+              className={`patch-tier ${t.recommended ? "tier-recommended recommended" : "tier-basic"}`}
+            >
               <div className="row" style={{ justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
                 <div className="card-title">{t.name}</div>
-                {t.recommended && <Badge tone="ink" dot={false}>Recommended</Badge>}
+                {t.recommended ? (
+                  <Badge tone="info" dot={false}>Recommended · Turnkey</Badge>
+                ) : (
+                  <Badge tone="outline" dot={false}>Basic</Badge>
+                )}
               </div>
               <p className="card-desc" style={{ marginBottom: "var(--space-5)" }}>{t.summary}</p>
               <CheckList items={t.features.slice(0, 4)} />
@@ -142,35 +144,7 @@ export function PatchDashboardView() {
         </div>
       </section>
 
-      <section className="page-section">
-        <SectionHeader title="Roadmap" description="Capabilities in engineering now." />
-        <div className="grid-2">
-          {ROADMAP.map(r => (
-            <Card key={r.title} variant="muted">
-              <div className="row" style={{ justifyContent: "space-between", marginBottom: "var(--space-4)" }}>
-                <IconTile name={r.icon} />
-                <Badge tone="info">{r.status}</Badge>
-              </div>
-              <div className="card-title">{r.title}</div>
-              <div className="card-desc">{r.desc}</div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
       <ContactSection />
     </>
-  );
-}
-
-function CriticalOutstanding({ count }: { count: number }) {
-  if (count === 0) {
-    return <div className="patch-hero-critical clear"><Icon name="check" size={14} /> Every critical bulletin is deployed</div>;
-  }
-  return (
-    <div className="patch-hero-critical">
-      <Icon name="alert" size={14} />
-      {count} critical {count === 1 ? "bulletin" : "bulletins"} not yet deployed
-    </div>
   );
 }

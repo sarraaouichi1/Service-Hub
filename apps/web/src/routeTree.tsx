@@ -33,6 +33,7 @@ import { PatchProcessView } from "./modules/patch/views/PatchProcessView";
 import { PatchSystemsView } from "./modules/patch/views/PatchSystemsView";
 import { PatchAutomoxView } from "./modules/patch/views/PatchAutomoxView";
 import { PatchServiceTiersView } from "./modules/patch/views/PatchServiceTiersView";
+import { PatchTicketCreateView } from "./modules/patch/views/PatchTicketCreateView";
 import { StyleGuideView } from "./modules/design-system/StyleGuideView";
 
 const LAST_WIZARD_STEP = WIZARD_STEPS.length - 1;
@@ -157,14 +158,14 @@ const reviewQueueRoute = createRoute({
   getParentRoute: () => onboardingRoute,
   path: "review-queue",
   component: ReviewQueueView,
-  staticData: { title: "Review Queue" } satisfies RouteStaticData,
+  staticData: { title: "Review List" } satisfies RouteStaticData,
 });
 
 const approvedRoute = createRoute({
   getParentRoute: () => onboardingRoute,
   path: "approved",
   component: ApprovedView,
-  staticData: { title: "Approved & Onboarded" } satisfies RouteStaticData,
+  staticData: { title: "Ready for deployment" } satisfies RouteStaticData,
 });
 
 const adminTemplatesRoute = createRoute({
@@ -288,6 +289,14 @@ const patchBasicRoute = createRoute({
   staticData: { title: "Basic Service" } satisfies RouteStaticData,
 });
 
+
+const patchTicketCreateRoute = createRoute({
+  getParentRoute: () => patchRoute,
+  path: "tickets/new",
+  component: PatchTicketCreateView,
+  staticData: { title: "New Patch Ticket" } satisfies RouteStaticData,
+});
+
 const patchPremiumRoute = createRoute({
   getParentRoute: () => patchRoute,
   path: "services/premium",
@@ -326,6 +335,7 @@ export const routeTree = rootRoute.addChildren([
     patchScheduleRoute,
     patchBasicRoute,
     patchPremiumRoute,
+    patchTicketCreateRoute,
   ]),
 ]);
 

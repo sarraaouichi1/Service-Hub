@@ -1,7 +1,7 @@
 import type {
   AppNotification, AuditLogEntry, CountryTemplate, OnboardingForm, PatchBulletin,
   PatchServiceTier, PatchStage, PlatformConfig, ProductDefinition, Project, Psp,
-  TemplateDraft, ValidationRule,
+  TemplateDraft, ValidationRule, AuthUser, UserRole,
 } from "@service-hub/shared";
 import { request } from "./http";
 
@@ -66,6 +66,47 @@ export const listPatchStages = () =>
 export const listServiceTiers = () =>
   request<{ tiers: PatchServiceTier[] }>("/patch/tiers").then((r) => r.tiers);
 
+export const createPatchInquiry = (inquiry: {
+  userName?: string;
+  userEmail?: string;
+  company?: string;
+  message: string;
+}) =>
+  request<{ ok: boolean; message: string; inquiry: unknown }>("/patch/inquiries", {
+    method: "POST",
+    body: JSON.stringify(inquiry),
+  });
+
+export interface PatchTicketInput {
+  carparkName: string;
+  customerAccount?: string;
+  contactName?: string;
+  contactEmail: string;
+  contactPhone?: string;
+  cpqOrderNumber?: string;
+  contractNumber?: string;
+  numberOfDevices: number;
+  entervoVersion: string;
+  operatingSystem: string;
+  ipAddress1: string;
+  ipAddress2?: string;
+  ipAddress3?: string;
+  priority?: string;
+  urgency?: string;
+  category?: string;
+  subCategory?: string;
+  notes?: string;
+}
+
+export const createPatchTicket = (data: PatchTicketInput) =>
+  request<{ ok: boolean; ticket: any; message: string }>("/patch/tickets", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const listPatchTickets = () =>
+  request<{ tickets: any[] }>("/patch/tickets").then((r) => r.tickets);
+
 // ─── Country templates ──────────────────────────────────────────────────────
 export const listTemplates = () =>
   request<{ templates: CountryTemplate[] }>("/templates").then((r) => r.templates);
@@ -87,59 +128,52 @@ export const deleteTemplate = (id: number) =>
 export const listRules = () =>
   request<{ rules: ValidationRule[] }>("/rules").then((r) => r.rules);
 
-/** Only these two are editable; a rule's pattern lives in the shared registry. */
+export const listRuleEnforcement = () =>
+  request<{ rules: ValidationRule[] }>("/rules/enforcement").then((r) => r.rules);
+
 export const updateRule = (id: number, patch: { active?: boolean; severity?: "error" | "warning" }) =>
   request<{ rule: ValidationRule }>(`/rules/${id}`, {
     method: "PATCH", body: JSON.stringify(patch),
   }).then((r) => r.rule);
 
-/** Just the enforcement flags — available to anyone signed in, unlike the full table. */
-export const listRuleEnforcement = () =>
-  request<{ rules: { id: number; active: boolean; severity: "error" | "warning" }[] }>(
-    "/rules/enforcement",
-  ).then((r) => r.rules);
+// ─── Platform settings ─────────────────────────────────────────────────────
+export const getPlatformConfig = () =>
+  request<{ config: PlatformConfig }>("/settings").then((r) => r.config);
 
-// ─── Platform settings ──────────────────────────────────────────────────────
-export const getSettings = () =>
-  request<{ settings: PlatformConfig }>("/settings").then((r) => r.settings);
-
-export const updateSettings = (patch: Partial<PlatformConfig>) =>
-  request<{ settings: PlatformConfig }>("/settings", {
+export const updatePlatformConfig = (patch: Partial<PlatformConfig>) =>
+  request<{ config: PlatformConfig }>("/settings", {
     method: "PATCH", body: JSON.stringify(patch),
-  }).then((r) => r.settings);
+  }).then((r) => r.config);
+
+export const getSettings = getPlatformConfig;
+export const updateSettings = updatePlatformConfig;
 
 export const listAuditLog = () =>
   request<{ entries: AuditLogEntry[] }>("/audit-log").then((r) => r.entries);
 
-// ─── Notifications ──────────────────────────────────────────────────────────
+// ─── Notifications ─────────────────────────────────────────────────────────
 export const listNotifications = () =>
   request<{ notifications: AppNotification[] }>("/notifications").then((r) => r.notifications);
 
-export const markRead = (id: number) =>
+export const markNotificationRead = (id: number) =>
   request<{ notification: AppNotification }>(`/notifications/${id}/read`, { method: "POST" })
     .then((r) => r.notification);
 
-export const markAllRead = () =>
-  request<{ notifications: AppNotification[] }>("/notifications/read-all", { method: "POST" })
-    .then((r) => r.notifications);
+export const markAllNotificationsRead = () =>
+  request<void>("/notifications/read-all", { method: "POST" });
 
-// ─── Users ──────────────────────────────────────────────────────────────────
-import type { AuthUser, UserRole } from "@service-hub/shared";
+export const markAllRead = markAllNotificationsRead;
+export const markRead = markNotificationRead;
 
+// ─── User management ───────────────────────────────────────────────────────
 export const listUsers = () =>
   request<{ users: AuthUser[] }>("/users").then((r) => r.users);
 
-export const createUser = (input: {
-  email: string; name: string; partner?: string; roles: UserRole[]; password?: string;
-}) => request<{ user: AuthUser }>("/users", {
-  method: "POST", body: JSON.stringify(input),
-}).then((r) => r.user);
+export const createUser = (user: { email: string; name: string; partner?: string; roles: UserRole[]; password?: string }) =>
+  request<{ user: AuthUser }>("/users", { method: "POST", body: JSON.stringify(user) }).then((r) => r.user);
 
-export const updateUser = (
-  id: string,
-  patch: { name?: string; partner?: string; status?: string; roles?: UserRole[] },
-) => request<{ user: AuthUser }>(`/users/${id}`, {
-  method: "PATCH", body: JSON.stringify(patch),
-}).then((r) => r.user);
+export const updateUser = (id: string, patch: { name?: string; partner?: string; status?: string; roles?: UserRole[] }) =>
+  request<{ user: AuthUser }>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(patch) }).then((r) => r.user);
 
-export const deleteUser = (id: string) => request<void>(`/users/${id}`, { method: "DELETE" });
+export const deleteUser = (id: string) =>
+  request<void>(`/users/${id}`, { method: "DELETE" });

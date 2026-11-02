@@ -15,7 +15,7 @@ const PROJECT_FILTERS: { value: ProjectStatus | "all"; label: string }[] = [
   { value: "progress", label: "In Progress" },
   { value: "review", label: "Pending Review" },
   { value: "sales-approval", label: "Sales Approval" },
-  { value: "approved", label: "Approved" },
+  { value: "approved", label: "Ready for deployment" },
   { value: "onboarded", label: "Onboarded" },
 ];
 
@@ -100,21 +100,28 @@ export function ProjectsView() {
             <div style={{ fontSize: 13, color: "var(--gray-600)" }}>{p.partner}</div>
             <div style={{ fontSize: 13, color: "var(--gray-600)" }}>{p.psp}</div>
             <div>
-              <div style={{ height: 6, background: "var(--gray-100)", borderRadius: 4, overflow: "hidden", width: 80 }}>
-                <div style={{ height: "100%", width: `${Math.round((p.step/p.total)*100)}%`, background: STATUS_COLOR[p.status], borderRadius: 4 }} />
+              <div style={{ width: "80%", background: "var(--gray-200)", borderRadius: 10, height: 6, overflow: "hidden" }}>
+                <div style={{ width: `${Math.round((p.step / p.total) * 100)}%`, background: STATUS_COLOR[p.status], height: "100%", borderRadius: 10 }} />
               </div>
-              <div style={{ fontSize: 10, color: "var(--gray-400)", marginTop: 3 }}>{Math.round((p.step/p.total)*100)}%</div>
+              <div style={{ fontSize: 10.5, color: "var(--gray-400)", marginTop: 4 }}>Step {p.step} of {p.total}</div>
             </div>
             <div>
               <span className={`badge ${STATUS_MAP[p.status].cls}`}>{STATUS_MAP[p.status].label}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <Icon name="chevronRight" color="var(--gray-400)" size={16} />
+            <div>
+              <button className="btn btn-secondary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={(e) => { e.stopPropagation(); openProject(p); }}>
+                Open
+              </button>
             </div>
           </div>
         );
       })}
-        </>}
+      {visible.length === 0 && (
+        <div style={{ padding: 40, textAlign: "center", color: "var(--gray-400)", fontSize: 13 }}>
+          No projects match the current filter.
+        </div>
+      )}
+      </>}
       </AsyncSection>
     </div>
   </div>

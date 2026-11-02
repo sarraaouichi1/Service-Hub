@@ -88,8 +88,11 @@ export async function updateMyProfile(patch: {
   jobTitle?: string;
   company?: string;
   department?: string;
+  country?: string;
   language?: string;
   timezone?: string;
+  notificationSettings?: Record<string, unknown>;
+  privacySettings?: Record<string, unknown>;
 }): Promise<AuthUser> {
   const body = await request<{ user: AuthUser }>("/auth/me", {
     method: "PATCH",

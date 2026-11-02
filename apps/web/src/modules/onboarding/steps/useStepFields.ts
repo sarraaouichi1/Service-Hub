@@ -15,7 +15,7 @@ import type { FormBoolKey, FormTextKey, OnboardingForm } from "../../../types";
  * checked it.
  */
 export function useStepFields() {
-  const { register, setValue, formState } = useFormContext<OnboardingForm>();
+  const { register, setValue, formState, clearErrors, setError } = useFormContext<OnboardingForm>();
   const watched = useWatch<OnboardingForm>();
 
   const values = watched as Record<string, unknown>;
@@ -27,13 +27,18 @@ export function useStepFields() {
   const state = (key: string) => (errors[key] ? " error" : values[key] ? " valid" : "");
 
   /** Set a value the user picked rather than typed — a card, a toggle, a row. */
-  const choose = (key: string, value: unknown) =>
+  const choose = (key: string, value: unknown) => {
+    clearErrors(key as FormTextKey);
     setValue(key as FormTextKey, value as string, { shouldValidate: true, shouldDirty: true });
+  };
 
   return {
     values: watched,
     message,
     choose,
+    register,
+    clearErrors,
+    setError,
     /** Props for an `<input>`; `extra` adds classes such as `mono`. */
     input: (key: FormTextKey, extra = "") => ({
       ...register(key),

@@ -7,6 +7,8 @@ import { SESSION_COOKIE, readSession } from "./auth/session.js";
 import { allowedOrigins, env, isProduction } from "./env.js";
 import { adminRoutes } from "./routes/admin.js";
 import { catalogRoutes } from "./routes/catalog.js";
+import { patchInquiriesRoutes } from "./routes/patchInquiries.js";
+import { patchTicketsRoutes } from "./routes/patchTickets.js";
 import { projectRoutes } from "./routes/projects.js";
 import { userRoutes } from "./routes/users.js";
 
@@ -85,6 +87,8 @@ export async function buildServer() {
     await projectRoutes(api);
     await adminRoutes(api);
     await catalogRoutes(api);
+    await patchInquiriesRoutes(api);
+    await patchTicketsRoutes(api);
   }, { prefix: "/api" });
 
   return app;

@@ -1,7 +1,7 @@
 import { useStepFields } from "./useStepFields";
 import { Badge, Button, Callout, Card, IconTile } from "../../../design-system";
 
-/** Wizard step 05 — Sales confirms payment before the submission is reviewed. */
+/** Wizard step 05 — Sales confirms delivery readiness before the submission is reviewed. */
 export function SalesApprovalStep() {
   const { values, choose, message } = useStepFields();
   const approved = values.salesApproved ?? false;
@@ -15,14 +15,14 @@ export function SalesApprovalStep() {
   return (
     <div className="slide-in stack" style={{ gap: "var(--space-5)" }}>
       <Callout tone="neutral" title="Sales approval required —">
-        before technical review, the Sales team must confirm that the customer's payment has been received.
+        delivery readiness to be checked
       </Callout>
       <Card>
         <div className="card-header">
           <div className="row">
             <IconTile name="creditCard" tone="ink" />
             <div>
-              <div className="card-title">Payment confirmation</div>
+              <div className="card-title">Delivery readiness</div>
               <div className="card-desc">Assigned to the Sales team</div>
             </div>
           </div>
@@ -38,11 +38,11 @@ export function SalesApprovalStep() {
         </div>
         {!approved ? (
           <div className="callout callout-warning" style={{ alignItems: "center", justifyContent: "space-between" }}>
-            <div>Waiting for the Sales team to confirm payment receipt. Sales Test has been notified by email.</div>
+            <div>Waiting for delivery check. Sales Team has been notified by email.</div>
             <Button size="sm" onClick={() => setApproved(true)}>Simulate approval</Button>
           </div>
         ) : (
-          <Callout tone="success" title="Payment confirmed by Sales.">Sales Test confirmed the payment was received.</Callout>
+          <Callout tone="success" title="Ready for delivery">Sales Test confirmed delivery can be done.</Callout>
         )}
       </Card>
       {message("salesApproved") && (

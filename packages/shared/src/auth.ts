@@ -33,8 +33,11 @@ export interface AuthUser {
   jobTitle?: string | null;
   company?: string | null;
   department?: string | null;
+  country?: string | null;
   language?: string | null;
   timezone?: string | null;
+  notificationSettings?: Record<string, unknown> | null;
+  privacySettings?: Record<string, unknown> | null;
 }
 
 export interface SessionInfo {

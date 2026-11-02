@@ -7,44 +7,300 @@
 .patch .page-header { margin-bottom: var(--space-8); }
 .patch .steps { margin-bottom: var(--space-5); }
 
-/* Overview hero: headline left, live bulletin status right */
+/* Overview hero */
 .patch-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
-  gap: var(--space-12);
-  align-items: center;
+  max-width: 820px;
   padding-top: var(--space-4);
 }
 .patch-hero-title { margin: var(--space-4) 0 var(--space-5); }
-.patch-hero-status { box-shadow: var(--shadow-md); }
-.patch-hero-count { font-size: var(--text-h2); font-weight: var(--weight-light); color: var(--color-text); }
-.patch-hero-critical {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: var(--space-4) 0;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-sm);
-  background: var(--color-danger-soft);
-  color: var(--color-danger-text);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-semibold);
+
+/* ── "Why patch management matters" — Scheidt & Bachmann Royal Navy Blue ── */
+.patch-why-section {
+  position: relative;
+  /* Rich Scheidt & Bachmann royal navy / cobalt brand gradient */
+  background:
+    radial-gradient(ellipse 90% 65% at 15% 30%, rgba(138, 221, 255, 0.16) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 55% at 85% 75%, rgba(0, 163, 224, 0.14) 0%, transparent 55%),
+    /* subtle high-tech circuit grid */
+    repeating-linear-gradient(0deg, transparent, transparent 47px, rgba(138, 221, 255, 0.05) 48px),
+    repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(138, 221, 255, 0.05) 48px),
+    linear-gradient(145deg, #03172E 0%, #072547 45%, #0B3666 100%);
+  border: 1px solid rgba(138, 221, 255, 0.22);
+  border-radius: var(--radius-md);
+  padding: var(--space-12) var(--space-10);
+  overflow: hidden;
+  margin-inline: 0;
+  box-shadow: 0 16px 40px -8px rgba(3, 23, 46, 0.4);
 }
 
-.patch-hero-critical.clear { background: var(--color-success-soft); color: var(--color-success-text); }
+/* Animated scan-line sweep overlay */
+.patch-why-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 25%,
+    rgba(138, 221, 255, 0.06) 50%,
+    transparent 75%
+  );
+  background-size: 300% 300%;
+  animation: patchWhySweep 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
 
-/* Process stage detail */
+@keyframes patchWhySweep {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+/* Section header text flips white on dark bg */
+.patch-why-section .section-title {
+  color: #FFFFFF;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.patch-why-section .section-desc {
+  color: rgba(221, 244, 255, 0.85);
+}
+
+/* Cards inside become luminous frosted glass panels */
+.patch-why-section .card {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(138, 221, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.patch-why-section .card:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(138, 221, 255, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 40, 85, 0.4), 0 0 16px rgba(138, 221, 255, 0.2);
+  transform: translateY(-4px);
+}
+.patch-why-section .card-title { color: #FFFFFF; }
+.patch-why-section .card-desc  { color: rgba(221, 244, 255, 0.78); }
+.patch-why-section .icon-tile  {
+  background: rgba(138, 221, 255, 0.18);
+  color: var(--sb-sky-300);
+  border: 1px solid rgba(138, 221, 255, 0.3);
+}
+
+/* ── Floating Back Button ────────────────────────────────────────────────── */
+.patch-floating-back {
+  position: fixed;
+  bottom: var(--space-8);
+  right: var(--space-8);
+  z-index: 999;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 20px;
+  background: rgba(3, 23, 46, 0.92);
+  color: #FFFFFF;
+  border: 1px solid rgba(138, 221, 255, 0.45);
+  border-radius: 9999px;
+  font-size: var(--text-body-sm, 14px);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  box-shadow: 0 10px 28px -4px rgba(0, 20, 48, 0.5), 0 0 12px rgba(138, 221, 255, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  animation: floatingBounceIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes floatingBounceIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.patch-floating-back:hover {
+  background: #002855;
+  border-color: var(--sb-sky-300);
+  color: var(--sb-sky-300);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 14px 36px -4px rgba(0, 20, 48, 0.65), 0 0 20px rgba(138, 221, 255, 0.45);
+}
+.patch-floating-back svg {
+  transition: transform 0.22s ease;
+}
+.patch-floating-back:hover svg {
+  transform: translateX(-4px);
+}
+
+/* ── Process stage detail ────────────────────────────────────────────────── */
 .patch-stage-head { display: flex; gap: var(--space-5); align-items: flex-start; }
+
+.patch-stage-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.patch-stage-kpi {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  border-left: 4px solid var(--sb-sky-600);
+  transition: all 0.25s ease;
+}
+.patch-stage-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+.patch-stage-kpi.tone-cobalt { border-left-color: #003865; }
+.patch-stage-kpi.tone-cyan   { border-left-color: #00A3E0; }
+.patch-stage-kpi.tone-green  { border-left-color: #10B981; }
+.patch-stage-kpi.tone-amber  { border-left-color: #F59E0B; }
 
 /* Automox */
 .patch-worklet { width: 100%; margin: var(--space-2) 0 0; white-space: pre-wrap; }
-.patch-automox-stages { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-6); }
-.patch-automox-stage { padding: var(--space-4); border-top: 2px solid var(--sb-ink); background: var(--color-surface); }
+.patch-automox-stages {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+.patch-automox-stage {
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.patch-automox-stage::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--stage-color, #003865);
+}
+.patch-automox-stage:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px -4px rgba(0, 40, 85, 0.12);
+  border-color: rgba(0, 163, 224, 0.4);
+}
+.patch-automox-stage .step-index-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: var(--weight-bold);
+  color: #FFFFFF;
+  background: var(--stage-color, #003865);
+  margin-bottom: var(--space-3);
+  box-shadow: 0 2px 8px rgba(0, 40, 85, 0.25);
+}
 
-/* Service tiers */
+/* ── Service Tiers — Scheidt & Bachmann brand colors ────────────────────── */
 .patch-tiers { margin-bottom: var(--space-6); }
-.patch-tier { display: flex; flex-direction: column; }
-.patch-tier.recommended { box-shadow: var(--shadow-md); }
+.patch-tier {
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+.patch-tier.tier-basic {
+  background: #FFFFFF !important;
+  border: 1.5px solid rgba(0, 56, 101, 0.16);
+  border-top: 4px solid #005691;
+  box-shadow: 0 8px 24px -4px rgba(0, 40, 85, 0.08);
+  color: var(--color-text);
+}
+.patch-tier.tier-basic:hover {
+  border-color: #005691;
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -6px rgba(0, 56, 101, 0.16), 0 0 16px rgba(0, 163, 224, 0.12);
+}
+.patch-tier.tier-basic .section-title,
+.patch-tier.tier-basic .card-title {
+  color: #002855;
+}
+.patch-tier.tier-basic .card-desc {
+  color: var(--color-text-muted);
+}
+.patch-tier.tier-basic .text-muted {
+  color: var(--color-text-muted);
+}
+.patch-tier.tier-basic .badge {
+  background: #EBF5FF;
+  color: #005691;
+  border: 1px solid rgba(0, 86, 145, 0.3);
+}
+
+/* Checklist in tier-basic — clean dark text with Scheidt & Bachmann blue ticks */
+.patch-tier.tier-basic .check-list li {
+  color: var(--color-text) !important;
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+.patch-tier.tier-basic .check-list li span {
+  color: var(--color-text) !important;
+}
+.patch-tier.tier-basic .check-list .check-mark {
+  background: #EBF5FF !important;
+  border: 1.5px solid #005691 !important;
+  color: #005691 !important;
+}
+.patch-tier.tier-basic .check-list .check-mark svg {
+  color: #005691 !important;
+  stroke: #005691 !important;
+}
+
+.patch-tier.tier-recommended {
+  background: linear-gradient(155deg, #021730 0%, #072A52 45%, #0B427B 100%) !important;
+  border: 1.5px solid rgba(138, 221, 255, 0.5);
+  border-top: 4px solid var(--sb-sky-300);
+  box-shadow: 0 16px 40px -8px rgba(3, 27, 54, 0.55), 0 0 24px rgba(138, 221, 255, 0.2);
+  color: #FFFFFF !important;
+}
+.patch-tier.tier-recommended:hover {
+  transform: translateY(-4px);
+  border-color: var(--sb-sky-300);
+  box-shadow: 0 20px 48px -8px rgba(3, 27, 54, 0.7), 0 0 32px rgba(138, 221, 255, 0.35);
+}
+.patch-tier.tier-recommended .section-title,
+.patch-tier.tier-recommended .card-title {
+  color: #FFFFFF !important;
+}
+.patch-tier.tier-recommended .card-desc {
+  color: rgba(221, 244, 255, 0.85) !important;
+}
+.patch-tier.tier-recommended .text-muted {
+  color: rgba(221, 244, 255, 0.65) !important;
+}
+.patch-tier.tier-recommended .badge {
+  background: rgba(138, 221, 255, 0.2) !important;
+  color: var(--sb-sky-300) !important;
+  border: 1px solid rgba(138, 221, 255, 0.4) !important;
+}
+
+/* Checklist in tier-recommended — Pure White Text & White Ticks */
+.patch-tier.tier-recommended .check-list li {
+  color: #FFFFFF !important;
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+.patch-tier.tier-recommended .check-list li span {
+  color: #FFFFFF !important;
+}
+.patch-tier.tier-recommended .check-list .check-mark {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.7) !important;
+  color: #FFFFFF !important;
+}
+.patch-tier.tier-recommended .check-list .check-mark svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
 .patch-tier-foot {
   margin-top: auto;
   padding-top: var(--space-6);
@@ -54,44 +310,178 @@
   gap: var(--space-4);
   font-size: var(--text-caption);
 }
-.patch-tier .check-list { margin-bottom: var(--space-6); }
 
-/* Contact — a slate panel beside the form, like a tile */
+/* ── Patch Numbers Band — Coherent Scheidt & Bachmann Navy/Blue Theme ────── */
+.patch .band {
+  background: linear-gradient(145deg, #021B38 0%, #062E5A 50%, #0A437E 100%) !important;
+  border: 1px solid rgba(138, 221, 255, 0.3) !important;
+  box-shadow: 0 16px 40px -8px rgba(2, 27, 56, 0.45), 0 0 24px rgba(138, 221, 255, 0.12) !important;
+}
+.patch .band .band-stat-value {
+  color: var(--sb-sky-300) !important;
+  text-shadow: 0 0 16px rgba(138, 221, 255, 0.35);
+}
+.patch .band .band-stat-label {
+  color: rgba(221, 244, 255, 0.92) !important;
+}
+.patch .band.animated::before {
+  background: radial-gradient(
+    circle 500px at calc(10% + var(--scroll-progress, 0.5) * 80%) 50%,
+    rgba(138, 221, 255, 0.24) 0%,
+    rgba(0, 163, 224, 0.08) 50%,
+    transparent 75%
+  ) !important;
+}
+
+/* ── Why Automox Pillars ─────────────────────────────────────────────────── */
+.patch-pillar-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+.patch-pillar-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -4px rgba(0, 40, 85, 0.12);
+}
+
+/* Contact — Midnight Sapphire & Electric Cyan (harmonious with Scheidt & Bachmann Blue) */
 .patch-contact {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(0, 163, 224, 0.35);
+  box-shadow: 0 16px 40px -8px rgba(0, 40, 85, 0.35);
   margin-bottom: 0;
+  position: relative;
 }
+
 .patch-contact-panel {
+  position: relative;
   background:
-    repeating-radial-gradient(circle at 100% 100%, transparent 0 52px, rgba(138, 221, 255, 0.08) 52px 53px),
-    var(--color-surface-inverse);
+    radial-gradient(ellipse 90% 80% at 20% 25%, rgba(0, 163, 224, 0.25) 0%, transparent 60%),
+    radial-gradient(circle at 85% 75%, rgba(99, 102, 241, 0.20) 0%, transparent 55%),
+    repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(138, 221, 255, 0.04) 35px, rgba(138, 221, 255, 0.04) 36px),
+    linear-gradient(145deg, #07152b 0%, #0d284f 45%, #13396b 80%, #0a1c36 100%);
   padding: var(--space-12) var(--space-10);
+  overflow: hidden;
 }
-.patch-contact-panel .display { margin: var(--space-3) 0 var(--space-4); }
-.patch-contact-lines { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-8); }
+
+/* Atmospheric animated radar sweep */
+.patch-contact-panel::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(0, 163, 224, 0.12) 120deg, transparent 180deg);
+  animation: expertRadarSweep 12s linear infinite;
+  pointer-events: none;
+}
+
+/* Pulsing ambient sapphire/cyan glow */
+.patch-contact-panel::after {
+  content: '';
+  position: absolute;
+  top: 10%;
+  right: 10%;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 163, 224, 0.22) 0%, transparent 70%);
+  animation: expertGlowPulse 6s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes expertRadarSweep {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes expertGlowPulse {
+  0%   { transform: scale(0.9) translateY(0); opacity: 0.7; }
+  100% { transform: scale(1.25) translateY(-15px); opacity: 1; }
+}
+
+.patch-contact-panel .eyebrow {
+  color: var(--sb-sky-300, #38bdf8) !important;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.patch-contact-panel .eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00a3e0;
+  box-shadow: 0 0 10px #00a3e0;
+}
+
+.patch-contact-panel .display {
+  margin: var(--space-3) 0 var(--space-4);
+  color: #f8fafc !important;
+  text-shadow: 0 2px 14px rgba(0, 20, 50, 0.6);
+}
+
+.patch-contact-panel .lead {
+  color: #e2e8f0 !important;
+  line-height: 1.6;
+}
+
+.patch-contact-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+  position: relative;
+  z-index: 2;
+}
+
 .patch-contact-line {
   display: flex;
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-4);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-text-on-inverse);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(138, 221, 255, 0.22);
+  color: #f8fafc;
   font-weight: var(--weight-semibold);
-  transition: background var(--duration-fast);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(8px);
 }
-.patch-contact-line:hover { background: rgba(255, 255, 255, 0.12); }
-.patch-contact-line svg { color: var(--sb-sky-300); }
+
+.patch-contact-line:hover {
+  background: rgba(0, 163, 224, 0.18);
+  border-color: #38bdf8;
+  transform: translateX(6px) translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(0, 20, 50, 0.5), 0 0 16px rgba(0, 163, 224, 0.3);
+}
+
+.patch-contact-line svg {
+  color: #38bdf8;
+  transition: transform 0.25s ease;
+}
+
+.patch-contact-line:hover svg {
+  transform: scale(1.15);
+  color: #bae6fd;
+}
+
 .patch-contact-line small {
   display: block;
   font-size: var(--text-overline);
   font-weight: var(--weight-regular);
-  color: var(--color-text-on-inverse-muted);
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
+
 .patch-contact-form {
   background: var(--color-surface);
   padding: var(--space-12) var(--space-10);

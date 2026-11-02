@@ -16,6 +16,7 @@ const prisma = new PrismaClient();
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "ChangeMe123!dev";
 
 const users = [
+  { email: "aouichi.sarra@scheidt-bachmann.de", name: "Sarra Aouichi", initials: "SA", partner: "S&B HQ", color: "#00A3E0", roles: ["Admin"] },
   { email: "admin@scheidt-bachmann.de", name: "Kai Harperscheidt", initials: "KH", partner: "S&B HQ", color: "#1A6FD4", roles: ["Admin"] },
   { email: "manager@scheidt-bachmann.de", name: "Manager Test", initials: "MT", partner: "S&B UK", color: "#1AB870", roles: ["Project Manager"] },
   { email: "sales@scheidt-bachmann.de", name: "Sales Test", initials: "ST", partner: "S&B HQ", color: "#C0185A", roles: ["Sales"] },

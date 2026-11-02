@@ -1,28 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { countByStatus } from "../../data/display";
 import { HUB_MODULES } from "../../data/modules";
-import { useBulletins, useProjects } from "../../queries";
 import { useAuth } from "../auth/useAuth";
 import {
-  AccountMenu, AppFooter, AppHeader, CheckList, Icon, StatBand, Tile, TileArt, buttonClass,
+  AccountMenu, AppFooter, AppHeader, CheckList, Icon, Tile, TileArt, buttonClass,
 } from "../../design-system";
 import "../../styles/landing.css";
 
 export function LandingHub() {
   const { user, can } = useAuth();
   const modules = HUB_MODULES.filter(m => can(m.permission));
-  const canPatch = can("patch:read");
-  const projects = useProjects().data;
-  const bulletins = useBulletins(canPatch).data;
   const firstName = user?.name.split(" ")[0];
-
-  // Every figure is counted from live data, and only from data this user may read.
-  const figures = [
-    projects && { value: projects.length, label: "Onboarding projects" },
-    projects && { value: countByStatus(projects, "review") + countByStatus(projects, "sales-approval"), label: "Awaiting review" },
-    projects && { value: countByStatus(projects, "onboarded"), label: "Customers onboarded" },
-    canPatch && bulletins && { value: bulletins.filter(b => b.status !== "deployed").length, label: "Open patch bulletins" },
-  ].filter(Boolean) as { value: number; label: string }[];
 
   return (
     <div className="page-shell">
@@ -42,15 +29,9 @@ export function LandingHub() {
           </p>
         </section>
 
-        {figures.length > 0 && (
-          <section className="hub-band" aria-label="At a glance">
-            <StatBand items={figures} />
-          </section>
-        )}
-
         <section className="hub-modules" aria-label="Modules">
           {modules.map((m, i) => (
-            <Tile key={m.to} reverse={i % 2 === 1} media={<TileArt icon={m.icon} label={`Module 0${i + 1} · ${m.kicker}`} />}>
+            <Tile key={m.to} reverse={i % 2 === 1} media={<TileArt icon={m.icon} label={`Module 0${i + 1} · ${m.kicker}`} imageSrc={m.image} />}>
               <div className="eyebrow">{m.kicker}</div>
               <h2 className="display">{m.label}</h2>
               <p className="lead">{m.description}</p>

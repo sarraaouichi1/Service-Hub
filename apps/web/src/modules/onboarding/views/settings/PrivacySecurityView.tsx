@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../../../../components/Icon";
 import { Toggle } from "../../../../components/Toggle";
 import { useOnboarding } from "../../context/onboardingContext";
 import { UserSettingsTabs } from "./UserSettingsTabs";
+import { updateMyProfile, ApiError } from "../../../../api";
 
 export function PrivacySecurityView() {
   const { currentUser } = useOnboarding();
@@ -31,6 +32,53 @@ export function PrivacySecurityView() {
     auditReports: true,
     thirdPartySharing: false,
   });
+
+  // Database Save state
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  useEffect(() => {
+    if (currentUser?.privacySettings) {
+      const saved = currentUser.privacySettings as {
+        tfaEnabled?: boolean;
+        alerts?: typeof alerts;
+        visibility?: "team" | "public" | "admins";
+        hideEmail?: boolean;
+        showOnlineStatus?: boolean;
+        privacy?: typeof privacy;
+      };
+      if (typeof saved.tfaEnabled === "boolean") setTfaEnabled(saved.tfaEnabled);
+      if (saved.alerts) setAlerts(saved.alerts);
+      if (saved.visibility) setVisibility(saved.visibility);
+      if (typeof saved.hideEmail === "boolean") setHideEmail(saved.hideEmail);
+      if (typeof saved.showOnlineStatus === "boolean") setShowOnlineStatus(saved.showOnlineStatus);
+      if (saved.privacy) setPrivacy(saved.privacy);
+    }
+  }, [currentUser]);
+
+  const handleSavePrivacySecurity = async () => {
+    setIsSaving(true);
+    setSaveError("");
+    try {
+      await updateMyProfile({
+        privacySettings: {
+          tfaEnabled,
+          alerts,
+          visibility,
+          hideEmail,
+          showOnlineStatus,
+          privacy,
+        },
+      });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3500);
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? err.message : "Failed to persist privacy settings to database");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Sessions list
   const [sessions, setSessions] = useState([
@@ -597,6 +645,27 @@ export function PrivacySecurityView() {
                   onChange={(v) => setPrivacy({ ...privacy, auditReports: v })}
                 />
               </div>
+            </div>
+
+            <div style={{ borderTop: "1px solid var(--gray-100)", paddingTop: 16, display: "flex", alignItems: "center", gap: 14 }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSavePrivacySecurity}
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving to Database..." : "Save Privacy & Security Settings"}
+              </button>
+              {savedSuccess && (
+                <span style={{ fontSize: 13, color: "var(--green)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                  <Icon name="check" size={15} color="var(--green)" /> Privacy & security settings saved to database!
+                </span>
+              )}
+              {saveError && (
+                <span style={{ fontSize: 13, color: "var(--red, #ef4444)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                  <Icon name="alert" size={15} color="var(--red, #ef4444)" /> {saveError}
+                </span>
+              )}
             </div>
           </div>
         </div>

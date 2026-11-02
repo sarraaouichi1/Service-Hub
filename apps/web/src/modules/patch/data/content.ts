@@ -224,6 +224,14 @@ export const ROADMAP: { title: string; desc: string; status: string; icon: IconN
 export const CONTACT = {
   phone: "+49 2166 266-0",
   email: "customer@scheidt-bachmann.de",
+  experts: [
+    { name: "Wissal Hafsaoui", email: "Hafsaoui.Wissal@scheidt-bachmann.de", role: "Security & Patch Operations" },
+    { name: "Hadil Aloui", email: "Aloui.Hadil@scheidt-bachmann.de", role: "Platform Security Architecture" },
+  ],
+  emails: [
+    "Hafsaoui.Wissal@scheidt-bachmann.de",
+    "Aloui.Hadil@scheidt-bachmann.de",
+  ],
 };
 
 export const SCOPE_NOTE =

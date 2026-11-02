@@ -14,13 +14,18 @@ export function LoginView() {
   const [failure, setFailure] = useState<string | null>(null);
 
   const {
-    register, handleSubmit, setError,
+    register, handleSubmit, setError, setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
     mode: "onTouched",
   });
+
+  const fillAccount = (email: string) => {
+    setValue("email", email, { shouldValidate: true });
+    setValue("password", "ChangeMe123!dev", { shouldValidate: true });
+  };
 
   /**
    * A rejection arrives as a 401 or 422 carrying per-field messages, which are
@@ -113,12 +118,64 @@ export function LoginView() {
             </button>
           </form>
 
-          <div className="callout callout-neutral auth-note">
-            <Icon name="lock" size={16} />
-            <div>
-              <strong>Single sign-on</strong> replaces this screen once the identity provider is
-              connected. Accounts, roles and permissions stay where they are — only how you prove who
-              you are changes.
+          <div className="auth-divider">
+            <span>Demo accounts</span>
+          </div>
+
+          <div className="auth-demo-accounts">
+            <p className="auth-demo-caption">
+              Click any role to prefill credentials (all use the same demo password):
+            </p>
+            <div className="auth-demo-chips">
+              <button
+                type="button"
+                className="chip"
+                onClick={() => fillAccount("admin@scheidt-bachmann.de")}
+              >
+                Admin
+              </button>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => fillAccount("manager@scheidt-bachmann.de")}
+              >
+                Project Manager
+              </button>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => fillAccount("sales@scheidt-bachmann.de")}
+              >
+                Sales
+              </button>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => fillAccount("reviewer@scheidt-bachmann.de")}
+              >
+                Reviewer
+              </button>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => fillAccount("devops@scheidt-bachmann.de")}
+              >
+                DevOps
+              </button>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => fillAccount("partner@scheidt-bachmann.de")}
+              >
+                Partner
+              </button>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => fillAccount("customer@scheidt-bachmann.de")}
+              >
+                Customer
+              </button>
             </div>
           </div>
         </div>

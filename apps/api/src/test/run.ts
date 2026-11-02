@@ -28,6 +28,7 @@ async function main() {
   // Re-runnable: a run that fails mid-way must not poison the next one.
   await prisma.user.deleteMany({ where: { email: { in: ["ada.lovelace@example.com", "e@v.il", "z@y.com"] } } });
   await prisma.template.deleteMany({ where: { title: "Ireland" } });
+  await prisma.user.updateMany({ where: { email: ADMIN }, data: { roles: ["Admin"], status: "active" } });
 
   const app = await buildServer();
   await app.listen({ port: 0, host: "127.0.0.1" });
@@ -111,9 +112,25 @@ async function main() {
 
   // ── Lockout protection ──────────────────────────────────────────────────
   const adminId = (me.body?.user as { id: string }).id;
+  const otherAdmins = await prisma.user.findMany({
+    where: { email: { not: ADMIN }, roles: { has: "Admin" }, status: "active" },
+    select: { id: true },
+  });
+  if (otherAdmins.length > 0) {
+    await prisma.user.updateMany({
+      where: { id: { in: otherAdmins.map((a) => a.id) } },
+      data: { status: "inactive" },
+    });
+  }
   check("last admin cannot drop the Admin role", (await call(`/api/users/${adminId}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ roles: ["Customer"] }) })).status, 409);
   check("last admin cannot be deactivated", (await call(`/api/users/${adminId}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ status: "inactive" }) })).status, 409);
   check("cannot delete your own account", (await call(`/api/users/${adminId}`, { method: "DELETE", cookie: admin.cookie })).status, 409);
+  if (otherAdmins.length > 0) {
+    await prisma.user.updateMany({
+      where: { id: { in: otherAdmins.map((a) => a.id) } },
+      data: { status: "active" },
+    });
+  }
 
   // ── A role change ends the sessions it was granted under ────────────────
   const patched = await call(`/api/users/${newUser.id}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ roles: ["DevOps"] }) });
@@ -131,7 +148,7 @@ async function main() {
   const auditor = await login(REVIEWER);
 
   check("everyone signed in can read projects", (await call("/api/projects", { cookie: customer.cookie })).status, 200);
-  check("a customer may not update a project", (await call("/api/projects/1", { method: "PATCH", cookie: customer.cookie, body: JSON.stringify({ status: "approved" }) })).status, 403);
+  check("sales may not update a project", (await call("/api/projects/1", { method: "PATCH", cookie: sales.cookie, body: JSON.stringify({ status: "approved" }) })).status, 403);
   check("an admin may update a project", (await call("/api/projects/1", { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ step: 5 }) })).status, 200);
 
   check("a customer may not read templates", (await call("/api/templates", { cookie: customer.cookie })).status, 403);
@@ -179,7 +196,7 @@ async function main() {
   const badSubmit = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify({ opName: "Incomplete" }) });
   check("an incomplete submission is 422", badSubmit.status, 422);
   check("the 422 names the missing fields", Object.keys((badSubmit.body?.fieldErrors ?? {}) as object).length > 3, true);
-  check("a customer may not submit at all", (await call("/api/projects/submit", { method: "POST", cookie: customer.cookie, body: JSON.stringify({}) })).status, 403);
+  check("sales may not submit at all", (await call("/api/projects/submit", { method: "POST", cookie: sales.cookie, body: JSON.stringify({}) })).status, 403);
 
   // ── Rules an administrator turned off stop being enforced ───────────────
   const ipRule = ((await call("/api/rules", { cookie: admin.cookie })).body?.rules as { id: number; field: string; active: boolean }[])

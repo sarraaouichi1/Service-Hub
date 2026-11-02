@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" width="1200" height="700">
+  <!-- Background -->
+  <rect width="1200" height="700" fill="#0A1120" />
+
+  <!-- Cyber Grid Pattern -->
+  <g opacity="0.15">
+    <path d="M0,50 H1200 M0,100 H1200 M0,150 H1200 M0,200 H1200 M0,250 H1200 M0,300 H1200 M0,350 H1200 M0,400 H1200 M0,450 H1200 M0,500 H1200 M0,550 H1200 M0,600 H1200 M0,650 H1200" stroke="#FFC200" stroke-width="0.5" />
+    <path d="M100,0 V700 M200,0 V700 M300,0 V700 M400,0 V700 M500,0 V700 M600,0 V700 M700,0 V700 M800,0 V700 M900,0 V700 M1000,0 V700 M1100,0 V700" stroke="#FFC200" stroke-width="0.5" />
+  </g>
+
+  <!-- Top Cyber Telemetry Header -->
+  <rect x="0" y="0" width="1200" height="75" fill="#111827" stroke="#FFC200" stroke-width="1" />
+  <text x="40" y="44" font-family="Outfit, sans-serif" font-size="20" font-weight="900" fill="#FFFFFF">CYBER ONBOARDING HUB</text>
+  
+  <circle cx="340" cy="38" r="5" fill="#10B981" />
+  <text x="354" y="42" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#10B981">AUTOMOX CLOUD SYNC ACTIVE</text>
+  
+  <text x="680" y="42" font-family="Outfit, sans-serif" font-size="12" font-weight="800" fill="#CBD5E1">SLA POSTURE SCORE:</text>
+  <text x="820" y="43" font-family="Outfit, sans-serif" font-size="18" font-weight="900" fill="#FFC200">98.6%</text>
+
+  <rect x="1000" y="18" width="160" height="38" rx="8" fill="#FFC200" />
+  <text x="1025" y="42" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#0A1120">+ CREATE REQUEST</text>
+
+  <!-- Title & Subtitle -->
+  <text x="40" y="115" font-family="Outfit, sans-serif" font-size="24" font-weight="900" fill="#FFFFFF">Proposal 2: Modern Dark Cyber Operations Hub</text>
+  <text x="40" y="136" font-family="Inter, sans-serif" font-size="13" fill="#CBD5E1">Kanban board workflow with live telemetry badges and dark glassmorphic cards</text>
+
+  <!-- Kanban Board Columns -->
+  <g transform="translate(40, 160)">
+    <!-- Column 1: Submitted -->
+    <rect x="0" y="0" width="265" height="500" rx="14" fill="#111827" stroke="rgba(255,255,255,0.08)" />
+    <rect x="0" y="0" width="265" height="40" rx="14" fill="rgba(255,194,0,0.1)" />
+    <text x="16" y="26" font-family="Outfit, sans-serif" font-size="12" font-weight="800" fill="#FFC200">SUBMITTED (3)</text>
+    
+    <!-- Card 1.1 -->
+    <rect x="12" y="52" width="241" height="120" rx="10" fill="#0A1120" stroke="rgba(255,194,0,0.3)" />
+    <text x="24" y="78" font-family="Outfit, sans-serif" font-size="13" font-weight="800" fill="#FFFFFF">#REQ-2026-104</text>
+    <text x="24" y="98" font-family="Inter, sans-serif" font-size="12" fill="#CBD5E1">customer@scheidt-bachmann.de</text>
+    <rect x="24" y="112" width="90" height="20" rx="10" fill="rgba(255,194,0,0.15)" />
+    <text x="34" y="126" font-family="Outfit, sans-serif" font-size="10" font-weight="800" fill="#FFC200">Parking System</text>
+
+    <!-- Column 2: Sales Review -->
+    <rect x="285" y="0" width="265" height="500" rx="14" fill="#111827" stroke="rgba(255,255,255,0.08)" />
+    <rect x="285" y="0" width="265" height="40" rx="14" fill="rgba(217,119,6,0.1)" />
+    <text x="301" y="26" font-family="Outfit, sans-serif" font-size="12" font-weight="800" fill="#F59E0B">SALES REVIEW (5)</text>
+
+    <!-- Card 2.1 -->
+    <rect x="297" y="52" width="241" height="120" rx="10" fill="#0A1120" stroke="#F59E0B" />
+    <text x="309" y="78" font-family="Outfit, sans-serif" font-size="13" font-weight="800" fill="#FFFFFF">#REQ-2026-102</text>
+    <text x="309" y="98" font-family="Inter, sans-serif" font-size="12" fill="#CBD5E1">Anna Krüger (Sales Test)</text>
+    <rect x="309" y="112" width="110" height="20" rx="10" fill="rgba(245,158,11,0.15)" />
+    <text x="319" y="126" font-family="Outfit, sans-serif" font-size="10" font-weight="800" fill="#F59E0B">Payment Pending</text>
+
+    <!-- Column 3: Tech Review -->
+    <rect x="570" y="0" width="265" height="500" rx="14" fill="#111827" stroke="rgba(255,255,255,0.08)" />
+    <rect x="570" y="0" width="265" height="40" rx="14" fill="rgba(0,102,204,0.1)" />
+    <text x="586" y="26" font-family="Outfit, sans-serif" font-size="12" font-weight="800" fill="#38BDF8">TECH REVIEW (3)</text>
+
+    <!-- Card 3.1 -->
+    <rect x="582" y="52" width="241" height="120" rx="10" fill="#0A1120" stroke="#38BDF8" />
+    <text x="594" y="78" font-family="Outfit, sans-serif" font-size="13" font-weight="800" fill="#FFFFFF">#REQ-2026-099</text>
+    <text x="594" y="98" font-family="Inter, sans-serif" font-size="12" fill="#CBD5E1">Laura Meissner (Reviewer)</text>
+    <rect x="594" y="112" width="100" height="20" rx="10" fill="rgba(56,189,248,0.15)" />
+    <text x="604" y="126" font-family="Outfit, sans-serif" font-size="10" font-weight="800" fill="#38BDF8">API Validation</text>
+
+    <!-- Column 4: Provisioned -->
+    <rect x="855" y="0" width="265" height="500" rx="14" fill="#111827" stroke="rgba(255,255,255,0.08)" />
+    <rect x="855" y="0" width="265" height="40" rx="14" fill="rgba(16,185,129,0.1)" />
+    <text x="871" y="26" font-family="Outfit, sans-serif" font-size="12" font-weight="800" fill="#10B981">PROVISIONED (16)</text>
+
+    <!-- Card 4.1 -->
+    <rect x="867" y="52" width="241" height="120" rx="10" fill="#0A1120" stroke="#10B981" />
+    <text x="879" y="78" font-family="Outfit, sans-serif" font-size="13" font-weight="800" fill="#FFFFFF">#REQ-2026-090</text>
+    <text x="879" y="98" font-family="Inter, sans-serif" font-size="12" fill="#CBD5E1">Marc Delvaux (Manager)</text>
+    <rect x="879" y="112" width="110" height="20" rx="10" fill="rgba(16,185,129,0.15)" />
+    <text x="889" y="126" font-family="Outfit, sans-serif" font-size="10" font-weight="800" fill="#10B981">100% Complete</text>
+  </g>
+</svg>

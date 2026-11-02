@@ -41,8 +41,11 @@ type UserRow = {
   jobTitle?: string | null;
   company?: string | null;
   department?: string | null;
+  country?: string | null;
   language?: string | null;
   timezone?: string | null;
+  notificationSettings?: unknown;
+  privacySettings?: unknown;
 };
 
 /** Shape a database row the way the client expects, deriving permissions from roles. */
@@ -65,8 +68,11 @@ export function toAuthUser(user: UserRow): AuthUser {
     jobTitle: user.jobTitle ?? undefined,
     company: user.company ?? user.partner ?? undefined,
     department: user.department ?? undefined,
+    country: user.country ?? "DE",
     language: user.language ?? "en-GB",
     timezone: user.timezone ?? "Europe/Berlin",
+    notificationSettings: (user.notificationSettings as Record<string, unknown>) ?? null,
+    privacySettings: (user.privacySettings as Record<string, unknown>) ?? null,
   };
 }
 

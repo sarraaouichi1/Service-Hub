@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" width="1200" height="700">
+  <defs>
+    <linearGradient id="bgGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#001E42" />
+      <stop offset="100%" stop-color="#002855" />
+    </linearGradient>
+    <filter id="shadow1" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#001E42" flood-opacity="0.1" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="700" fill="#F4F7FA" />
+
+  <!-- Top Header Bar -->
+  <rect x="0" y="0" width="1200" height="70" fill="url(#bgGrad1)" />
+  <text x="40" y="42" font-family="Outfit, sans-serif" font-size="20" font-weight="900" fill="#FFFFFF">SCHEIDT &amp; BACHMANN</text>
+  <rect x="290" y="24" width="150" height="26" rx="13" fill="rgba(255, 194, 0, 0.15)" stroke="#FFC200" stroke-width="1" />
+  <text x="304" y="41" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#FFC200">ONBOARDING DESK</text>
+  <rect x="1000" y="18" width="160" height="36" rx="8" fill="#FFC200" />
+  <text x="1025" y="41" font-family="Outfit, sans-serif" font-size="12" font-weight="800" fill="#001E42">+ NEW REQUEST</text>
+
+  <!-- Title & Subtitle -->
+  <text x="40" y="115" font-family="Outfit, sans-serif" font-size="24" font-weight="900" fill="#001E42">Proposal 1: Executive Command Center</text>
+  <text x="40" y="136" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#64748B">Executive KPI overview with structured request queue table and status filtering</text>
+
+  <!-- KPI Cards Grid -->
+  <g transform="translate(40, 155)">
+    <!-- Card 1 -->
+    <rect x="0" y="0" width="260" height="100" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow1)" />
+    <text x="20" y="32" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#64748B">TOTAL REQUESTS</text>
+    <text x="20" y="70" font-family="Outfit, sans-serif" font-size="32" font-weight="900" fill="#001E42">24</text>
+    <rect x="200" y="20" width="40" height="40" rx="10" fill="rgba(0, 102, 204, 0.1)" />
+    <text x="212" y="46" font-size="18">📊</text>
+
+    <!-- Card 2 -->
+    <rect x="285" y="0" width="260" height="100" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow1)" />
+    <text x="305" y="32" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#64748B">PENDING SALES</text>
+    <text x="305" y="70" font-family="Outfit, sans-serif" font-size="32" font-weight="900" fill="#D97706">5</text>
+    <rect x="485" y="20" width="40" height="40" rx="10" fill="rgba(217, 119, 6, 0.1)" />
+    <text x="497" y="46" font-size="18">💳</text>
+
+    <!-- Card 3 -->
+    <rect x="570" y="0" width="260" height="100" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow1)" />
+    <text x="590" y="32" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#64748B">TECH REVIEW</text>
+    <text x="590" y="70" font-family="Outfit, sans-serif" font-size="32" font-weight="900" fill="#0066CC">3</text>
+    <rect x="770" y="20" width="40" height="40" rx="10" fill="rgba(0, 102, 204, 0.1)" />
+    <text x="782" y="46" font-size="18">🔬</text>
+
+    <!-- Card 4 -->
+    <rect x="855" y="0" width="265" height="100" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow1)" />
+    <text x="875" y="32" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#64748B">PROVISIONED</text>
+    <text x="875" y="70" font-family="Outfit, sans-serif" font-size="32" font-weight="900" fill="#10B981">16</text>
+    <rect x="1055" y="20" width="40" height="40" rx="10" fill="rgba(16, 185, 129, 0.1)" />
+    <text x="1067" y="46" font-size="18">✅</text>
+  </g>
+
+  <!-- Table Container -->
+  <g transform="translate(40, 280)">
+    <rect x="0" y="0" width="1120" height="380" rx="16" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow1)" />
+
+    <!-- Table Header -->
+    <rect x="0" y="0" width="1120" height="50" rx="16" fill="#F8FAFC" />
+    <line x1="0" y1="50" x2="1120" y2="50" stroke="#E2E8F0" stroke-width="1" />
+    <text x="30" y="32" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#64748B">REQUEST ID</text>
+    <text x="160" y="32" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#64748B">CUSTOMER EMAIL</text>
+    <text x="440" y="32" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#64748B">PRODUCT TYPE</text>
+    <text x="680" y="32" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#64748B">STAGE</text>
+    <text x="880" y="32" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#64748B">ASSIGNED ROLE</text>
+    <text x="1030" y="32" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#64748B">ACTION</text>
+
+    <!-- Row 1 -->
+    <g transform="translate(0, 50)">
+      <line x1="0" y1="65" x2="1120" y2="65" stroke="#F1F5F9" stroke-width="1" />
+      <text x="30" y="38" font-family="Outfit, sans-serif" font-size="13" font-weight="800" fill="#001E42">#REQ-2026-01</text>
+      <text x="160" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#1E293B">customer@scheidt-bachmann.de</text>
+      <text x="440" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#0066CC" font-weight="700">Parking Management System</text>
+      
+      <rect x="680" y="20" width="110" height="26" rx="13" fill="#FEF3E8" />
+      <text x="696" y="37" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#D97706">Sales Review</text>
+
+      <text x="880" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="12" fill="#475569">Sales Test (Sales)</text>
+      
+      <rect x="1020" y="20" width="70" height="26" rx="6" fill="#001E42" />
+      <text x="1037" y="37" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#FFC200">Inspect</text>
+    </g>
+
+    <!-- Row 2 -->
+    <g transform="translate(0, 115)">
+      <line x1="0" y1="65" x2="1120" y2="65" stroke="#F1F5F9" stroke-width="1" />
+      <text x="30" y="38" font-family="Outfit, sans-serif" font-size="13" font-weight="800" fill="#001E42">#REQ-2026-02</text>
+      <text x="160" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#1E293B">Marc Delvaux (Manager Test)</text>
+      <text x="440" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#0066CC" font-weight="700">entervo smart</text>
+      
+      <rect x="680" y="20" width="110" height="26" rx="13" fill="#EFF6FF" />
+      <text x="695" y="37" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#2563EB">Tech Review</text>
+
+      <text x="880" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="12" fill="#475569">Reviewer Test</text>
+      
+      <rect x="1020" y="20" width="70" height="26" rx="6" fill="#10B981" />
+      <text x="1034" y="37" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF">Approve</text>
+    </g>
+
+    <!-- Row 3 -->
+    <g transform="translate(0, 180)">
+      <text x="30" y="38" font-family="Outfit, sans-serif" font-size="13" font-weight="800" fill="#001E42">#REQ-2026-03</text>
+      <text x="160" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#1E293B">Anna Krüger (Sales Test)</text>
+      <text x="440" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#0066CC" font-weight="700">Smart Portal Solution</text>
+      
+      <rect x="680" y="20" width="110" height="26" rx="13" fill="#ECFDF5" />
+      <text x="698" y="37" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#059669">Provisioned</text>
+
+      <text x="880" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="12" fill="#475569">System Admin</text>
+      
+      <rect x="1020" y="20" width="70" height="26" rx="6" fill="#F1F5F9" stroke="#CBD5E1" />
+      <text x="1036" y="37" font-family="Outfit, sans-serif" font-size="11" font-weight="800" fill="#475569">Details</text>
+    </g>
+  </g>
+</svg>

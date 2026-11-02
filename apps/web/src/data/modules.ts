@@ -13,6 +13,7 @@ export interface HubModule {
   icon: IconName;
   description: string;
   highlights: string[];
+  image: string;
   /** Hidden from anyone who lacks this. The API enforces the same rule. */
   permission: Permission;
 }
@@ -25,6 +26,7 @@ export const HUB_MODULES: HubModule[] = [
     icon: "layers",
     description: "Provision a customer onto entervo smart — company, facilities, hardware, payment and go-live — through one guided, validated workflow.",
     highlights: ["Seven-step guided wizard", "Review, sales and approval flow", "Country templates and validation rules"],
+    image: "/landing/hub-onboarding.jpg",
     permission: "project:read",
   },
   {
@@ -34,6 +36,7 @@ export const HUB_MODULES: HubModule[] = [
     icon: "shield",
     description: "Keep every entervo installation patched — security bulletins, rollout schedules and the managed service tiers behind them.",
     highlights: ["Security bulletins by severity", "Maintenance-window scheduling", "Basic and Premium service tiers"],
+    image: "/landing/hub-patch.jpg",
     permission: "patch:read",
   },
 ];

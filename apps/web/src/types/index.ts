@@ -16,7 +16,7 @@ export type IconName =
   | "building" | "settings" | "list" | "trash" | "creditCard" | "shield"
   | "eye" | "download" | "server" | "mapPin" | "zap" | "users" | "user" | "lock"
   | "search" | "cloud" | "monitor" | "fileText" | "refresh" | "activity" | "mail"
-  | "phone" | "arrowRight" | "info" | "alert" | "package" | "cpu" | "trendingUp"
+  | "phone" | "arrowRight" | "arrowLeft" | "info" | "alert" | "package" | "cpu" | "trendingUp"
   | "logOut" | "clock" | "calendar" | "layers" | "terminal" | "externalLink" | "globe";
 
 export interface IconProps {

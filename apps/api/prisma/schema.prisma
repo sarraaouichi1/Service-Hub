@@ -29,8 +29,12 @@ model User {
   jobTitle     String?
   company      String?
   department   String?
+  country      String?   @default("DE")
   language     String?   @default("en-GB")
   timezone     String?   @default("Europe/Berlin")
+
+  notificationSettings Json?
+  privacySettings      Json?
 
   /// Null for accounts that can only sign in through an identity provider.
   passwordHash String?
@@ -151,4 +155,48 @@ model OnboardingDraft {
   updatedAt DateTime @updatedAt
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Patch Management consultations and security inquiries from "Talk with our security experts".
+model PatchInquiry {
+  id         Int      @id @default(autoincrement())
+  userName   String
+  userEmail  String
+  company    String?
+  message    String
+  recipients String[] @default(["Hafsaoui.Wissal@scheidt-bachmann.de", "Aloui.Hadil@scheidt-bachmann.de"])
+  status     String   @default("submitted")
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/// Patch Request Tickets based on ServiceNow sn_customerservice_case specification.
+model PatchTicket {
+  id                    Int      @id @default(autoincrement())
+  ticketNumber          String   @unique
+  carparkName           String
+  customerAccount       String?
+  contactName           String?
+  contactEmail          String
+  contactPhone          String?
+  cpqOrderNumber        String?
+  contractNumber        String?
+  numberOfDevices       Int      @default(1)
+  entervoVersion        String
+  operatingSystem       String
+  ipAddress1           String
+  ipAddress2           String?
+  ipAddress3           String?
+  priority              String   @default("3 - Moderate")
+  urgency               String   @default("2 - Medium")
+  category              String   @default("Service Request")
+  subCategory           String   @default("entervo.it.security")
+  status                String   @default("Open")
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([ticketNumber])
+  @@index([createdAt])
 }

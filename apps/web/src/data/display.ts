@@ -12,7 +12,7 @@ export const STATUS_MAP: Record<ProjectStatus, StatusMeta> = {
   draft: { label: "Draft", cls: "badge-draft" },
   progress: { label: "In Progress", cls: "badge-progress" },
   review: { label: "Pending Review", cls: "badge-review" },
-  approved: { label: "Approved", cls: "badge-approved" },
+  approved: { label: "Ready for deployment", cls: "badge-approved" },
   "sales-approval": { label: "Sales Approval", cls: "badge-sales" },
   onboarded: { label: "Onboarded", cls: "badge-onboarded" },
 };
@@ -59,28 +59,39 @@ export const USER_ROLES: UserRole[] = [
 export const ROLE_COLORS: Record<UserRole, Tone> = {
   Admin: TONE.ink,
   "Project Manager": TONE.info,
-  Sales: TONE.rose,
-  Reviewer: TONE.plum,
+  Sales: TONE.plum,
+  Reviewer: TONE.warning,
   DevOps: TONE.teal,
-  Partner: TONE.success,
-  Customer: TONE.warning,
+  Partner: TONE.rose,
+  Customer: TONE.success,
 };
 
-export const PATCH_SEVERITY_TONE: Record<PatchSeverity, BadgeTone> = {
-  Critical: "danger", High: "warning", Medium: "info", Low: "neutral",
+export const NOTIFICATION_STYLE: Record<NotificationType, { icon: IconName; tone: BadgeTone; bg: string; color: string }> = {
+  submit: { icon: "package", tone: "info", bg: TONE.info.bg, color: TONE.info.color },
+  approve: { icon: "check", tone: "success", bg: TONE.success.bg, color: TONE.success.color },
+  reject: { icon: "alert", tone: "danger", bg: TONE.danger.bg, color: TONE.danger.color },
+  info: { icon: "info", tone: "neutral", bg: TONE.ink.bg, color: TONE.ink.color },
 };
 
-export const PATCH_STATUS: Record<PatchStatus, { label: string; tone: BadgeTone }> = {
+export const PATCH_STATUS_META: Record<PatchStatus, { label: string; tone: BadgeTone }> = {
   deployed: { label: "Deployed", tone: "success" },
-  testing: { label: "In testing", tone: "info" },
-  scheduled: { label: "Scheduled", tone: "warning" },
+  scheduled: { label: "Scheduled", tone: "info" },
+  testing: { label: "Testing", tone: "warning" },
   pending: { label: "Pending", tone: "neutral" },
 };
 
-/** A notification's look follows its type, not colours stored alongside it. */
-export const NOTIFICATION_STYLE: Record<NotificationType, Tone & { icon: IconName }> = {
-  submit: { ...TONE.info, icon: "plus" },
-  approve: { ...TONE.success, icon: "check" },
-  reject: { ...TONE.danger, icon: "alert" },
-  info: { ...TONE.warning, icon: "settings" },
+export const PATCH_STATUS = PATCH_STATUS_META;
+
+export const PATCH_SEVERITY_META: Record<PatchSeverity, { label: string; tone: BadgeTone }> = {
+  Critical: { label: "Critical", tone: "danger" },
+  High: { label: "High", tone: "warning" },
+  Medium: { label: "Medium", tone: "neutral" },
+  Low: { label: "Low", tone: "neutral" },
+};
+
+export const PATCH_SEVERITY_TONE: Record<PatchSeverity, BadgeTone> = {
+  Critical: "danger",
+  High: "warning",
+  Medium: "neutral",
+  Low: "neutral",
 };

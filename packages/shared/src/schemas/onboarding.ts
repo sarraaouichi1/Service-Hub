@@ -98,6 +98,16 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     port: text("port"),
     domain: text("domain"),
     address: text("address"),
+    // Connect & Validation & Mobility additions
+    providerId: text("providerId"),
+    contactEmail: text("contactEmail"),
+    contactPhone: text("contactPhone"),
+    adminUsername: text("adminUsername"),
+    adminEmail: text("adminEmail"),
+    tenantShortname: text("tenantShortname"),
+    tenantDescription: text("tenantDescription"),
+    zipCode: text("zipCode"),
+    city: text("city"),
   });
 
   const cellComputerStep = z.object({
@@ -111,9 +121,23 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     uiPassword: text("uiPassword"),
     deviceId: text("deviceId"),
     vat: text("vat"),
+    sshPort: text("sshPort"),
   });
 
-  const facilitiesStep = z.object({ facilities });
+  const facilitiesStep = z.object({
+    facilities,
+    carparkType: text("carparkType"),
+    heightLimit: text("heightLimit"),
+    parkingLots: text("parkingLots"),
+    chargingStations: text("chargingStations"),
+    costCenter: text("costCenter"),
+    entryLanes: text("entryLanes"),
+    exitLanes: text("exitLanes"),
+    latitude: text("latitude"),
+    longitude: text("longitude"),
+    totalSpaces: text("totalSpaces"),
+    mediatypes: text("mediatypes"),
+  });
 
   const appPaymentStep = z.object({
     financialInfo: text("financialInfo"),
@@ -122,13 +146,43 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     psp: text("psp", "Select a payment service provider"),
     pspMid: text("pspMid", "Merchant ID is required"),
     pspTid: text("pspTid"),
+    dailyMax: text("dailyMax"),
+    subtechEmail: text("subtechEmail"),
+    incidentEmail: text("incidentEmail"),
+    onboardingEmail: text("onboardingEmail"),
+    portalUrl: text("portalUrl"),
+    projectName: text("projectName"),
+    senderEmail: text("senderEmail"),
+    senderDomain: text("senderDomain"),
+    brandColors: text("brandColors"),
+    privacyUrl: text("privacyUrl"),
+    paymentType: text("paymentType"),
+    mobilityProvider: text("mobilityProvider"),
+    contractProductName: text("contractProductName"),
+    contractOneTimeFee: text("contractOneTimeFee"),
+    contractRecurringFee: text("contractRecurringFee"),
+    contractMinLeaseMonths: text("contractMinLeaseMonths"),
+    contractNoticePeriod: text("contractNoticePeriod"),
+    contractMaxBookings: text("contractMaxBookings"),
+    timeCardProductName: text("timeCardProductName"),
+    timeCardFee: text("timeCardFee"),
+    timeCardDuration: text("timeCardDuration"),
+    bundleProductName: text("bundleProductName"),
+    bundleFee: text("bundleFee"),
+    bundleSlotsCount: text("bundleSlotsCount"),
+    bundleSlotDuration: text("bundleSlotDuration"),
+    bundleOverstayFee: text("bundleOverstayFee"),
+    prepaidProductName: text("prepaidProductName"),
+    prepaidPrice: text("prepaidPrice"),
+    prepaidCredit: text("prepaidCredit"),
+    prepaidMinBalance: text("prepaidMinBalance"),
   });
 
   const salesApprovalStep = z.object({
     salesApproved: z.preprocess(
       (value) => value ?? false,
       z.boolean().refine((value) => value === true, {
-        message: "Sales must confirm payment before this submission can continue",
+        message: "Sales must confirm that the delivery can be done",
       }),
     ),
   });
@@ -221,6 +275,7 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     draftFieldErrors,
     draftIssues,
     isDraftComplete,
+    toFormErrors,
   };
 }
 
@@ -234,5 +289,6 @@ export const validateStep = defaults.validateStep;
 export const draftFieldErrors = defaults.draftFieldErrors;
 export const draftIssues = defaults.draftIssues;
 export const isDraftComplete = defaults.isDraftComplete;
+export const toFormErrors = defaults.toFormErrors;
 
 export type OnboardingSchemas = ReturnType<typeof createOnboardingSchemas>;

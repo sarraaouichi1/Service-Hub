@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../../../../components/Icon";
 import { UserSettingsTabs } from "./UserSettingsTabs";
+import { useOnboarding } from "../../context/onboardingContext";
+import { updateMyProfile, ApiError } from "../../../../api";
 
 type Frequency = "instant" | "daily" | "weekly" | "disabled";
 
@@ -19,7 +21,60 @@ interface CategorySetting {
   };
 }
 
+const DEFAULT_CATEGORIES: CategorySetting[] = [
+  {
+    id: "security",
+    name: "Security Alerts",
+    desc: "Unrecognized logins, password resets, 2FA modifications, and privilege escalations.",
+    icon: "🔒",
+    frequency: "instant",
+    channels: { inApp: true, email: true, sms: true, teams: true, push: true },
+  },
+  {
+    id: "system",
+    name: "System Updates",
+    desc: "Platform maintenance windows, patch bulletin releases, and version upgrades.",
+    icon: "⚙️",
+    frequency: "daily",
+    channels: { inApp: true, email: true, sms: false, teams: true, push: false },
+  },
+  {
+    id: "assignments",
+    name: "New Assignments",
+    desc: "When a new onboarding project or patch deployment is assigned to your account or team.",
+    icon: "📋",
+    frequency: "instant",
+    channels: { inApp: true, email: true, sms: false, teams: true, push: true },
+  },
+  {
+    id: "approvals",
+    name: "Approval Requests",
+    desc: "Step submissions, technical review sign-offs, and commercial payment confirmations.",
+    icon: "✅",
+    frequency: "instant",
+    channels: { inApp: true, email: true, sms: false, teams: true, push: true },
+  },
+  {
+    id: "comments",
+    name: "Comments & Mentions",
+    desc: "Direct @mentions, reviewer notes, and discussion threads on onboarding projects.",
+    icon: "💬",
+    frequency: "instant",
+    channels: { inApp: true, email: true, sms: false, teams: false, push: true },
+  },
+  {
+    id: "reports",
+    name: "Reports & Summaries",
+    desc: "Weekly onboarding statistics, team activity digests, and system health status reports.",
+    icon: "📊",
+    frequency: "weekly",
+    channels: { inApp: true, email: true, sms: false, teams: false, push: false },
+  },
+];
+
 export function NotificationPreferencesView() {
+  const { currentUser } = useOnboarding();
+
   // Global channel toggles
   const [channels, setChannels] = useState({
     inApp: true,
@@ -30,58 +85,22 @@ export function NotificationPreferencesView() {
   });
 
   // Notification categories state
-  const [categories, setCategories] = useState<CategorySetting[]>([
-    {
-      id: "security",
-      name: "Security Alerts",
-      desc: "Unrecognized logins, password resets, 2FA modifications, and privilege escalations.",
-      icon: "🔒",
-      frequency: "instant",
-      channels: { inApp: true, email: true, sms: true, teams: true, push: true },
-    },
-    {
-      id: "system",
-      name: "System Updates",
-      desc: "Platform maintenance windows, patch bulletin releases, and version upgrades.",
-      icon: "⚙️",
-      frequency: "daily",
-      channels: { inApp: true, email: true, sms: false, teams: true, push: false },
-    },
-    {
-      id: "assignments",
-      name: "New Assignments",
-      desc: "When a new onboarding project or patch deployment is assigned to your account or team.",
-      icon: "📋",
-      frequency: "instant",
-      channels: { inApp: true, email: true, sms: false, teams: true, push: true },
-    },
-    {
-      id: "approvals",
-      name: "Approval Requests",
-      desc: "Step submissions, technical review sign-offs, and commercial payment confirmations.",
-      icon: "✅",
-      frequency: "instant",
-      channels: { inApp: true, email: true, sms: false, teams: true, push: true },
-    },
-    {
-      id: "comments",
-      name: "Comments & Mentions",
-      desc: "Direct @mentions, reviewer notes, and discussion threads on onboarding projects.",
-      icon: "💬",
-      frequency: "instant",
-      channels: { inApp: true, email: true, sms: false, teams: false, push: true },
-    },
-    {
-      id: "reports",
-      name: "Reports & Summaries",
-      desc: "Weekly onboarding statistics, team activity digests, and system health status reports.",
-      icon: "📊",
-      frequency: "weekly",
-      channels: { inApp: true, email: true, sms: false, teams: false, push: false },
-    },
-  ]);
+  const [categories, setCategories] = useState<CategorySetting[]>(DEFAULT_CATEGORIES);
 
+  useEffect(() => {
+    if (currentUser?.notificationSettings) {
+      const saved = currentUser.notificationSettings as {
+        channels?: typeof channels;
+        categories?: CategorySetting[];
+      };
+      if (saved.channels) setChannels(saved.channels);
+      if (saved.categories && Array.isArray(saved.categories)) setCategories(saved.categories);
+    }
+  }, [currentUser]);
+
+  const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const updateCategoryFrequency = (id: string, frequency: Frequency) => {
     setCategories((prev) =>
@@ -103,10 +122,24 @@ export function NotificationPreferencesView() {
     );
   };
 
-  const handleSavePreferences = (e: React.FormEvent) => {
+  const handleSavePreferences = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3500);
+    setIsSaving(true);
+    setSaveError("");
+    try {
+      await updateMyProfile({
+        notificationSettings: {
+          channels,
+          categories,
+        },
+      });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3500);
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? err.message : "Failed to persist preferences to database");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -323,12 +356,17 @@ export function NotificationPreferencesView() {
           </div>
 
           <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 14 }}>
-            <button type="submit" className="btn btn-primary">
-              Save Notification Preferences
+            <button type="submit" className="btn btn-primary" disabled={isSaving}>
+              {isSaving ? "Saving to Database..." : "Save Notification Preferences"}
             </button>
             {savedSuccess && (
               <span style={{ fontSize: 13, color: "var(--green)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                <Icon name="check" size={15} color="var(--green)" /> Notification preferences saved!
+                <Icon name="check" size={15} color="var(--green)" /> Notification preferences saved to database!
+              </span>
+            )}
+            {saveError && (
+              <span style={{ fontSize: 13, color: "var(--red, #ef4444)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                <Icon name="alert" size={15} color="var(--red, #ef4444)" /> {saveError}
               </span>
             )}
           </div>

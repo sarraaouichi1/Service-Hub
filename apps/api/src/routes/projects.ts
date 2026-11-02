@@ -37,8 +37,52 @@ function fieldErrorsFrom(issues: z.ZodError["issues"]) {
 }
 
 export async function projectRoutes(app: FastifyInstance) {
-  app.get("/projects", { preHandler: requirePermission("project:read") }, async () => {
-    const projects = await prisma.project.findMany({ orderBy: { id: "asc" } });
+  app.get("/projects", { preHandler: requirePermission("project:read") }, async (request) => {
+    const user = request.authUser;
+    const isCustomer = user?.roles.some(r => r.toLowerCase() === "customer");
+    const userCompany = (user?.company || user?.partner || "").trim().toLowerCase();
+    const userCountry = (user?.country || "").trim().toUpperCase();
+
+    let projects = await prisma.project.findMany({ orderBy: { id: "asc" } });
+
+    // Scoping for Customer role
+    if (isCustomer && userCompany) {
+      projects = projects.filter(p => {
+        const pName = (p.name || "").toLowerCase();
+        const pPartner = (p.partner || "").toLowerCase();
+        return pName.includes(userCompany) || pPartner.includes(userCompany) || userCompany.includes(pName);
+      });
+    }
+
+    // Scoping by user's country
+    if (userCountry) {
+      const matchCountry = (pCountry: string) => {
+        const pC = (pCountry || "").trim().toUpperCase();
+        if (!pC) return false;
+        if (pC === userCountry) return true;
+        if (userCountry === "DE" && (pC === "GERMANY" || pC === "DEUTSCHLAND")) return true;
+        if ((userCountry === "GERMANY" || userCountry === "DEUTSCHLAND") && pC === "DE") return true;
+        if (userCountry === "UK" && (pC === "GB" || pC === "UNITED KINGDOM")) return true;
+        if (userCountry === "GB" && (pC === "UK" || pC === "UNITED KINGDOM")) return true;
+        if (userCountry === "FR" && pC === "FRANCE") return true;
+        if (userCountry === "FRANCE" && pC === "FR") return true;
+        if (userCountry === "US" && (pC === "USA" || pC === "UNITED STATES")) return true;
+        if (userCountry === "AT" && pC === "AUSTRIA") return true;
+        if (userCountry === "CH" && pC === "SWITZERLAND") return true;
+        if (userCountry === "NL" && (pC === "NETHERLANDS" || pC === "HOLLAND")) return true;
+        return pC.includes(userCountry) || userCountry.includes(pC);
+      };
+      projects = projects.filter(p => matchCountry(p.country));
+    }
+
+    // Sort projects by country, then by name
+    projects.sort((a, b) => {
+      const cA = (a.country || "").toUpperCase();
+      const cB = (b.country || "").toUpperCase();
+      if (cA !== cB) return cA.localeCompare(cB);
+      return a.name.localeCompare(b.name);
+    });
+
     return { projects };
   });
 
@@ -78,18 +122,21 @@ export async function projectRoutes(app: FastifyInstance) {
    */
   app.post("/projects/submit", { preHandler: requirePermission("project:submit") }, async (request, reply) => {
     // Validated against the rules as an administrator has them configured, so
-    // the server enforces what the admin screen promises rather than whatever
-    // was compiled in.
-    const rows = await prisma.rule.findMany({ select: { id: true, active: true, severity: true } });
-    const overrides: RuleOverrides = Object.fromEntries(
-      rows.map((r) => [r.id, { active: r.active, severity: r.severity as "error" | "warning" }]),
-    );
-    const { onboardingDraftSchema } = createOnboardingSchemas(overrides);
-    const result = onboardingDraftSchema.safeParse(request.body);
+    // switching a rule off on the admin screen actually stops the server
+    // enforcing it.
+    const overrides: RuleOverrides = {};
+    for (const row of await prisma.rule.findMany()) {
+      overrides[row.id] = {
+        active: row.active,
+        severity: row.severity as "error" | "warning",
+      };
+    }
+    const schemas = createOnboardingSchemas(overrides);
+    const result = schemas.onboardingDraftSchema.safeParse(request.body);
     if (!result.success) {
       return reply.code(422).send({
-        message: "This submission is incomplete",
-        fieldErrors: fieldErrorsFrom(result.error.issues),
+        message: "Check the form — some entries need attention",
+        fieldErrors: schemas.toFormErrors(result.error),
       });
     }
 
@@ -101,22 +148,28 @@ export async function projectRoutes(app: FastifyInstance) {
         pm: request.authUser!.name,
         step: 6,
         total: 6,
-        status: "review",
+        status: "sales-approval",
         psp: draft.psp ?? "",
         country: draft.country ?? "",
         product: draft.product ?? "smart-web-pay",
       },
     });
+
+    // Clear working draft after submission
+    await prisma.onboardingDraft.deleteMany({ where: { userId: request.authUser!.id } });
     return reply.code(201).send({ project });
   });
 
   /**
    * The signed-in person's working draft — what makes "Save Draft" real.
    *
-   * Credentials are write-only: they can be set, never read back. The response
-   * says *which* are on file so the wizard can show "stored" rather than an
-   * empty box, but the values never leave the server. Until there is somewhere
-   * proper to keep them, this at least stops them travelling to every browser
+   * Credentials on file are reported as a list of field names rather than values,
+   * so the browser knows to render "stored" rather than an empty box. Loading
+   * returns the draft as JSON so the client can seed the form; the form then
+   * owns the edits and sends the whole thing back on Save.
+   *
+   * A project being edited is loaded over this same route: the caller passes
+   * `?project=123`, the API copies that project's draft into the user's slot and
    * that opens the draft.
    */
   app.get("/draft", { preHandler: requireSignedIn }, async (request) => {

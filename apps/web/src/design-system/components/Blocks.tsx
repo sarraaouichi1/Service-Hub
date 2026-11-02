@@ -12,8 +12,17 @@ export function Tile({ media, reverse, children }: { media: ReactNode; reverse?:
   );
 }
 
-/** The slate half of a tile when there's no photograph: one icon in sky rings. */
-export function TileArt({ icon, label }: { icon: IconName; label?: ReactNode }) {
+/** The slate half of a tile when there's no photograph: one icon in sky rings.
+ *  Pass `imageSrc` to show a real cover photo instead. */
+export function TileArt({ icon, label, imageSrc }: { icon: IconName; label?: ReactNode; imageSrc?: string }) {
+  if (imageSrc) {
+    return (
+      <div className="tile-art tile-art-photo" aria-hidden="true">
+        <img src={imageSrc} alt="" loading="lazy" />
+        {label && <div className="tile-art-label">{label}</div>}
+      </div>
+    );
+  }
   return (
     <div className="tile-art" aria-hidden="true">
       <div className="tile-art-ring"><Icon name={icon} size={48} /></div>
@@ -21,6 +30,7 @@ export function TileArt({ icon, label }: { icon: IconName; label?: ReactNode }) 
     </div>
   );
 }
+
 
 export function CheckList({ items }: { items: ReactNode[] }) {
   return (

@@ -53,8 +53,8 @@ function OnboardingShell() {
     { to: "/onboarding/projects", icon: "list", label: "All projects", badge: projects.length },
   ];
   const reviewNav: NavLink[] = [
-    { to: "/onboarding/review-queue", icon: "eye", label: "Review queue", badge: countByStatus(projects, "review") + countByStatus(projects, "sales-approval"), permission: "project:review" },
-    { to: "/onboarding/approved", icon: "check", label: "Approved", permission: "project:read" },
+    { to: "/onboarding/review-queue", icon: "eye", label: "Review List", badge: countByStatus(projects, "review") + countByStatus(projects, "sales-approval"), permission: "project:review" },
+    { to: "/onboarding/approved", icon: "check", label: "Ready for deployment", permission: "project:read" },
   ];
   const adminNav: NavLink[] = [
     { to: "/onboarding/admin/templates", icon: "globe", label: "Countries", permission: "template:read" },

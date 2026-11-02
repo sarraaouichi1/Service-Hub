@@ -24,8 +24,11 @@ const updateProfileSchema = z.object({
   jobTitle: z.string().optional(),
   company: z.string().optional(),
   department: z.string().optional(),
+  country: z.string().optional(),
   language: z.string().optional(),
   timezone: z.string().optional(),
+  notificationSettings: z.any().optional(),
+  privacySettings: z.any().optional(),
 });
 
 export async function authRoutes(app: FastifyInstance) {
@@ -49,7 +52,21 @@ export async function authRoutes(app: FastifyInstance) {
         return reply.code(422).send({ message: "Invalid profile data" });
       }
 
-      const { firstName, lastName, name: rawName, username, phone, jobTitle, company, department, language, timezone } = parsed.data;
+      const {
+        firstName,
+        lastName,
+        name: rawName,
+        username,
+        phone,
+        jobTitle,
+        company,
+        department,
+        country,
+        language,
+        timezone,
+        notificationSettings,
+        privacySettings,
+      } = parsed.data;
 
       let name = request.authUser!.name;
       let initials = request.authUser!.initials;
@@ -75,8 +92,11 @@ export async function authRoutes(app: FastifyInstance) {
           ...(jobTitle !== undefined ? { jobTitle: jobTitle.trim() } : {}),
           ...(company !== undefined ? { company: company.trim() } : {}),
           ...(department !== undefined ? { department: department.trim() } : {}),
+          ...(country !== undefined ? { country: country.trim() } : {}),
           ...(language !== undefined ? { language } : {}),
           ...(timezone !== undefined ? { timezone } : {}),
+          ...(notificationSettings !== undefined ? { notificationSettings } : {}),
+          ...(privacySettings !== undefined ? { privacySettings } : {}),
         },
       });
 
