@@ -50,7 +50,7 @@ export function SalesApprovalStep() {
   return (
     <div className="slide-in stack" style={{ gap: "var(--space-5)" }}>
       <Callout tone="neutral" title="Delivery check required —">
-        delivery readiness to be checked
+        delivery readiness to be checked(contract valid, payment confirmed,...)
       </Callout>
       <Card>
         <div className="card-header">

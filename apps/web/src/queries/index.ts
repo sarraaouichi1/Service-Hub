@@ -44,6 +44,12 @@ const REFERENCE = { staleTime: Infinity, gcTime: Infinity };
 
 // ─── Reads ──────────────────────────────────────────────────────────────────
 export const useProjects = () => useQuery({ queryKey: keys.projects, queryFn: api.listProjects });
+export const useProject = (id: number | undefined) =>
+  useQuery({
+    queryKey: keys.project(id ?? 0),
+    queryFn: () => api.getProject(id!),
+    enabled: typeof id === "number" && !isNaN(id),
+  });
 export const useProducts = () => useQuery({ queryKey: keys.products, queryFn: api.listProducts, ...REFERENCE });
 export const usePsps = () => useQuery({ queryKey: keys.psps, queryFn: api.listPsps, ...REFERENCE });
 /** `enabled: false` for a caller who may not read bulletins, so it doesn't fetch a 403. */

@@ -15,7 +15,7 @@ import type { FieldPath } from "react-hook-form";
 import type { OnboardingForm } from "../../../types";
 import { useOnboarding } from "../context/onboardingContext";
 import { ApiError } from "../../../api";
-import { useOnboardingSchemas, useProducts, useSaveDraft, useSubmitDraft } from "../../../queries";
+import { useOnboardingSchemas, useProducts, useProjects, useSaveDraft, useSubmitDraft } from "../../../queries";
 
 const route = getRouteApi("/onboarding/wizard/$step");
 
@@ -30,6 +30,9 @@ export function WizardView() {
   const [failure, setFailure] = useState<string | null>(null);
   const schemas = useOnboardingSchemas();
   const products = useProducts();
+  const allProjects = useProjects();
+  const activeProject = (allProjects.data ?? []).find(p => p.id === project);
+  const isReadyForDeployment = activeProject?.status === "approved";
 
   const productVal = (getValues("product") as string) || "";
   const selectedProducts = productVal ? productVal.split(",").filter(Boolean) : [];
@@ -236,7 +239,7 @@ export function WizardView() {
                   disabled={!canSubmit || submitDraft.isPending}
                   title={canSubmit ? undefined : declared ? "Some steps are still incomplete" : "Tick the confirmation above to submit"}
                   onClick={() => submitDraft.mutate(getValues())}>
-                  <Icon name="check" /> Submit for Review
+                  <Icon name="check" /> {isReadyForDeployment ? "Onboarding Confirmation" : "Submit for Review"}
                 </button>
               )}
             </div>
