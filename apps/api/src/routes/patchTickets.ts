@@ -2,20 +2,22 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../db.js";
 
+const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
 const ticketSchema = z.object({
-  carparkName: z.string().min(1, "Car park name is required"),
+  carparkName: z.string().trim().min(1, "Car park name is required"),
   customerAccount: z.string().optional(),
   contactName: z.string().optional(),
-  contactEmail: z.string().pipe(z.email("A valid contact email is required")),
+  contactEmail: z.string().trim().pipe(z.email("A valid contact email is required")),
   contactPhone: z.string().optional(),
-  cpqOrderNumber: z.string().optional(),
-  contractNumber: z.string().optional(),
-  numberOfDevices: z.number().int().min(1).default(1),
-  entervoVersion: z.string().min(1, "entervo software version is required"),
-  operatingSystem: z.string().min(1, "Operating System is required"),
-  ipAddress1: z.string().min(1, "Primary IP address is required"),
-  ipAddress2: z.string().optional(),
-  ipAddress3: z.string().optional(),
+  cpqOrderNumber: z.string().trim().min(1, "CPQ Order Number is mandatory"),
+  contractNumber: z.string().trim().min(1, "Contract Number is mandatory").regex(/^\d+$/, "Contract Number must contain only digits"),
+  numberOfDevices: z.coerce.number().int("Number of devices must be an integer").min(1, "At least 1 device is required"),
+  entervoVersion: z.string().trim().min(1, "entervo Software Release is mandatory"),
+  operatingSystem: z.string().trim().min(1, "Operating System is required"),
+  ipAddress1: z.string().trim().regex(IPV4_REGEX, "Primary IP address must be a valid IPv4 address (e.g. 10.50.38.100)"),
+  ipAddress2: z.string().trim().refine((val) => !val || IPV4_REGEX.test(val), "Secondary IP address must be a valid IPv4 address").optional(),
+  ipAddress3: z.string().trim().refine((val) => !val || IPV4_REGEX.test(val), "IP address 3 must be a valid IPv4 address").optional(),
   remoteAccess: z.string().optional(),
   priority: z.string().default("3 - Moderate"),
   urgency: z.string().default("2 - Medium"),
