@@ -21,6 +21,7 @@ export function PatchTicketCreateView() {
     ipAddress1: "10.50.38.100",
     ipAddress2: "",
     ipAddress3: "",
+    remoteAccess: "",
     priority: "3 - Moderate",
     urgency: "2 - Medium",
     category: "Service Request",
@@ -253,6 +254,16 @@ export function PatchTicketCreateView() {
                   placeholder="e.g. 10.50.38.101"
                   value={form.ipAddress2}
                   onChange={e => setForm({ ...form, ipAddress2: e.target.value })}
+                />
+              </div>
+
+              <div className="field" style={{ gridColumn: "span 2" }}>
+                <label className="field-label">Remote Access Details</label>
+                <input
+                  className="form-input mono"
+                  placeholder="e.g. VPN gateway, SSH port 2222, TeamViewer ID, or Bastion Host details"
+                  value={form.remoteAccess}
+                  onChange={e => setForm({ ...form, remoteAccess: e.target.value })}
                 />
               </div>
 

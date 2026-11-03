@@ -188,6 +188,7 @@ model PatchTicket {
   ipAddress1           String
   ipAddress2           String?
   ipAddress3           String?
+  remoteAccess         String?
   priority              String   @default("3 - Moderate")
   urgency               String   @default("2 - Medium")
   category              String   @default("Service Request")

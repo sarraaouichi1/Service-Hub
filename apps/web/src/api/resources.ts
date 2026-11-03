@@ -91,6 +91,7 @@ export interface PatchTicketInput {
   ipAddress1: string;
   ipAddress2?: string;
   ipAddress3?: string;
+  remoteAccess?: string;
   priority?: string;
   urgency?: string;
   category?: string;
