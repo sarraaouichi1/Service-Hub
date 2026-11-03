@@ -14,7 +14,7 @@ const PROJECT_FILTERS: { value: ProjectStatus | "all"; label: string }[] = [
   { value: "draft", label: "Draft" },
   { value: "progress", label: "In Progress" },
   { value: "review", label: "Pending Review" },
-  { value: "sales-approval", label: "Sales Approval" },
+  { value: "sales-approval", label: "Delivery Check" },
   { value: "approved", label: "Ready for deployment" },
   { value: "onboarded", label: "Onboarded" },
 ];

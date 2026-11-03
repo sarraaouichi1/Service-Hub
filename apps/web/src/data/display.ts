@@ -13,7 +13,7 @@ export const STATUS_MAP: Record<ProjectStatus, StatusMeta> = {
   progress: { label: "In Progress", cls: "badge-progress" },
   review: { label: "Pending Review", cls: "badge-review" },
   approved: { label: "Ready for deployment", cls: "badge-approved" },
-  "sales-approval": { label: "Sales Approval", cls: "badge-sales" },
+  "sales-approval": { label: "Delivery Check", cls: "badge-sales" },
   onboarded: { label: "Onboarded", cls: "badge-onboarded" },
 };
 

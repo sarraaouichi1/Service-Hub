@@ -40,7 +40,7 @@ export const WIZARD_STEPS: WizardStepDef[] = [
   {
     num: 5,
     label: "Step 05",
-    name: "Sales Approval",
+    name: "Delivery Check",
     subtitle: "Sales must confirm that the delivery can be done.",
   },
   {
