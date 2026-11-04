@@ -8,6 +8,7 @@
 import { buildServer } from "../server.js";
 import { prisma } from "../db.js";
 import { resetLoginRateLimits } from "../auth/rateLimit.js";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@service-hub/shared";
 
 let failed = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -80,6 +81,12 @@ async function main() {
   check("me returns the signed-in user", meUser.email, ADMIN);
   check("me carries roles", meUser.roles, ["Admin"]);
   check("admin holds user:write", meUser.permissions.includes("user:write"), true);
+
+  // The sign-in page's chips prefill DEMO_PASSWORD; on the deployed demo every
+  // one of them was rejected because the seed had used another password.
+  for (const account of DEMO_ACCOUNTS) {
+    check(`demo chip "${account.label}" signs in with the prefilled password`, (await login(account.email, DEMO_PASSWORD)).status, 200);
+  }
 
   // ── RBAC ────────────────────────────────────────────────────────────────
   const customer = await login(CUSTOMER);
