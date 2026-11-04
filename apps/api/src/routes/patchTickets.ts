@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../db.js";
+import { requirePermission } from "../rbac/guard.js";
 
 const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 
@@ -33,7 +34,7 @@ function generateTicketNumber(): string {
 
 export async function patchTicketsRoutes(app: FastifyInstance) {
   // Create patch request ticket
-  app.post("/patch/tickets", async (request, reply) => {
+  app.post("/patch/tickets", { preHandler: requirePermission("patch:read") }, async (request, reply) => {
     const parsed = ticketSchema.safeParse(request.body);
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
@@ -85,7 +86,7 @@ export async function patchTicketsRoutes(app: FastifyInstance) {
   });
 
   // List recent patch tickets
-  app.get("/patch/tickets", async () => {
+  app.get("/patch/tickets", { preHandler: requirePermission("patch:read") }, async () => {
     const tickets = await prisma.patchTicket.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,

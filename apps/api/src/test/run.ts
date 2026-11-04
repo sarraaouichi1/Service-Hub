@@ -161,6 +161,15 @@ async function main() {
   check("a reviewer may read the audit log", (await call("/api/audit-log", { cookie: auditor.cookie })).status, 200);
   check("sales may not read the audit log", (await call("/api/audit-log", { cookie: sales.cookie })).status, 403);
 
+  // Tickets carry customer contact details and IP addresses, so the patch
+  // endpoints must not be reachable by anyone who can't see the Patch module.
+  for (const path of ["/api/patch/tickets", "/api/patch/inquiries"]) {
+    check(`signed out may not read ${path}`, (await call(path)).status, 401);
+    check(`signed out may not post to ${path}`, (await call(path, { method: "POST", body: "{}" })).status, 401);
+    check(`a customer may not read ${path}`, (await call(path, { cookie: customer.cookie })).status, 403);
+    check(`an admin may read ${path}`, (await call(path, { cookie: admin.cookie })).status, 200);
+  }
+
   // The bug this whole layer exists to fix: an admin edit has to outlive the
   // request that made it.
   const ruleBefore = ((await call("/api/rules", { cookie: admin.cookie })).body?.rules as { id: number; active: boolean }[])[0];
