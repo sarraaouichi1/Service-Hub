@@ -112,7 +112,9 @@ export type FormTextKey =
   | "contractProductName" | "contractOneTimeFee" | "contractRecurringFee" | "contractMinLeaseMonths" | "contractNoticePeriod" | "contractMaxBookings"
   | "timeCardProductName" | "timeCardFee" | "timeCardDuration"
   | "bundleProductName" | "bundleFee" | "bundleSlotsCount" | "bundleSlotDuration" | "bundleOverstayFee"
-  | "prepaidProductName" | "prepaidPrice" | "prepaidCredit" | "prepaidMinBalance";
+  | "prepaidProductName" | "prepaidPrice" | "prepaidCredit" | "prepaidMinBalance"
+  // Delivery & contract validation
+  | "contractDate";
 
 /** Feature switches captured by the onboarding wizard across all products. */
 export type FormBoolKey =

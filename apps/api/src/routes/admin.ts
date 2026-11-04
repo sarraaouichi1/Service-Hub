@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../db.js";
-import { AUDIT_LOG } from "../data/seed-data.js";
+import { AUDIT_LOG, DEFAULT_PLATFORM_CONFIG } from "../data/seed-data.js";
 import { requirePermission } from "../rbac/guard.js";
 
 const templateSchema = z.object({
@@ -128,9 +128,17 @@ export async function adminRoutes(app: FastifyInstance) {
   );
 
   // ── Platform settings ─────────────────────────────────────────────────
-  app.get("/settings", { preHandler: requirePermission("settings:read") }, async () => ({
-    settings: await prisma.platformSetting.findUnique({ where: { id: "platform" } }),
-  }));
+  app.get("/settings", { preHandler: requirePermission("settings:read") }, async () => {
+    let settings = await prisma.platformSetting.findUnique({ where: { id: "platform" } });
+    if (!settings) {
+      settings = await prisma.platformSetting.upsert({
+        where: { id: "platform" },
+        update: {},
+        create: { id: "platform", ...DEFAULT_PLATFORM_CONFIG },
+      });
+    }
+    return { settings, config: settings };
+  });
 
   app.patch("/settings", { preHandler: requirePermission("settings:write") }, async (request, reply) => {
     const parsed = settingsSchema.safeParse(request.body);
@@ -138,7 +146,7 @@ export async function adminRoutes(app: FastifyInstance) {
       return reply.code(422).send({ message: "Check the form", fieldErrors: fieldErrorsFrom(parsed.error.issues) });
     }
     const settings = await prisma.platformSetting.update({ where: { id: "platform" }, data: parsed.data });
-    return { settings };
+    return { settings, config: settings };
   });
 
   app.get("/audit-log", { preHandler: requirePermission("audit:read") }, async () => ({ entries: AUDIT_LOG }));

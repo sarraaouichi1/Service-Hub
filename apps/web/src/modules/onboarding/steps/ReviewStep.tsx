@@ -181,6 +181,17 @@ export function ReviewStep({ declared, onDeclaredChange }: DeclarationReviewStep
         ))}
       </div>
 
+      <div className="review-section">
+        <div className="review-section-title"><Icon name="shield" size={14} /> Delivery Check &amp; Contract Validity</div>
+        {[
+          ["Delivery Readiness", data.salesApproved ? "Confirmed by Sales Team" : "Pending Confirmation"],
+          ["Contract Expiration Date", data.contractDate ? `${data.contractDate} (Valid)` : "—"],
+          ["Assigned Sales Contact", "Sales Team"],
+        ].map(([k, v], i) => (
+          <div className="review-row" key={i}><div className="review-key">{k}</div><div className="review-val">{v}</div></div>
+        ))}
+      </div>
+
       <div style={{ marginTop: 20, padding: "14px 18px", background: "var(--blue-pale)", border: "1px solid var(--blue-mid)", borderRadius: 8, fontSize: 13, color: "var(--blue)" }}>
         <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer" }}>
           <input

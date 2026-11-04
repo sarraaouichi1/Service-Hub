@@ -139,12 +139,12 @@ export const updateRule = (id: number, patch: { active?: boolean; severity?: "er
 
 // ─── Platform settings ─────────────────────────────────────────────────────
 export const getPlatformConfig = () =>
-  request<{ config: PlatformConfig }>("/settings").then((r) => r.config);
+  request<{ settings?: PlatformConfig; config?: PlatformConfig }>("/settings").then((r) => (r.settings ?? r.config)!);
 
 export const updatePlatformConfig = (patch: Partial<PlatformConfig>) =>
-  request<{ config: PlatformConfig }>("/settings", {
+  request<{ settings?: PlatformConfig; config?: PlatformConfig }>("/settings", {
     method: "PATCH", body: JSON.stringify(patch),
-  }).then((r) => r.config);
+  }).then((r) => (r.settings ?? r.config)!);
 
 export const getSettings = getPlatformConfig;
 export const updateSettings = updatePlatformConfig;

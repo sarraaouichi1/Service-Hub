@@ -158,7 +158,7 @@ const reviewQueueRoute = createRoute({
   getParentRoute: () => onboardingRoute,
   path: "review-queue",
   component: ReviewQueueView,
-  staticData: { title: "Review List" } satisfies RouteStaticData,
+  staticData: { title: "Sales Delivery Confirmation" } satisfies RouteStaticData,
 });
 
 const approvedRoute = createRoute({

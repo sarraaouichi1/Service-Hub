@@ -1,11 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { createOnboardingSchemas } from "@service-hub/shared";
+import { can, createOnboardingSchemas } from "@service-hub/shared";
 import type { RuleOverrides } from "@service-hub/shared";
 import type { OnboardingForm } from "@service-hub/shared";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
-import { requirePermission, requireSignedIn } from "../rbac/guard.js";
+import { requireAnyPermission, requirePermission, requireSignedIn } from "../rbac/guard.js";
 
 const STATUSES = ["draft", "progress", "review", "approved", "sales-approval", "onboarded"] as const;
 
@@ -37,36 +37,33 @@ function fieldErrorsFrom(issues: z.ZodError["issues"]) {
 }
 
 export async function projectRoutes(app: FastifyInstance) {
+  // ── Project portfolio ──────────────────────────────────────────────────
   app.get("/projects", { preHandler: requirePermission("project:read") }, async (request) => {
-    const user = request.authUser;
-    const isCustomer = user?.roles.some(r => r.toLowerCase() === "customer");
-    const userCompany = (user?.company || user?.partner || "").trim().toLowerCase();
-    const userCountry = (user?.country || "").trim().toUpperCase();
-
     let projects = await prisma.project.findMany({ orderBy: { id: "asc" } });
 
-    // Scoping for Customer role
-    if (isCustomer && userCompany) {
-      projects = projects.filter(p => {
-        const pName = (p.name || "").toLowerCase();
-        const pPartner = (p.partner || "").toLowerCase();
-        return pName.includes(userCompany) || pPartner.includes(userCompany) || userCompany.includes(pName);
-      });
-    }
+    // Filter projects by country for Partner and Customer roles
+    const isPartnerOrCustomer = request.authUser?.roles?.some(r => r === "Partner" || r === "Customer");
+    const userPartner = (request.authUser?.partner || "").toUpperCase();
 
-    // Scoping by user's country
-    if (userCountry) {
-      const matchCountry = (pCountry: string) => {
-        const pC = (pCountry || "").trim().toUpperCase();
-        if (!pC) return false;
-        if (pC === userCountry) return true;
-        if (userCountry === "DE" && (pC === "GERMANY" || pC === "DEUTSCHLAND")) return true;
-        if ((userCountry === "GERMANY" || userCountry === "DEUTSCHLAND") && pC === "DE") return true;
-        if (userCountry === "UK" && (pC === "GB" || pC === "UNITED KINGDOM")) return true;
-        if (userCountry === "GB" && (pC === "UK" || pC === "UNITED KINGDOM")) return true;
-        if (userCountry === "FR" && pC === "FRANCE") return true;
-        if (userCountry === "FRANCE" && pC === "FR") return true;
-        if (userCountry === "US" && (pC === "USA" || pC === "UNITED STATES")) return true;
+    // Map partner to country code
+    let userCountry = "";
+    if (userPartner.includes("UK")) userCountry = "UK";
+    else if (userPartner.includes("DE") || userPartner.includes("GERMANY")) userCountry = "DE";
+    else if (userPartner.includes("FR") || userPartner.includes("FRANCE")) userCountry = "FR";
+    else if (userPartner.includes("AT") || userPartner.includes("AUSTRIA")) userCountry = "AT";
+    else if (userPartner.includes("CH") || userPartner.includes("SWITZERLAND")) userCountry = "CH";
+    else if (userPartner.includes("NL") || userPartner.includes("NETHERLANDS") || userPartner.includes("HOLLAND")) userCountry = "NL";
+    else if (userPartner.includes("BE") || userPartner.includes("BELGIUM")) userCountry = "BE";
+    else if (userPartner.includes("ES") || userPartner.includes("SPAIN")) userCountry = "ES";
+    else if (userPartner.includes("IT") || userPartner.includes("ITALY")) userCountry = "IT";
+    else if (userPartner.includes("MEDWAY") || userPartner.includes("HOSPITAL")) userCountry = "UK";
+
+    if (isPartnerOrCustomer && userCountry) {
+      const matchCountry = (projectCountry: string) => {
+        const pC = (projectCountry || "").toUpperCase();
+        if (userCountry === "UK" && (pC === "UK" || pC === "GB" || pC.includes("UNITED KINGDOM"))) return true;
+        if (userCountry === "DE" && (pC === "DE" || pC === "GERMANY" || pC === "DEUTSCHLAND")) return true;
+        if (userCountry === "FR" && (pC === "FR" || pC === "FRANCE")) return true;
         if (userCountry === "AT" && pC === "AUSTRIA") return true;
         if (userCountry === "CH" && pC === "SWITZERLAND") return true;
         if (userCountry === "NL" && (pC === "NETHERLANDS" || pC === "HOLLAND")) return true;
@@ -98,16 +95,38 @@ export async function projectRoutes(app: FastifyInstance) {
 
   app.patch<{ Params: { id: string } }>(
     "/projects/:id",
-    { preHandler: requirePermission("project:update") },
+    { preHandler: requireAnyPermission("project:update", "payment:confirm", "project:deploy") },
     async (request, reply) => {
       const parsed = updateProjectSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.code(422).send({ message: "Check the form", fieldErrors: fieldErrorsFrom(parsed.error.issues) });
       }
       const id = Number(request.params.id);
-      if (!(await prisma.project.findUnique({ where: { id } }))) {
+      const existing = await prisma.project.findUnique({ where: { id } });
+      if (!existing) {
         return reply.code(404).send({ message: "No such project" });
       }
+
+      const permissions = request.authUser!.permissions;
+      const isAdmin = request.authUser?.roles?.includes("Admin");
+      const canUpdate = can(permissions, "project:update");
+      const canConfirmPayment = can(permissions, "payment:confirm");
+      const canDeploy = can(permissions, "project:deploy");
+
+      if (!isAdmin) {
+        if (existing.status === "sales-approval" && parsed.data.status === "approved") {
+          if (!canConfirmPayment) {
+            return reply.code(403).send({ message: "Only Sales may confirm sales delivery" });
+          }
+        } else if (existing.status === "approved" && parsed.data.status === "onboarded") {
+          if (!canDeploy) {
+            return reply.code(403).send({ message: "Only DevOps may complete deployment" });
+          }
+        } else if (!canUpdate) {
+          return reply.code(403).send({ message: "You do not have permission to do that" });
+        }
+      }
+
       return { project: await prisma.project.update({ where: { id }, data: parsed.data }) };
     },
   );

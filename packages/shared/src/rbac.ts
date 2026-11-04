@@ -22,6 +22,7 @@ export const PERMISSIONS = [
   "project:review",
   "project:approve",
   "payment:confirm",
+  "project:deploy",
   "patch:read",
   "patch:schedule",
   "template:read",
@@ -42,13 +43,13 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
   Admin: PERMISSIONS,
   "Project Manager": [
     "project:read", "project:create", "project:update", "project:submit",
-    "patch:read", "template:read", "rule:read", "user:read",
+    "template:read", "rule:read",
   ],
   Sales: ["project:read", "payment:confirm"],
   Reviewer: ["project:read", "project:review", "project:approve", "rule:read", "audit:read"],
-  DevOps: ["project:read", "patch:read", "patch:schedule"],
-  Partner: ["project:read", "project:create", "project:update", "project:submit", "patch:read"],
-  Customer: ["project:read", "project:create", "project:update", "project:submit"],
+  DevOps: ["project:read", "project:deploy", "patch:read", "patch:schedule"],
+  Partner: ["project:read", "project:create", "project:update", "project:submit"],
+  Customer: ["project:read"],
 };
 
 /** Everything the given roles allow, flattened and de-duplicated. */

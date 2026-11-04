@@ -281,6 +281,39 @@ async function main() {
   });
   check("a different port on the same machine is still cross-origin", wrongPort.status, 403);
 
+  // ── Contract Date, Roles & Workflow Verification ───────────────────────
+  const expiredContract = { ...DEMO_ONBOARDING_DRAFT, product: "smart-web-pay", salesApproved: true, contractDate: "2020-01-01" };
+  const resExpired = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(expiredContract) });
+  check("an expired contract date is rejected", resExpired.status, 422);
+  check("and message explains contract expired", (resExpired.body?.fieldErrors as Record<string, string>)?.contractDate, "Contract has expired. Contract must be active and valid for onboarding.");
+
+  const validContract = { ...DEMO_ONBOARDING_DRAFT, product: "smart-web-pay", salesApproved: true, contractDate: "2028-12-31" };
+  const resValid = await call("/api/projects/submit", { method: "POST", cookie: (await login(PM)).cookie, body: JSON.stringify(validContract) });
+  check("project manager submits onboarding request", resValid.status, 201);
+  const newProj = resValid.body?.project as { id: number; status: string };
+  check("and status is sales-approval", newProj.status, "sales-approval");
+
+  const pmTry = await call(`/api/projects/${newProj.id}`, { method: "PATCH", cookie: (await login(PM)).cookie, body: JSON.stringify({ status: "approved" }) });
+  check("project manager cannot confirm sales delivery", pmTry.status, 403);
+
+  const salesConfirm = await call(`/api/projects/${newProj.id}`, { method: "PATCH", cookie: (await login(SALES)).cookie, body: JSON.stringify({ status: "approved" }) });
+  check("sales team confirms delivery to approved", salesConfirm.status, 200);
+  check("project status is now approved", (salesConfirm.body?.project as { status: string }).status, "approved");
+
+  const pmDeployTry = await call(`/api/projects/${newProj.id}`, { method: "PATCH", cookie: (await login(PM)).cookie, body: JSON.stringify({ status: "onboarded" }) });
+  check("project manager cannot complete deployment", pmDeployTry.status, 403);
+
+  const devops = await login("devops@scheidt-bachmann.de");
+  const devopsDeploy = await call(`/api/projects/${newProj.id}`, { method: "PATCH", cookie: devops.cookie, body: JSON.stringify({ status: "onboarded" }) });
+  check("devops team completes deployment to onboarded", devopsDeploy.status, 200);
+  check("project status is now onboarded", (devopsDeploy.body?.project as { status: string }).status, "onboarded");
+
+  await prisma.project.delete({ where: { id: newProj.id } });
+
+  const settingsRes = await call("/api/settings", { cookie: admin.cookie });
+  check("settings returns 200", settingsRes.status, 200);
+  check("settings body has settings and config", !!(settingsRes.body?.settings && settingsRes.body?.config), true);
+
   // ── Sign out ────────────────────────────────────────────────────────────
   check("logout succeeds", (await call("/api/auth/logout", { method: "POST", cookie: admin.cookie })).status, 200);
   check("the session is dead afterwards", (await call("/api/auth/me", { cookie: admin.cookie })).status, 401);

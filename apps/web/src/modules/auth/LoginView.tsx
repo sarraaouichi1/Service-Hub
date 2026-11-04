@@ -130,13 +130,7 @@ export function LoginView() {
               <button
                 type="button"
                 className="chip"
-                onClick={() => fillAccount("admin@scheidt-bachmann.de")}
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                className="chip"
+                style={{ fontWeight: 600 }}
                 onClick={() => fillAccount("manager@scheidt-bachmann.de")}
               >
                 Project Manager
@@ -144,20 +138,15 @@ export function LoginView() {
               <button
                 type="button"
                 className="chip"
+                style={{ fontWeight: 600 }}
                 onClick={() => fillAccount("sales@scheidt-bachmann.de")}
               >
-                Sales
+                Sales Team
               </button>
               <button
                 type="button"
                 className="chip"
-                onClick={() => fillAccount("reviewer@scheidt-bachmann.de")}
-              >
-                Reviewer
-              </button>
-              <button
-                type="button"
-                className="chip"
+                style={{ fontWeight: 600 }}
                 onClick={() => fillAccount("devops@scheidt-bachmann.de")}
               >
                 DevOps
@@ -165,16 +154,9 @@ export function LoginView() {
               <button
                 type="button"
                 className="chip"
-                onClick={() => fillAccount("partner@scheidt-bachmann.de")}
+                onClick={() => fillAccount("admin@scheidt-bachmann.de")}
               >
-                Partner
-              </button>
-              <button
-                type="button"
-                className="chip"
-                onClick={() => fillAccount("customer@scheidt-bachmann.de")}
-              >
-                Customer
+                Admin
               </button>
             </div>
           </div>

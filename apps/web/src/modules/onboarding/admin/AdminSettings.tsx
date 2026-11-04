@@ -54,7 +54,7 @@ function SettingsForm({ settings }: { settings: PlatformConfig }) {
               <div style={{ fontSize: 12, fontWeight: 600, color: "var(--gray-800)", marginBottom: 5 }}>{f.label}</div>
               <input
                 style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--gray-200)", borderRadius: 7, fontFamily: "var(--font)", fontSize: 13 }}
-                value={cfg[f.key]}
+                value={cfg[f.key] ?? ""}
                 onChange={e => setCfg({ ...cfg, [f.key]: e.target.value })}
               />
             </div>

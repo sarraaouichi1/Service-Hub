@@ -5,6 +5,7 @@ import { AsyncSection } from "../../../components/AsyncSection";
 import { useProjects } from "../../../queries";
 import { ProjectMeta } from "../components/ProjectMeta";
 import { Can } from "../../auth/Can";
+import { useAuth } from "../../auth/useAuth";
 import { clickable } from "../../../components/clickable";
 import { useOnboarding } from "../context/onboardingContext";
 import { Button, Icon, PageHeader, SectionHeader, StatCard } from "../../../design-system";
@@ -29,6 +30,7 @@ export function DashboardView() {
   const navigate = useNavigate();
   const { currentUser, resetDraft } = useOnboarding();
   const projects = useProjects();
+  const { can } = useAuth();
 
   const openProject = (p: Project) =>
     navigate({ to: "/onboarding/wizard/$step", params: { step: String(p.step) }, search: { project: p.id } });
@@ -115,13 +117,20 @@ export function DashboardView() {
                   <div
                     key={c.status}
                     {...clickable(() => {
-                      if (c.targetUrl?.includes("?")) {
-                        const [path, searchStr] = c.targetUrl.split("?");
+                      let target = c.targetUrl;
+                      if (c.status === "sales-approval" && !can("payment:confirm")) {
+                        target = "/onboarding/projects?status=sales-approval";
+                      }
+                      if (c.status === "approved" && !can("project:deploy")) {
+                        target = "/onboarding/projects?status=approved";
+                      }
+                      if (target?.includes("?")) {
+                        const [path, searchStr] = target.split("?");
                         const params = new URLSearchParams(searchStr);
                         const statusVal = params.get("status") as ProjectStatus;
                         navigate({ to: path as any, search: { status: statusVal, q: undefined } as any });
-                      } else if (c.targetUrl) {
-                        navigate({ to: c.targetUrl as any });
+                      } else if (target) {
+                        navigate({ to: target as any });
                       } else {
                         navigate({ to: "/onboarding/projects", search: { status: c.status, q: undefined } });
                       }

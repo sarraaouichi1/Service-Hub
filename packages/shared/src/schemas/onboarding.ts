@@ -179,6 +179,30 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
   });
 
   const salesApprovalStep = z.object({
+    contractDate: z.preprocess(
+      (value) => value ?? "",
+      z.string().superRefine((val, ctx) => {
+        const trimmed = (val as string).trim();
+        if (!trimmed) {
+          ctx.addIssue({ code: "custom", message: "Contract date is required" });
+          return;
+        }
+        const d = new Date(trimmed);
+        if (isNaN(d.getTime())) {
+          ctx.addIssue({ code: "custom", message: "Invalid contract date format" });
+          return;
+        }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        d.setHours(23, 59, 59, 999);
+        if (d < today) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Contract has expired. Contract must be active and valid for onboarding.",
+          });
+        }
+      }),
+    ),
     salesApproved: z.preprocess(
       (value) => value ?? false,
       z.boolean().refine((value) => value === true, {
