@@ -75,6 +75,10 @@ export function ProjectsView() {
       </div>
     </div>
 
+    {/* The table keeps a readable minimum width and scrolls sideways in a
+        narrow window, rather than squeezing every column. */}
+    <div className="table-scroll">
+    <div className="table-scroll-inner">
     {/* Table header */}
     <div style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 1.2fr 1fr 1fr 1.2fr 80px", padding: "10px 18px", background: "var(--gray-50)", border: "1px solid var(--gray-200)", borderRadius: "8px 8px 0 0", borderBottom: "none" }}>
       {["Project", "Product", "Partner", "PSP", "Progress", "Status", ""].map((h, i) => (
@@ -128,13 +132,15 @@ export function ProjectsView() {
           </div>
         );
       })}
-      {visible.length === 0 && (
+      {visible.length === 0 && !(savedDraft && (status === "all" || status === "draft")) && (
         <div style={{ padding: 40, textAlign: "center", color: "var(--gray-400)", fontSize: 13 }}>
           No projects match the current filter.
         </div>
       )}
       </>}
       </AsyncSection>
+    </div>
+    </div>
     </div>
   </div>
   );

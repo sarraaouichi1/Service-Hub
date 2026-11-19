@@ -111,6 +111,13 @@ These are load-bearing. Don't "simplify" them without reading why.
 - **`Field` renders caption → control → one message slot.** The slot shows `hint`
   by default and is *replaced* by `error`. Client validation and server 422 field
   errors both land there, so they never stack. This was asked for explicitly.
+- **Every reader of a draft passes it through `normalizeDraft` first.** Drafts
+  and projects saved before v1.1 hold one cell computer as flat fields; the
+  function converts them, and is idempotent.
+- **Checks that span steps live in `crossStepChecks`** (PSP only for payment
+  products, facility → cell computer links, facility services ⊆ selected
+  products), registered with `when: () => true` so they report alongside other
+  errors instead of only once everything else passes.
 - **Continue validates; Back and the step nav don't.** Gating navigation both
   ways would trap a user in a half-filled step.
 - **`mode: "onTouched"`** keeps a field quiet while first filled in, speaks up on
@@ -138,10 +145,18 @@ These are invariants. Breaking one is a vulnerability, not a style regression.
 - **`linkOrCreateUser` matches on issuer+subject, then only a *verified* email.**
   Matching an unverified email, or keying users on email instead of the subject
   claim, would let one person claim another's account.
-- **PSP credentials are write-only.** `pspKey`, `pspSecret` and `uiPassword` are
-  accepted on a write and never returned by a read; a blank value on save means
-  "leave it alone". Anything credential-shaped added later must join
-  `SECRET_FIELDS` in `apps/api/src/routes/projects.ts`.
+- **PSP credentials are write-only.** `pspKey`, `pspSecret` and each cell
+  computer's `uiPassword` are accepted on a write and never returned by a read;
+  a blank value on save means "leave it alone". Cell computers are matched by
+  their stable `key`. Anything credential-shaped added later must join
+  `SECRET_FIELDS` or `CELL_SECRET_FIELDS` in `apps/api/src/routes/projects.ts`.
+- **A project's stored configuration (`Project.data`) never leaves through the
+  list or detail endpoints** — only through `/projects/:id/configuration`, which
+  strips credentials. `toPublicProject` enforces that.
+- **Status changes follow `TRANSITIONS` in `projects.ts`.** `project:update`
+  edits details; it does not move a project past Sales or DevOps.
+- **`project:read-any` separates S&B staff from partners and customers**, who
+  see only the configurations they submitted.
 - **The last active administrator cannot be demoted, deactivated or deleted**, and
   nobody can delete their own account.
 - **The web app always calls same-origin `/api`.** nginx proxies it in the

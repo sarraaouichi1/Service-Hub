@@ -52,6 +52,7 @@ export function DashboardView() {
 
     if (isCustomer && userCompany) {
       result = result.filter(p => {
+        if (p.mine) return true;
         const pName = (p.name || "").toLowerCase();
         const pPartner = (p.partner || "").toLowerCase();
         return pName.includes(userCompany) || pPartner.includes(userCompany) || userCompany.includes(pName);
@@ -77,7 +78,7 @@ export function DashboardView() {
         if (userCountry === "NL" && (pC === "NETHERLANDS" || pC === "HOLLAND")) return true;
         return pC.includes(userCountry) || userCountry.includes(pC);
       };
-      result = result.filter(p => matchCountry(p.country));
+      result = result.filter(p => p.mine || matchCountry(p.country));
     }
 
     // Sort by country, then alphabetically by project name

@@ -782,6 +782,8 @@
 
 /* ── Modal dialog (native <dialog>) ──────────────────────────────────────── */
 .modal {
+  /* The global reset zeroes margins, which un-centres a native <dialog>. */
+  margin: auto;
   width: min(560px, calc(100vw - 32px));
   padding: var(--space-6);
   border: 1px solid var(--color-border);
@@ -804,3 +806,4 @@
 .menu-narrow { width: 200px; }
 .menu-item.selected { font-weight: var(--weight-semibold); }
 .menu-item-check { margin-left: auto; color: var(--color-accent); display: inline-flex; }
+[data-theme="dark"] .avatar { color: var(--sb-grey-50); }

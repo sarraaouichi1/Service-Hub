@@ -55,8 +55,8 @@ All seven share the password in `SEED_PASSWORD` (`ChangeMe123!dev` by default).
 | Sales | `sales@scheidt-bachmann.de` | read projects; confirm payment |
 | Reviewer | `reviewer@scheidt-bachmann.de` | read projects; review, approve; read rules and the audit log |
 | DevOps | `devops@scheidt-bachmann.de` | read projects; read and schedule patches |
-| Partner | `partner@scheidt-bachmann.de` | create, edit and submit projects; read patches |
-| Customer | `customer@scheidt-bachmann.de` | read projects |
+| Partner | `partner@scheidt-bachmann.de` | create, edit and submit projects; see the configurations they submitted |
+| Customer | `customer@scheidt-bachmann.de` | create, edit and submit their own onboarding; see the configurations they submitted |
 
 The addresses are role-based so they're easy to remember; the display names stay
 human so the demo data reads naturally. One shared domain keeps them uniform —
@@ -69,12 +69,34 @@ deployed environment, or don't seed at all.
 `packages/shared/src/rbac.ts` is the authority on what each role may do; the
 table above summarises it.
 
+## Onboarding data model (v1.1)
+
+- **Operator** holds the locale shared by everything it runs: country, language,
+  currency, decimal places, VAT.
+- **Cell computers** are a list under the operator. Each has its own name, ID,
+  URL, IP, port and credentials.
+- **Facilities** each point at one cell computer and list the services enabled
+  at that location (a subset of the selected products).
+- A **payment service provider** is required only when a payment product
+  (smart web pay) is selected.
+- Drafts saved in the old single-cell-computer shape are converted on read
+  (`normalizeDraft` in `packages/shared`).
+- A submitted project keeps its full configuration; `GET /api/projects/:id/configuration`
+  serves it without credentials for the one-page view and its copy buttons.
+
+## Inviting users
+
+Creating a user without a password returns a one-time activation link (valid
+7 days). Until a mail service is connected, the admin screen shows the link to
+copy and send; the envelope button on a pending user's row issues a new one.
+
 ## Verifying
 
 ```bash
 pnpm typecheck                               # every package
 pnpm lint
 pnpm build
+pnpm --filter @service-hub/shared test       # schema, migration and RBAC unit tests
 pnpm --filter @service-hub/api test          # auth + RBAC against a real database
 ```
 

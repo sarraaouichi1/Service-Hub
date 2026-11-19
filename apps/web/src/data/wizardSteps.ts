@@ -13,22 +13,22 @@ export const WIZARD_STEPS: WizardStepDef[] = [
   {
     num: 1,
     label: "Step 01",
-    name: "Operator & Access",
+    name: "Operator",
     subtitle:
-      "Fill in the parking operator details and network access information.",
+      "Fill in the parking operator's details, locale and finance settings.",
   },
   {
     num: 2,
     label: "Step 02",
-    name: "Cell Computer",
-    subtitle: "Provide cell computer configuration and system settings.",
+    name: "Cell Computers",
+    subtitle: "Add every cell computer the operator runs, each with its own address and credentials.",
   },
   {
     num: 3,
     label: "Step 03",
     name: "Facilities",
     subtitle:
-      "Add one or more parking facilities served by this cell computer.",
+      "Add each facility, the cell computer it is connected to, and the services enabled there.",
   },
   {
     num: 4,

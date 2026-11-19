@@ -20,8 +20,8 @@ interface NavLink {
   badge?: number;
   /** Also highlight this entry while a descendant route is active. */
   fuzzy?: boolean;
-  /** Hidden from anyone who lacks this. The API enforces the same rule. */
-  permission?: Permission;
+  /** Hidden from anyone who lacks any of these. The API enforces the same rule. */
+  permission?: Permission | Permission[];
 }
 
 export function OnboardingLayout() {
@@ -69,14 +69,17 @@ function OnboardingShell() {
     },
   ];
   const adminNav: NavLink[] = [
-    { to: "/onboarding/admin/templates", icon: "globe", label: "Countries", permission: "template:read" },
+    // Partners and customers read templates only so the wizard can prefill a
+    // country's locale; the admin screen is for S&B staff.
+    { to: "/onboarding/admin/templates", icon: "globe", label: "Countries", permission: ["template:read", "project:read-any"] },
     { to: "/onboarding/admin/rules", icon: "shield", label: "Validation rules", permission: "rule:read" },
     { to: "/onboarding/admin/users", icon: "users", label: "User management", permission: "user:read" },
     { to: "/onboarding/admin/settings", icon: "settings", label: "Settings", permission: "settings:read" },
   ];
 
   // A section with nothing the user may reach shouldn't leave a heading behind.
-  const allowed = (items: NavLink[]) => items.filter(item => !item.permission || can(item.permission));
+  const allowed = (items: NavLink[]) => items.filter(item =>
+    !item.permission || [item.permission].flat().every(p => can(p)));
 
   const renderNav = (items: NavLink[]) => items.map(item => (
     <Link key={item.to} to={item.to} className="nav-item"

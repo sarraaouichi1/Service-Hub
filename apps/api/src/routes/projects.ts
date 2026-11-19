@@ -72,6 +72,18 @@ export function mergeSecrets(incoming: OnboardingForm, stored: OnboardingForm): 
 }
 
 /**
+ * A project as list and detail endpoints return it. The stored configuration
+ * carries credentials, so it never leaves through these — only through the
+ * configuration endpoint, which strips them. `mine` says whether the caller
+ * submitted it.
+ */
+function toPublicProject<T extends { data?: unknown; createdById: string | null }>(project: T, user: AuthUser) {
+  const { data: _configuration, createdById, ...rest } = project;
+  void _configuration;
+  return { ...rest, mine: createdById === user.id };
+}
+
+/**
  * Whether this person may see a given project's details. S&B roles hold
  * project:read-any; partners and customers see the projects they submitted.
  */
@@ -140,7 +152,9 @@ export async function projectRoutes(app: FastifyInstance) {
         if (userCountry === "NL" && (pC === "NETHERLANDS" || pC === "HOLLAND")) return true;
         return pC.includes(userCountry) || userCountry.includes(pC);
       };
-      projects = projects.filter(p => matchCountry(p.country));
+      // A partner's or customer's own submissions are always theirs to see,
+      // whatever the country guess makes of their organisation's name.
+      projects = projects.filter(p => matchCountry(p.country) || p.createdById === request.authUser!.id);
     }
 
     // Sort projects by country, then by name
@@ -151,7 +165,7 @@ export async function projectRoutes(app: FastifyInstance) {
       return a.name.localeCompare(b.name);
     });
 
-    return { projects };
+    return { projects: projects.map((p) => toPublicProject(p, request.authUser!)) };
   });
 
   app.get<{ Params: { id: string } }>(
@@ -160,7 +174,7 @@ export async function projectRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const project = await prisma.project.findUnique({ where: { id: Number(request.params.id) } });
       if (!project) return reply.code(404).send({ message: "No such project" });
-      return { project };
+      return { project: toPublicProject(project, request.authUser!) };
     },
   );
 
@@ -222,7 +236,7 @@ export async function projectRoutes(app: FastifyInstance) {
         }
       }
 
-      return { project: await prisma.project.update({ where: { id }, data: parsed.data }) };
+      return { project: toPublicProject(await prisma.project.update({ where: { id }, data: parsed.data }), user) };
     },
   );
 
@@ -287,7 +301,7 @@ export async function projectRoutes(app: FastifyInstance) {
 
     // Clear working draft after submission
     await prisma.onboardingDraft.deleteMany({ where: { userId: request.authUser!.id } });
-    return reply.code(201).send({ project });
+    return reply.code(201).send({ project: toPublicProject(project, request.authUser!) });
   });
 
   /**

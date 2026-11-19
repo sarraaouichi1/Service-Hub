@@ -158,7 +158,8 @@ async function main() {
   check("sales may not update a project", (await call("/api/projects/1", { method: "PATCH", cookie: sales.cookie, body: JSON.stringify({ status: "approved" }) })).status, 403);
   check("an admin may update a project", (await call("/api/projects/1", { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ step: 5 }) })).status, 200);
 
-  check("a customer may not read templates", (await call("/api/templates", { cookie: customer.cookie })).status, 403);
+  check("a customer may read templates, to prefill the wizard's locale", (await call("/api/templates", { cookie: customer.cookie })).status, 200);
+  check("but may not write them", (await call("/api/templates", { method: "POST", cookie: customer.cookie, body: JSON.stringify({ title: "X", country: "X", lang: "en-GB", currency: "GBP", vat: "20" }) })).status, 403);
   check("a project manager may read templates", (await call("/api/templates", { cookie: (await login(PM)).cookie })).status, 200);
   check("a project manager may not write templates", (await call("/api/templates", { method: "POST", cookie: (await login(PM)).cookie, body: JSON.stringify({ title: "X", country: "X", lang: "en-GB", currency: "GBP", vat: "20" }) })).status, 403);
 
@@ -344,6 +345,11 @@ async function main() {
   check("nor skip straight to onboarded", (await call(`/api/projects/${customerProject.id}`, { method: "PATCH", cookie: customer.cookie, body: JSON.stringify({ status: "onboarded" }) })).status, 403);
   check("a project manager may not skip Sales and DevOps either", (await call(`/api/projects/${customerProject.id}`, { method: "PATCH", cookie: (await login(PM)).cookie, body: JSON.stringify({ status: "onboarded" }) })).status, 403);
   check("a customer may not edit a project someone else submitted", (await call("/api/projects/1", { method: "PATCH", cookie: customer.cookie, body: JSON.stringify({ name: "Hijacked" }) })).status, 404);
+
+  const customerList = (await call("/api/projects", { cookie: customer.cookie })).body?.projects as { id: number; mine: boolean; data?: unknown }[];
+  check("the customer sees their own submission in the list", customerList.find(p => p.id === customerProject.id)?.mine, true);
+  check("the list never carries the stored configuration", JSON.stringify(customerList).includes("cellComputers"), false);
+  check("nor does the submit response", JSON.stringify(customerSubmit.body).includes("cellComputers"), false);
 
   // The stored configuration: visible to its submitter and to S&B, without credentials.
   const ownConfig = await call(`/api/projects/${customerProject.id}/configuration`, { cookie: customer.cookie });

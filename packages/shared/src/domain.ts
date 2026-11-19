@@ -28,6 +28,8 @@ export interface Project {
   psp: string;
   country: string;
   product: ProductId;
+  /** True when the signed-in person submitted it. Set by the API. */
+  mine?: boolean;
 }
 
 export interface Psp { id: string; name: string; tag: string }

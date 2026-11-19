@@ -52,9 +52,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
   Sales: ["project:read", "project:read-any", "payment:confirm"],
   Reviewer: ["project:read", "project:read-any", "project:review", "project:approve", "rule:read", "audit:read"],
   DevOps: ["project:read", "project:read-any", "project:deploy", "patch:read", "patch:schedule"],
-  Partner: ["project:read", "project:create", "project:update", "project:submit"],
+  // Everyone who fills in the wizard reads the country templates: choosing a
+  // country prefills its locale from them.
+  Partner: ["project:read", "project:create", "project:update", "project:submit", "template:read"],
   // A customer (the operator) fills in and submits their own onboarding request.
-  Customer: ["project:read", "project:create", "project:update", "project:submit"],
+  Customer: ["project:read", "project:create", "project:update", "project:submit", "template:read"],
 };
 
 /** Everything the given roles allow, flattened and de-duplicated. */
