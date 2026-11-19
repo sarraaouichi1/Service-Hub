@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../db.js";
+import { requirePermission } from "../rbac/guard.js";
 
 const inquirySchema = z.object({
   userName: z.string().optional(),
@@ -10,7 +11,7 @@ const inquirySchema = z.object({
 });
 
 export async function patchInquiriesRoutes(app: FastifyInstance) {
-  app.post("/patch/inquiries", async (request, reply) => {
+  app.post("/patch/inquiries", { preHandler: requirePermission("patch:read") }, async (request, reply) => {
     const parsed = inquirySchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.code(422).send({ message: "Check the form", fieldErrors: parsed.error.issues });
@@ -42,7 +43,7 @@ export async function patchInquiriesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/patch/inquiries", async () => {
+  app.get("/patch/inquiries", { preHandler: requirePermission("patch:read") }, async () => {
     const inquiries = await prisma.patchInquiry.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,

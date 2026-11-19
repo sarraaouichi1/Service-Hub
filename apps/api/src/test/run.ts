@@ -8,6 +8,7 @@
 import { buildServer } from "../server.js";
 import { prisma } from "../db.js";
 import { resetLoginRateLimits } from "../auth/rateLimit.js";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@service-hub/shared";
 
 let failed = 0;
 const check = (label: string, got: unknown, want: unknown) => {
@@ -80,6 +81,12 @@ async function main() {
   check("me returns the signed-in user", meUser.email, ADMIN);
   check("me carries roles", meUser.roles, ["Admin"]);
   check("admin holds user:write", meUser.permissions.includes("user:write"), true);
+
+  // The sign-in page's chips prefill DEMO_PASSWORD; on the deployed demo every
+  // one of them was rejected because the seed had used another password.
+  for (const account of DEMO_ACCOUNTS) {
+    check(`demo chip "${account.label}" signs in with the prefilled password`, (await login(account.email, DEMO_PASSWORD)).status, 200);
+  }
 
   // ── RBAC ────────────────────────────────────────────────────────────────
   const customer = await login(CUSTOMER);
@@ -160,6 +167,15 @@ async function main() {
   check("sales may not read settings", (await call("/api/settings", { cookie: sales.cookie })).status, 403);
   check("a reviewer may read the audit log", (await call("/api/audit-log", { cookie: auditor.cookie })).status, 200);
   check("sales may not read the audit log", (await call("/api/audit-log", { cookie: sales.cookie })).status, 403);
+
+  // Tickets carry customer contact details and IP addresses, so the patch
+  // endpoints must not be reachable by anyone who can't see the Patch module.
+  for (const path of ["/api/patch/tickets", "/api/patch/inquiries"]) {
+    check(`signed out may not read ${path}`, (await call(path)).status, 401);
+    check(`signed out may not post to ${path}`, (await call(path, { method: "POST", body: "{}" })).status, 401);
+    check(`a customer may not read ${path}`, (await call(path, { cookie: customer.cookie })).status, 403);
+    check(`an admin may read ${path}`, (await call(path, { cookie: admin.cookie })).status, 200);
+  }
 
   // The bug this whole layer exists to fix: an admin edit has to outlive the
   // request that made it.

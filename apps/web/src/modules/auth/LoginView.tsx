@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
-import { loginSchema, type LoginInput } from "@service-hub/shared";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, loginSchema, type LoginInput } from "@service-hub/shared";
 import { ApiError, signIn } from "../../api";
 import { Field } from "../../components/Field";
 import { Icon } from "../../components/Icon";
@@ -24,7 +24,7 @@ export function LoginView() {
 
   const fillAccount = (email: string) => {
     setValue("email", email, { shouldValidate: true });
-    setValue("password", "ChangeMe123!dev", { shouldValidate: true });
+    setValue("password", DEMO_PASSWORD, { shouldValidate: true });
   };
 
   /**
@@ -127,37 +127,20 @@ export function LoginView() {
               Click any role to prefill credentials (all use the same demo password):
             </p>
             <div className="auth-demo-chips">
-              <button
-                type="button"
-                className="chip"
-                style={{ fontWeight: 600 }}
-                onClick={() => fillAccount("manager@scheidt-bachmann.de")}
-              >
-                Project Manager
-              </button>
-              <button
-                type="button"
-                className="chip"
-                style={{ fontWeight: 600 }}
-                onClick={() => fillAccount("sales@scheidt-bachmann.de")}
-              >
-                Sales Team
-              </button>
-              <button
-                type="button"
-                className="chip"
-                style={{ fontWeight: 600 }}
-                onClick={() => fillAccount("devops@scheidt-bachmann.de")}
-              >
-                DevOps
-              </button>
-              <button
-                type="button"
-                className="chip"
-                onClick={() => fillAccount("admin@scheidt-bachmann.de")}
-              >
-                Admin
-              </button>
+              {DEMO_ACCOUNTS.map(account => (
+                <button
+                  key={account.email}
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  // Keep focus in the auto-focused email field. Its blur would
+                  // show "Enter your email address", push the chips down between
+                  // mousedown and mouseup, and the click would never fire.
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => fillAccount(account.email)}
+                >
+                  {account.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

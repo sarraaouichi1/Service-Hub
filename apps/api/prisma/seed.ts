@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { VALIDATION_RULES } from "@service-hub/shared";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, VALIDATION_RULES } from "@service-hub/shared";
 import { hashPassword } from "../src/auth/password.js";
 import {
   AUDIT_LOG, DEFAULT_PLATFORM_CONFIG, DEMO_ONBOARDING_DRAFT, INITIAL_NOTIFS,
@@ -8,8 +8,9 @@ import {
 
 /**
  * Seeds the accounts the hub demoed with, one per role so RBAC can actually be
- * seen working. The password comes from SEED_PASSWORD and is only ever meant
- * for local and demo databases.
+ * seen working. The sign-in page's demo accounts get DEMO_PASSWORD (see
+ * packages/shared/src/demoAccounts.ts); the rest get SEED_PASSWORD. Both are
+ * only ever meant for local and demo databases.
  */
 const prisma = new PrismaClient();
 
@@ -28,12 +29,20 @@ const users = [
 
 async function main() {
   const passwordHash = await hashPassword(SEED_PASSWORD);
+  const demoPasswordHash = await hashPassword(DEMO_PASSWORD);
+  const demoEmails = new Set<string>(DEMO_ACCOUNTS.map((a) => a.email));
 
   for (const user of users) {
+    // The sign-in page's demo accounts are put back to the password it prefills
+    // on every run; any other seeded account keeps whatever password it has.
+    const demo = demoEmails.has(user.email);
     await prisma.user.upsert({
       where: { email: user.email },
-      update: { name: user.name, initials: user.initials, partner: user.partner, color: user.color, roles: user.roles },
-      create: { ...user, status: "active", issuer: "local", passwordHash },
+      update: {
+        name: user.name, initials: user.initials, partner: user.partner, color: user.color, roles: user.roles,
+        ...(demo && { passwordHash: demoPasswordHash, status: "active" }),
+      },
+      create: { ...user, status: "active", issuer: "local", passwordHash: demo ? demoPasswordHash : passwordHash },
     });
   }
 
