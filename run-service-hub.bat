@@ -54,6 +54,22 @@ if errorlevel 1 (echo [ERROR] Database "servicehub" could not be created. & goto
 echo Database ready.
 
 echo.
+echo Checking that no other Service-Hub is still running...
+netstat -ano | find ":3001 " | find "LISTENING" >nul
+if not errorlevel 1 (
+  echo [ERROR] Port 3001 is already in use - an earlier Service-Hub is probably still running.
+  echo         Close its window, or end every "Node.js JavaScript Runtime" in Task Manager, then re-run.
+  echo         ^(Otherwise Windows keeps Prisma's engine file locked: "EPERM: operation not permitted".^)
+  goto :fail
+)
+netstat -ano | find ":5173 " | find "LISTENING" >nul
+if not errorlevel 1 (
+  echo [ERROR] Port 5173 is already in use - another copy of the web app is running.
+  echo         Close that window ^(e.g. "Service-Hub Starter"^), then re-run.
+  goto :fail
+)
+
+echo.
 echo [4/6] Installing dependencies...
 call pnpm install || goto :fail
 call pnpm --filter @service-hub/api db:generate || goto :fail
@@ -61,6 +77,11 @@ call pnpm --filter @service-hub/shared build || goto :fail
 
 echo.
 echo [5/6] Migrating and seeding the database...
+REM A database created with "prisma db push" before the patch-management
+REM migration existed failed it with "column already exists" (P3018), which
+REM leaves it marked failed. The migration is now re-runnable; clear that mark
+REM so it can be applied. On any other database this does nothing.
+call pnpm --filter @service-hub/api exec prisma migrate resolve --rolled-back 20261103100000_patch_requests_and_user_settings >nul 2>nul
 call pnpm --filter @service-hub/api db:migrate || goto :fail
 if not exist "%SEED_MARKER%" (
   call pnpm --filter @service-hub/api db:seed || goto :fail

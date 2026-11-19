@@ -1,10 +1,13 @@
+-- Written to be re-runnable: some databases got these columns and tables
+-- from `prisma db push` before this migration existed, and adding them
+-- again failed with "column already exists" (P3018).
 -- AlterTable
-ALTER TABLE "User" ADD COLUMN     "country" TEXT DEFAULT 'DE',
-ADD COLUMN     "notificationSettings" JSONB,
-ADD COLUMN     "privacySettings" JSONB;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "country" TEXT DEFAULT 'DE',
+ADD COLUMN IF NOT EXISTS "notificationSettings" JSONB,
+ADD COLUMN IF NOT EXISTS "privacySettings" JSONB;
 
 -- CreateTable
-CREATE TABLE "PatchInquiry" (
+CREATE TABLE IF NOT EXISTS "PatchInquiry" (
     "id" SERIAL NOT NULL,
     "userName" TEXT NOT NULL,
     "userEmail" TEXT NOT NULL,
@@ -18,7 +21,7 @@ CREATE TABLE "PatchInquiry" (
 );
 
 -- CreateTable
-CREATE TABLE "PatchTicket" (
+CREATE TABLE IF NOT EXISTS "PatchTicket" (
     "id" SERIAL NOT NULL,
     "ticketNumber" TEXT NOT NULL,
     "carparkName" TEXT NOT NULL,
@@ -47,14 +50,14 @@ CREATE TABLE "PatchTicket" (
 );
 
 -- CreateIndex
-CREATE INDEX "PatchInquiry_createdAt_idx" ON "PatchInquiry"("createdAt");
+CREATE INDEX IF NOT EXISTS "PatchInquiry_createdAt_idx" ON "PatchInquiry"("createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PatchTicket_ticketNumber_key" ON "PatchTicket"("ticketNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "PatchTicket_ticketNumber_key" ON "PatchTicket"("ticketNumber");
 
 -- CreateIndex
-CREATE INDEX "PatchTicket_ticketNumber_idx" ON "PatchTicket"("ticketNumber");
+CREATE INDEX IF NOT EXISTS "PatchTicket_ticketNumber_idx" ON "PatchTicket"("ticketNumber");
 
 -- CreateIndex
-CREATE INDEX "PatchTicket_createdAt_idx" ON "PatchTicket"("createdAt");
+CREATE INDEX IF NOT EXISTS "PatchTicket_createdAt_idx" ON "PatchTicket"("createdAt");
 
