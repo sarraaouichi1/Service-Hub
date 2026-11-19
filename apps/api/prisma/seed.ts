@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD, VALIDATION_RULES } from "@service-hub/shared";
 import { hashPassword } from "../src/auth/password.js";
+import { syncRules } from "../src/data/syncRules.js";
 import {
   AUDIT_LOG, DEFAULT_PLATFORM_CONFIG, DEMO_ONBOARDING_DRAFT, INITIAL_NOTIFS,
   INITIAL_TEMPLATES, PROJECTS,
@@ -71,14 +72,7 @@ async function main() {
   // Rules come from the shared registry, so the table can never list something
   // the wizard doesn't enforce. Only `active` and `severity` are editable
   // afterwards, and an existing row's are left alone.
-  for (const rule of VALIDATION_RULES) {
-    const { id, field, category, type, pattern, severity, active, description } = rule;
-    await prisma.rule.upsert({
-      where: { id },
-      update: { field, category, type, pattern, description },
-      create: { id, field, category, type, pattern, severity, active, description },
-    });
-  }
+  await syncRules();
 
   // Seeding with explicit ids leaves the identity sequence at 1, so the next
   // insert that lets Postgres choose an id collides with a seeded row. Nudge

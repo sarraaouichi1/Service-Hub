@@ -1,4 +1,5 @@
-import { parseProducts } from "@service-hub/shared";
+import { PRODUCT_REQUIRED_FIELDS, parseProducts } from "@service-hub/shared";
+import type { FormTextKey } from "../../../types";
 import { Icon } from "../../../components/Icon";
 import { Field } from "../../../components/Field";
 import { useStepFields } from "./useStepFields";
@@ -13,6 +14,11 @@ export function OperatorStep() {
   const { input, select, message, values, choose } = useStepFields();
   const selectedList = parseProducts(values.product);
   const templates = useTemplates().data ?? [];
+  // Asterisks follow the selected products' onboarding sheets.
+  const needs = (key: FormTextKey) => selectedList.some(p => (PRODUCT_REQUIRED_FIELDS[p] ?? []).some(f => f.key === key));
+  const needsCity = needs("city");
+  const needsOpId = needs("opId");
+  const needsCurrency = needs("currency");
 
   // Choosing a country fills the locale from its country template, without
   // overwriting anything the user already chose.
@@ -33,10 +39,10 @@ export function OperatorStep() {
         Fields marked with a red asterisk are required before you can advance to the next step. Numeric fields must contain valid numbers.
       </div>
       <div className="form-grid">
-        <Field label="Operator Name" required error={message("opName")} hint="Shared across all products">
+        <Field label={selectedList.includes("entervo-connect") ? "Operator / business partner name" : "Operator Name"} required error={message("opName")} hint="Shared across all products">
           <input {...input("opName")} placeholder="e.g. Medway Hospital NHS Trust" />
         </Field>
-        <Field label="Operator ID" hint="Unique numeric ID, e.g. 46722" error={message("opId")}>
+        <Field label="Operator ID" required={needsOpId} hint="Unique operator number, 5 digits, e.g. 55555" error={message("opId")}>
           <input {...input("opId", "mono")} placeholder="e.g. 46722" />
         </Field>
         <Field label="Operator Email" required error={message("opEmail")} hint="Shared primary email">
@@ -51,8 +57,11 @@ export function OperatorStep() {
         <Field label="Parking System Version" hint="Minimum: V2R5M5" error={message("version")}>
           <input {...input("version", "mono")} placeholder="e.g. V3R0M4" />
         </Field>
-        <Field label="Operator Address" span2 error={message("address")}>
-          <input {...input("address")} placeholder="Street, City, Country" />
+        <Field label="Operator Address" span2 error={message("address")} hint="Also used for the smart pay API">
+          <input {...input("address")} placeholder="Street, postcode, city" />
+        </Field>
+        <Field label="City" required={needsCity} error={message("city")} hint="Location city — smart web pay and entervo connect">
+          <input {...input("city")} placeholder="e.g. London" />
         </Field>
 
         <div className="form-section-title span-2">
@@ -76,57 +85,19 @@ export function OperatorStep() {
             <option>fr-FR</option><option>nl-NL</option><option>nl-BE</option><option>es-ES</option>
           </select>
         </Field>
-        <Field label="Currency Code" hint="ISO 4217" error={message("currency")}>
+        <Field label="Currency Code" required={needsCurrency} hint="ISO 4217" error={message("currency")}>
           <select {...select("currency")}>
             <option value="">Select currency…</option>
             <option>GBP</option><option>EUR</option><option>CHF</option><option>USD</option><option>CAD</option>
           </select>
         </Field>
-        <Field label="Decimal Places in Currency" hint="0 to 4 digits" error={message("decimals")}>
+        <Field label="Decimal Places in Currency" required={needs("decimals")} hint="Default 2" error={message("decimals")}>
           <input {...input("decimals", "mono")} placeholder="2" />
         </Field>
         <Field label="VAT Percentage" hint="Whole number 0–100" error={message("vat")}>
           <input {...input("vat", "mono")} placeholder="e.g. 20" />
         </Field>
 
-        {/* Conditional section if entervo connect is selected */}
-        {selectedList.includes("entervo-connect") && (
-          <div className="product-panel span-2">
-            <div className="product-panel-title">
-              <span>🔗 entervo connect — Partner & Contact Person</span>
-              <span className="product-panel-tag">Product specific</span>
-            </div>
-            <div className="form-grid">
-              <Field label="Provider ID" hint="Unique number > 100 for car park operator" error={message("providerId")}>
-                <input {...input("providerId", "mono")} placeholder="e.g. 101" />
-              </Field>
-              <Field label="Contact Person Email" error={message("contactEmail")}>
-                <input {...input("contactEmail")} type="email" placeholder="contact@organisation.com" />
-              </Field>
-              <Field label="Contact Phone" error={message("contactPhone")}>
-                <input {...input("contactPhone")} placeholder="+49 123 456789" />
-              </Field>
-            </div>
-          </div>
-        )}
-
-        {/* Conditional section if smart validation is selected */}
-        {selectedList.includes("smart-validation") && (
-          <div className="product-panel span-2">
-            <div className="product-panel-title">
-              <span>✅ entervo smart validation — Tenant Identity</span>
-              <span className="product-panel-tag">Product specific</span>
-            </div>
-            <div className="form-grid">
-              <Field label="Tenant Shortname" hint="Max 20 chars, small letters/numbers only (URL part)" error={message("tenantShortname")}>
-                <input {...input("tenantShortname", "mono")} placeholder="e.g. centralgarage" />
-              </Field>
-              <Field label="Tenant Description" error={message("tenantDescription")}>
-                <input {...input("tenantDescription")} placeholder="e.g. Central Garage Customer Validation" />
-              </Field>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

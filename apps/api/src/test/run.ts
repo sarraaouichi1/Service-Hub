@@ -6,6 +6,7 @@
  * test with those parts replaced would actually exercise.
  */
 import { buildServer } from "../server.js";
+import { syncRules } from "../data/syncRules.js";
 import { prisma } from "../db.js";
 import { resetLoginRateLimits } from "../auth/rateLimit.js";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@service-hub/shared";
@@ -22,7 +23,19 @@ const CUSTOMER = "customer@scheidt-bachmann.de";
 const SALES = "sales@scheidt-bachmann.de";
 const REVIEWER = "reviewer@scheidt-bachmann.de";
 const PM = "manager@scheidt-bachmann.de";
-import { DEMO_ONBOARDING_DRAFT } from "../data/seed-data.js";
+import { DEMO_ONBOARDING_DRAFT as DEMO_DRAFT_WITHOUT_SECRETS } from "../data/seed-data.js";
+
+// The demo draft holds no credentials (the seed stores none). A submission has
+// to carry the ones the sheets require: each cell computer's password and the
+// PSP's secrets.
+const DEMO_ONBOARDING_DRAFT = {
+  ...DEMO_DRAFT_WITHOUT_SECRETS,
+  cellComputers: DEMO_DRAFT_WITHOUT_SECRETS.cellComputers.map((c) => ({ ...c, uiPassword: "pw123" })),
+  pspConfig: {
+    ...DEMO_DRAFT_WITHOUT_SECRETS.pspConfig,
+    fields: { ...DEMO_DRAFT_WITHOUT_SECRETS.pspConfig.fields, apiPassword: "api-pw", sharedSecret: "shh", privateKeyPassword: "pk" },
+  },
+};
 const PASSWORD = process.env.SEED_PASSWORD ?? "ChangeMe123!dev";
 
 async function main() {
@@ -31,6 +44,8 @@ async function main() {
   await prisma.template.deleteMany({ where: { title: "Ireland" } });
   await prisma.user.updateMany({ where: { email: ADMIN }, data: { roles: ["Admin"], status: "active" } });
 
+  // What the API does on boot (src/index.ts) before serving.
+  await syncRules();
   const app = await buildServer();
   await app.listen({ port: 0, host: "127.0.0.1" });
   const base = `http://127.0.0.1:${(app.server.address() as { port: number }).port}`;
@@ -365,7 +380,8 @@ async function main() {
   // ── v1.1: the payment provider only where a product takes payments ──────
   const validationOnly = {
     ...DEMO_ONBOARDING_DRAFT, salesApproved: true, product: "smart-validation", psp: "", pspMid: "",
-    facilities: DEMO_ONBOARDING_DRAFT.facilities.map(f => ({ ...f, services: ["smart-validation"] })),
+    tenantShortname: "medway", tenantDescription: "Medway Hospital validation", subtechEmail: "subtech@medway.example",
+    facilities: DEMO_ONBOARDING_DRAFT.facilities.map(f => ({ ...f, services: ["smart-validation"], timezone: "Europe/London", mediaTypes: ["Barcode", "LPN"] })),
   };
   const noPsp = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(validationOnly) });
   check("a Validation-only onboarding needs no PSP", noPsp.status, 201);
@@ -401,6 +417,34 @@ async function main() {
   const stored = (await prisma.onboardingDraft.findUniqueOrThrow({ where: { userId: adminId } })).data as { cellComputers: { uiPassword: string }[] };
   check("and is still the original value in storage", stored.cellComputers[0].uiPassword, "old-secret");
   await call("/api/draft", { method: "DELETE", cookie: admin.cookie });
+
+  // ── Product sheets: PSP credentials ─────────────────────────────────────
+  // Secrets are kept out of every read and required on submit.
+  await call("/api/draft", { method: "PUT", cookie: admin.cookie, body: JSON.stringify({ ...DEMO_ONBOARDING_DRAFT, salesApproved: true }) });
+  const pspRead = (await call("/api/draft", { cookie: admin.cookie })).body as { draft: { pspConfig: { fields: Record<string, string>; methods: string[] } }; secretsOnFile: string[] };
+  check("a PSP's secret fields are not sent back", pspRead.draft.pspConfig.fields.sharedSecret, "");
+  check("its ordinary fields are", pspRead.draft.pspConfig.fields.storeId, "FIS-MED-001");
+  check("and its payment methods", pspRead.draft.pspConfig.methods, ["visa", "mastercard", "applepay"]);
+  check("the secrets on file are named", pspRead.secretsOnFile.filter(k => k.startsWith("pspConfig.")).sort(), ["pspConfig.fields.apiPassword", "pspConfig.fields.privateKeyPassword", "pspConfig.fields.sharedSecret"]);
+  // Saving the form back (secrets blank) keeps them, and submitting then works.
+  await call("/api/draft", { method: "PUT", cookie: admin.cookie, body: JSON.stringify(pspRead.draft) });
+  const pspStored = (await prisma.onboardingDraft.findUniqueOrThrow({ where: { userId: adminId } })).data as { pspConfig: { fields: Record<string, string> } };
+  check("a save without the PSP secrets keeps them", pspStored.pspConfig.fields.sharedSecret, "shh");
+  const fromStored = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(pspRead.draft) });
+  check("a submission completes its secrets from the saved draft", fromStored.status, 201);
+  const storedConfig = (await call(`/api/projects/${(fromStored.body?.project as { id: number }).id}/configuration`, { cookie: admin.cookie })).body as { configuration: unknown; secretsOnFile: string[] };
+  check("the stored configuration hides PSP secrets too", JSON.stringify(storedConfig.configuration).includes("shh"), false);
+  await prisma.project.deleteMany({ where: { id: (fromStored.body?.project as { id: number }).id } });
+
+  const noSecrets = { ...DEMO_DRAFT_WITHOUT_SECRETS, salesApproved: true };
+  const refused = await call("/api/projects/submit", { method: "POST", cookie: (await login(PM)).cookie, body: JSON.stringify(noSecrets) });
+  check("without the PSP's secrets a submission is refused", refused.status, 422);
+  check("naming the first missing one", (refused.body?.fieldErrors as Record<string, string>)?.pspConfig, "Fiserv / Telecash: API password is required");
+
+  // ── Product sheets: the rule table follows the registry ─────────────────
+  const ruleIds = ((await call("/api/rules", { cookie: admin.cookie })).body?.rules as { id: number }[]).map(r => r.id);
+  check("rules added for the sheets are listed for administrators", [46, 47, 48, 49, 50, 51].every(id => ruleIds.includes(id)), true);
+  check("the PSP catalogue lists the sheet's eight providers", ((await call("/api/catalog/psps", { cookie: admin.cookie })).body?.psps as { id: string }[]).map(p => p.id), ["fiserv", "planet", "trustcommerce", "nmi", "worldline", "ccv", "advam", "moneris"]);
 
   // ── v1.1: invitation links ──────────────────────────────────────────────
   const invited = await call("/api/users", { method: "POST", cookie: admin.cookie, body: JSON.stringify({ email: "z@y.com", name: "Zed Invite", roles: ["Customer"] }) });

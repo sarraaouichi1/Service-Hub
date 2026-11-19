@@ -105,8 +105,21 @@ export interface CellComputer {
   /** Write-only: accepted on save, never returned by a read. */
   uiPassword: string;
   deviceId: string;
+  /** No longer asked for (not on entervo connect sheet v3.0); kept so older drafts still read. */
   sshPort: string;
+  /** smart web pay: the name shown to customers. */
+  hostName?: string;
+  /** smart web pay: physical address of the cell computer, not its network address. */
+  address?: string;
+  /** smart web pay: cashier contract and consumer IDs. */
+  cashierContractId?: string;
+  cashierConsumerId?: string;
 }
+
+/** Carpark types from the entervo connect sheet: multi-storey, underground, park area (default). */
+export type CarparkType = "MSCP" | "UGCP" | "PA";
+/** Media types from the smart validation sheet, per facility. */
+export const VALIDATION_MEDIA_TYPES = ["Barcode", "LPN", "Mobile-ID"] as const;
 
 export interface Facility {
   id: string;
@@ -118,6 +131,25 @@ export interface Facility {
   cellComputer?: string;
   /** Products enabled at this physical location — a subset of those selected. */
   services?: ProductId[];
+  /** smart web pay: only when the facility's address differs from the cell computer's. */
+  address?: string;
+  /** smart web pay: the enclosing facility, for a nested area. */
+  parentId?: string;
+  /** smart validation: IANA time zone of the facility, e.g. Europe/London. */
+  timezone?: string;
+  /** smart validation: media accepted here. */
+  mediaTypes?: string[];
+  /** entervo connect: defaults to PA. */
+  carparkType?: CarparkType;
+}
+
+/**
+ * The chosen PSP's credentials and payment methods. Field keys come from
+ * `PSP_DEFINITIONS`; the ones marked secret are write-only.
+ */
+export interface PspConfig {
+  fields: Record<string, string>;
+  methods: string[];
 }
 
 /** Free-text fields captured by the onboarding wizard across all products. */
@@ -128,9 +160,13 @@ export type FormTextKey =
   | "uiUserId" | "uiPassword" | "deviceId" | "vat" | "financialInfo"
   | "tocUrl" | "tariff" | "psp" | "pspMid" | "pspTid" | "pspKey" | "pspSecret"
   // Connect additions
-  | "providerId" | "salutation" | "contactFirstname" | "contactSurname"
+  | "providerId" | "salutation" | "contactTitle" | "contactFirstname" | "contactSurname"
   | "contactStreet" | "contactCity" | "contactEmail" | "contactPhone"
-  | "adminUsername" | "adminFirstname" | "adminSurname" | "adminEmail" | "adminPhone" | "sshPort"
+  | "adminUsername" | "adminName" | "adminFirstname" | "adminSurname" | "adminEmail" | "adminPhone" | "sshPort"
+  | "onlineAuthProvider" | "customerMediaProvider" | "countingProvider" | "deviceControlProvider"
+  // smart web pay (sheet v3.1) additions
+  | "opDescription" | "contactUsEmails" | "receiptEmails" | "pgsLocationDescription"
+  | "shiftHandlingTime" | "inPayAfterEntry" | "inPayAfterPayment" | "serviceFeeType" | "serviceFee"
   // Smart Validation additions
   | "tenantShortname" | "tenantDescription" | "subtechEmail" | "incidentEmail" | "onboardingEmail" | "mediatypes"
   // Mobility Connect additions
@@ -152,7 +188,9 @@ export type FormBoolKey =
   | "vouchers" | "prepay" | "topup" | "salesApproved"
   | "onlineAuth" | "customerMedia" | "counting"
   | "open247" | "accessOutsideHours"
-  | "mainAreaConcept" | "autoCheckout" | "boostFunction" | "productWebshop" | "autoDeactivation";
+  | "mainAreaConcept" | "autoCheckout" | "boostFunction" | "productWebshop" | "autoDeactivation"
+  // entervo connect, smart validation, smart web pay sheet additions
+  | "deviceControl" | "showLpnInReport" | "latePayment" | "showInPayTime";
 
 /**
  * The onboarding wizard's working draft. Every field is optional because the
@@ -161,7 +199,7 @@ export type FormBoolKey =
  */
 export type OnboardingForm = { [K in FormTextKey]?: string } & {
   [K in FormBoolKey]?: boolean;
-} & { facilities?: Facility[]; cellComputers?: CellComputer[] } & {
+} & { facilities?: Facility[]; cellComputers?: CellComputer[]; pspConfig?: PspConfig } & {
   [key: `pm_${string}`]: boolean | undefined;
 };
 
@@ -171,7 +209,7 @@ export type OnboardingForm = { [K in FormTextKey]?: string } & {
  * shares one key and the message names the row.
  */
 export type FormErrors = Partial<
-  Record<FormTextKey | FormBoolKey | "facilities" | "cellComputers", string>
+  Record<FormTextKey | FormBoolKey | "facilities" | "cellComputers" | "pspConfig", string>
 >;
 
 export type TemplateStatus = "active" | "draft";

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import type { FormErrors, FormTextKey, OnboardingForm } from "../domain.js";
 import { needsPaymentProvider, parseProducts } from "../products.js";
+import { CELL_REQUIREMENTS, PRODUCT_REQUIRED_FIELDS } from "../productSheets.js";
+import { pspDefinition } from "../psp.js";
 import { blockingRulesFor, type RuleOverrides } from "./rules.js";
 
 /**
@@ -26,7 +28,25 @@ import { blockingRulesFor, type RuleOverrides } from "./rules.js";
  * A rule's pattern and check stay fixed in code either way — those are the
  * definition, and the admin table shows exactly what the wizard runs.
  */
-export function createOnboardingSchemas(overrides?: RuleOverrides) {
+export interface OnboardingSchemaOptions {
+  /**
+   * Whether required credentials (cell computer passwords, PSP secrets) must be
+   * present. The browser never holds a stored credential — the API sends back
+   * only that one is on file — so the wizard can't check them; the submit
+   * endpoint, which folds the stored ones back in first, can and does.
+   */
+  requireSecrets?: boolean;
+  /**
+   * Credentials the server already holds, named as the API reports them
+   * (`cellComputers.<key>.uiPassword`, `pspConfig.fields.<key>`). With this the
+   * wizard can require credentials too: a blank one counts as present when it
+   * is on file, so the user hears about a missing password on the step where
+   * it's typed rather than only when submitting.
+   */
+  secretsOnFile?: readonly string[];
+}
+
+export function createOnboardingSchemas(overrides?: RuleOverrides, options: OnboardingSchemaOptions = {}) {
   /**
    * A wizard text field: optional by default, checked against its registry rules.
    *
@@ -74,6 +94,10 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     uiPassword: z.string().optional(),
     deviceId: z.string().optional(),
     sshPort: z.string().optional(),
+    hostName: z.string().optional(),
+    address: z.string().optional(),
+    cashierContractId: z.string().optional(),
+    cashierConsumerId: z.string().optional(),
   });
 
   /**
@@ -95,7 +119,7 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
         const problem =
           (row.name?.trim() ? undefined : `Cell computer ${i + 1}: name is required`) ??
           rowValueError(row.cellId, "cellId", `${label} — Cell computer ID`, true) ??
-          rowValueError(row.ip, "ip", `${label} — Static public IP`, true) ??
+          rowValueError(row.ip, "ip", `${label} — Static public IP`, false) ??
           rowValueError(row.port, "port", `${label} — Port`, false) ??
           rowValueError(row.uiUserId, "uiUserId", `${label} — UI user ID`, false) ??
           rowValueError(row.uiPassword, "uiPassword", `${label} — UI password`, false) ??
@@ -122,6 +146,11 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     inpayPayment: z.union([z.string(), z.number()]).optional(),
     cellComputer: z.string().optional(),
     services: z.array(z.string()).optional(),
+    address: z.string().optional(),
+    parentId: z.string().optional(),
+    timezone: z.string().optional(),
+    mediaTypes: z.array(z.string()).optional(),
+    carparkType: z.string().optional(),
   });
 
   /**
@@ -171,22 +200,14 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     phone: text("phone"),
     version: text("version"),
     address: text("address"),
+    city: text("city"),
+    zipCode: text("zipCode"),
     // Locale is the operator's, shared by every cell computer it runs.
     country: text("country", "Country is required"),
     lang: text("lang", "Language tag is required"),
     currency: text("currency"),
     decimals: text("decimals"),
     vat: text("vat"),
-    // Connect & Validation & Mobility additions
-    providerId: text("providerId"),
-    contactEmail: text("contactEmail"),
-    contactPhone: text("contactPhone"),
-    adminUsername: text("adminUsername"),
-    adminEmail: text("adminEmail"),
-    tenantShortname: text("tenantShortname"),
-    tenantDescription: text("tenantDescription"),
-    zipCode: text("zipCode"),
-    city: text("city"),
   });
 
   const cellComputerStep = z.object({
@@ -209,10 +230,43 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
   });
 
   const appPaymentStep = z.object({
+    // smart validation (sheet v4.4)
+    tenantShortname: text("tenantShortname"),
+    tenantDescription: text("tenantDescription"),
+    showLpnInReport: z.boolean().optional(),
+    // entervo connect (sheet v3.0)
+    providerId: text("providerId"),
+    salutation: text("salutation"),
+    contactTitle: text("contactTitle"),
+    contactFirstname: text("contactFirstname"),
+    contactSurname: text("contactSurname"),
+    contactStreet: text("contactStreet"),
+    contactCity: text("contactCity"),
+    contactEmail: text("contactEmail"),
+    contactPhone: text("contactPhone"),
+    adminUsername: text("adminUsername"),
+    adminEmail: text("adminEmail"),
+    adminName: text("adminName"),
+    adminPhone: text("adminPhone"),
+    onlineAuthProvider: text("onlineAuthProvider"),
+    customerMediaProvider: text("customerMediaProvider"),
+    countingProvider: text("countingProvider"),
+    deviceControlProvider: text("deviceControlProvider"),
+    // smart web pay (sheet v3.1)
+    opDescription: text("opDescription"),
+    contactUsEmails: text("contactUsEmails"),
+    receiptEmails: text("receiptEmails"),
+    pgsLocationDescription: text("pgsLocationDescription"),
+    shiftHandlingTime: text("shiftHandlingTime"),
+    inPayAfterEntry: text("inPayAfterEntry"),
+    inPayAfterPayment: text("inPayAfterPayment"),
+    serviceFeeType: text("serviceFeeType"),
+    serviceFee: text("serviceFee"),
+    pspConfig: z.object({ fields: z.record(z.string(), z.string()), methods: z.array(z.string()) }).partial().optional(),
     financialInfo: text("financialInfo"),
     tocUrl: text("tocUrl"),
     tariff: text("tariff"),
-    // Required only when a payment product is selected — see `requirePayment`.
+    // Required only when a payment product is selected — see `crossStepChecks`.
     psp: text("psp"),
     pspMid: text("pspMid"),
     pspTid: text("pspTid"),
@@ -290,18 +344,61 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
   function crossStepChecks(draft: Record<string, unknown>, ctx: z.RefinementCtx) {
     const products = parseProducts(typeof draft.product === "string" ? draft.product : "");
 
+    const filled = (value: unknown) => typeof value === "string" ? value.trim() !== "" : value !== undefined && value !== null;
+
+    // What each selected product's onboarding sheet marks with an asterisk.
+    const reported = new Set<string>();
+    for (const product of products) {
+      for (const { key, message } of PRODUCT_REQUIRED_FIELDS[product] ?? []) {
+        if (reported.has(key) || filled(draft[key])) continue;
+        reported.add(key);
+        ctx.addIssue({ code: "custom", path: [key], message });
+      }
+    }
+
     if (needsPaymentProvider(products)) {
-      if (!String(draft.psp ?? "").trim()) {
+      const psp = String(draft.psp ?? "").trim();
+      const definition = pspDefinition(psp);
+      const config = (draft.pspConfig ?? {}) as { fields?: Record<string, string>; methods?: string[] };
+      if (!psp) {
         ctx.addIssue({ code: "custom", path: ["psp"], message: "Select a payment service provider" });
-      } else if (!String(draft.pspMid ?? "").trim()) {
-        ctx.addIssue({ code: "custom", path: ["pspMid"], message: "Merchant ID is required" });
+      } else if (definition) {
+        const missing = definition.fields.find((f) =>
+          f.required && (options.requireSecrets || !f.secret) && !String(config.fields?.[f.key] ?? "").trim() &&
+          !(f.secret && options.secretsOnFile?.includes(`pspConfig.fields.${f.key}`)));
+        if (missing) {
+          ctx.addIssue({ code: "custom", path: ["pspConfig"], message: `${definition.name}: ${missing.label} is required` });
+        } else if (!(config.methods ?? []).some((m) => definition.methods.includes(m))) {
+          ctx.addIssue({ code: "custom", path: ["pspConfig"], message: `${definition.name}: choose at least one payment method` });
+        }
+      }
+    }
+
+    // Cell computers: what the selected products need from each one.
+    const cellRows = Array.isArray(draft.cellComputers)
+      ? (draft.cellComputers as { key?: string; name?: string; ip?: string; port?: string; url?: string; uiUserId?: string; uiPassword?: string; hostName?: string }[])
+      : [];
+    const wants = (list: readonly string[]) => products.some((p) => list.includes(p));
+    for (const [i, row] of cellRows.entries()) {
+      const label = row.name?.trim() || `Cell computer ${i + 1}`;
+      const problem =
+        (wants(CELL_REQUIREMENTS.needsAddress) && !filled(row.url) && !(filled(row.ip) && filled(row.port))
+          ? `${label}: enter its public IP and port, or a URL`
+          : undefined) ??
+        (wants(CELL_REQUIREMENTS.needsUser) && !filled(row.uiUserId) ? `${label}: the username / participant ID is required` : undefined) ??
+        (wants(CELL_REQUIREMENTS.needsUser) && options.requireSecrets && !filled(row.uiPassword) &&
+          !options.secretsOnFile?.includes(`cellComputers.${row.key}.uiPassword`) ? `${label}: the password is required` : undefined) ??
+        (wants(CELL_REQUIREMENTS.needsHostName) && !filled(row.hostName) ? `${label}: the host name shown to customers is required` : undefined);
+      if (problem) {
+        ctx.addIssue({ code: "custom", path: ["cellComputers"], message: problem });
+        break;
       }
     }
 
     const cells = Array.isArray(draft.cellComputers) ? (draft.cellComputers as { key?: string }[]) : [];
     const cellKeys = new Set(cells.map((c) => c.key).filter(Boolean));
     const rows = Array.isArray(draft.facilities)
-      ? (draft.facilities as { cellComputer?: string; services?: string[] }[])
+      ? (draft.facilities as { cellComputer?: string; services?: string[]; timezone?: string; mediaTypes?: string[]; carparkType?: string }[])
       : [];
     for (const [i, row] of rows.entries()) {
       if (row.cellComputer && !cellKeys.has(row.cellComputer)) {
@@ -311,6 +408,17 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
       const stray = (row.services ?? []).find((s) => !products.includes(s as never));
       if (stray) {
         ctx.addIssue({ code: "custom", path: ["facilities"], message: `Facility ${i + 1}: ${stray} is not one of the selected products` });
+        return;
+      }
+      // Per-facility fields a service's sheet requires, only where that
+      // service actually runs.
+      const runs = (product: string) => (row.services ?? []).includes(product);
+      const facilityProblem =
+        (runs("smart-validation") && !filled(row.timezone) ? "choose its time zone (smart validation)" : undefined) ??
+        (runs("smart-validation") && !(row.mediaTypes ?? []).length ? "select the media types accepted there (smart validation)" : undefined) ??
+        (runs("entervo-connect") && !filled(row.carparkType) ? "choose its carpark type (entervo connect)" : undefined);
+      if (facilityProblem) {
+        ctx.addIssue({ code: "custom", path: ["facilities"], message: `Facility ${i + 1}: ${facilityProblem}` });
         return;
       }
     }

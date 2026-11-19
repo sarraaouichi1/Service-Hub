@@ -1,5 +1,5 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
-import { parseProducts } from "@service-hub/shared";
+import { FACILITY_TIMEZONES, VALIDATION_MEDIA_TYPES, parseProducts, validationLocationId } from "@service-hub/shared";
 import type { OnboardingForm, ProductId } from "../../../types";
 import { Icon } from "../../../components/Icon";
 import { Field } from "../../../components/Field";
@@ -21,10 +21,20 @@ export function FacilitiesStep() {
   // A new facility starts on the only cell computer when there is one, and with
   // no services ticked: which services run where is exactly what this step asks.
   const addFacility = () => append({
-    id: "", name: "", city: "", inpayEntry: "", inpayPayment: "",
+    id: "", name: "", city: values.city ?? "", inpayEntry: "", inpayPayment: "",
     cellComputer: cellComputers.length === 1 ? cellComputers[0].key : "",
     services: selectedList.length === 1 ? [...selectedList] : [],
+    // The sheets' defaults: connect's carpark type is PA.
+    carparkType: "PA",
+    mediaTypes: [],
   });
+
+  const toggleMedia = (index: number, media: string) => {
+    const current = values.facilities?.[index]?.mediaTypes ?? [];
+    const next = current.includes(media) ? current.filter(m => m !== media) : [...current, media];
+    setValue(`facilities.${index}.mediaTypes`, next, { shouldDirty: true });
+    if (formState.errors.facilities) void trigger("facilities");
+  };
 
   const toggleService = (index: number, product: ProductId) => {
     const current = values.facilities?.[index]?.services ?? [];
@@ -50,6 +60,10 @@ export function FacilitiesStep() {
 
       {fields.map((row, i) => {
         const services = values.facilities?.[i]?.services ?? [];
+        const runs = (product: string) => services.includes(product as ProductId);
+        const facility = values.facilities?.[i];
+        const cell = cellComputers.find(c => c.key === facility?.cellComputer);
+        const media = facility?.mediaTypes ?? [];
         return (
           <section className="row-card" key={row._rowId} aria-label={`Facility ${i + 1}`}>
             <div className="row-card-head">
@@ -100,6 +114,63 @@ export function FacilitiesStep() {
                 {selectedList.length === 0 && <span className="text-muted">Select products on Step 00 first.</span>}
               </div>
             </div>
+            {(runs("smart-validation") || runs("entervo-connect") || runs("smart-web-pay")) && (
+              <div className="facility-product-fields">
+                {runs("smart-validation") && (
+                  <div className="facility-product-block">
+                    <div className="facility-product-label">smart validation</div>
+                    <div className="facility-grid">
+                      <Field label="Time zone" required hint="Where the facility is">
+                        <select className="form-select" {...register(`facilities.${i}.timezone`)}>
+                          <option value="">Select time zone…</option>
+                          {FACILITY_TIMEZONES.map(tz => <option key={tz}>{tz}</option>)}
+                        </select>
+                      </Field>
+                      <Field label="Location-ID" hint="Generated: SB + cell ID + facility ID">
+                        <input className="form-input mono" readOnly tabIndex={-1}
+                          value={validationLocationId(cell?.cellId, facility?.id) || "—"} aria-label="Location-ID (generated)" />
+                      </Field>
+                    </div>
+                    <div className="service-picker-options" role="group" aria-label={`Media types at facility ${i + 1}`} style={{ marginTop: 10 }}>
+                      <span className="service-picker-label" style={{ margin: "0 6px 0 0", alignSelf: "center" }}>Media types <span className="req">*</span></span>
+                      {VALIDATION_MEDIA_TYPES.map(m => (
+                        <label key={m} className={`service-chip${media.includes(m) ? " selected" : ""}`}>
+                          <input type="checkbox" checked={media.includes(m)} onChange={() => toggleMedia(i, m)} />
+                          {m}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {runs("entervo-connect") && (
+                  <div className="facility-product-block">
+                    <div className="facility-product-label">entervo connect</div>
+                    <div className="facility-grid">
+                      <Field label="Carpark type" required hint="API key, username and password come from PS ITOPS">
+                        <select className="form-select" {...register(`facilities.${i}.carparkType`)}>
+                          <option value="PA">Park Area (PA)</option>
+                          <option value="MSCP">Multi Storey Car Park (MSCP)</option>
+                          <option value="UGCP">Underground Car Park (UGCP)</option>
+                        </select>
+                      </Field>
+                    </div>
+                  </div>
+                )}
+                {runs("smart-web-pay") && (
+                  <div className="facility-product-block">
+                    <div className="facility-product-label">smart web pay <span>only if the address differs from the cell computer's</span></div>
+                    <div className="facility-grid">
+                      <Field label="Facility address">
+                        <input className="form-input" {...register(`facilities.${i}.address`)} placeholder="Street, city" />
+                      </Field>
+                      <Field label="Parent facility ID" hint="Only for a nested area">
+                        <input className="form-input mono" {...register(`facilities.${i}.parentId`)} />
+                      </Field>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         );
       })}

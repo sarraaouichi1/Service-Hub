@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { can, createOnboardingSchemas, needsPaymentProvider, normalizeDraft, parseProducts } from "@service-hub/shared";
+import { PSP_DEFINITIONS, can, createOnboardingSchemas, needsPaymentProvider, normalizeDraft, parseProducts } from "@service-hub/shared";
 import type { RuleOverrides } from "@service-hub/shared";
 import type { AuthUser, OnboardingForm } from "@service-hub/shared";
 import type { Prisma } from "@prisma/client";
@@ -22,6 +22,13 @@ const STATUSES = ["draft", "progress", "review", "approved", "sales-approval", "
  */
 const SECRET_FIELDS = ["pspKey", "pspSecret"] as const;
 const CELL_SECRET_FIELDS = ["uiPassword"] as const;
+/**
+ * PSP credential fields marked secret in the shared PSP definitions. A key is
+ * secret if any PSP treats it so — `apiKey` is a secret for NMI, Worldline and
+ * CCV alike — so switching PSP can never expose what another one stored.
+ * Reported as `pspConfig.fields.<key>`.
+ */
+const PSP_SECRET_KEYS = new Set(PSP_DEFINITIONS.flatMap((p) => p.fields.filter((f) => f.secret).map((f) => f.key)));
 
 /** A copy of the draft with every credential removed, and the list of those on file. */
 export function withoutSecrets(stored: OnboardingForm): { draft: OnboardingForm; secretsOnFile: string[] } {
@@ -40,6 +47,15 @@ export function withoutSecrets(stored: OnboardingForm): { draft: OnboardingForm;
       }
       return copy;
     });
+  }
+  if (stored.pspConfig) {
+    const fields = { ...(stored.pspConfig.fields ?? {}) };
+    for (const key of Object.keys(fields)) {
+      if (!PSP_SECRET_KEYS.has(key)) continue;
+      if (fields[key]) secretsOnFile.push(`pspConfig.fields.${key}`);
+      fields[key] = "";
+    }
+    draft.pspConfig = { methods: [...(stored.pspConfig.methods ?? [])], fields };
   }
   return { draft, secretsOnFile };
 }
@@ -67,6 +83,19 @@ export function mergeSecrets(incoming: OnboardingForm, stored: OnboardingForm): 
       }
       return copy;
     });
+  }
+  if (!incoming.pspConfig && stored.pspConfig) {
+    // A save that doesn't carry the PSP form at all leaves it as stored.
+    merged.pspConfig = stored.pspConfig;
+  } else if (incoming.pspConfig) {
+    const storedFields = stored.pspConfig?.fields ?? {};
+    const fields = { ...(incoming.pspConfig?.fields ?? {}) };
+    for (const key of PSP_SECRET_KEYS) {
+      if (fields[key]) continue;
+      if (storedFields[key]) fields[key] = storedFields[key];
+      else delete fields[key];
+    }
+    merged.pspConfig = { methods: incoming.pspConfig.methods ?? stored.pspConfig?.methods ?? [], fields };
   }
   return merged;
 }
@@ -259,7 +288,9 @@ export async function projectRoutes(app: FastifyInstance) {
         severity: row.severity as "error" | "warning",
       };
     }
-    const schemas = createOnboardingSchemas(overrides);
+    // Here, unlike in the browser, the stored credentials are at hand, so the
+    // ones the sheets require are checked too.
+    const schemas = createOnboardingSchemas(overrides, { requireSecrets: true });
     // Credentials typed in an earlier session live only in the saved draft, so
     // fold them back in before checking — the form never had them to resend.
     const savedDraft = await prisma.onboardingDraft.findUnique({ where: { userId: request.authUser!.id } });
@@ -279,7 +310,7 @@ export async function projectRoutes(app: FastifyInstance) {
     // over from an earlier product choice would otherwise ride along unseen.
     if (!needsPaymentProvider(parseProducts(draft.product))) {
       for (const key of Object.keys(draft) as (keyof OnboardingForm)[]) {
-        if (["psp", "pspMid", "pspTid", "pspKey", "pspSecret"].includes(key) || String(key).startsWith("pm_")) delete draft[key];
+        if (["psp", "pspMid", "pspTid", "pspKey", "pspSecret", "pspConfig"].includes(key) || String(key).startsWith("pm_")) delete draft[key];
       }
     }
 

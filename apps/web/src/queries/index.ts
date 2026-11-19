@@ -72,13 +72,17 @@ export const useRuleEnforcement = () =>
 export function useOnboardingSchemas(): OnboardingSchemas {
   const enforcement = useRuleEnforcement();
   const rules = enforcement.data;
+  // Required credentials are checked in the wizard too; ones the server
+  // already holds count as given, since the browser is never sent them.
+  const secretsOnFile = useSavedDraft().data?.secretsOnFile;
   return useMemo(() => {
-    if (!rules) return createOnboardingSchemas();
+    const options = { requireSecrets: true, secretsOnFile: secretsOnFile ?? [] };
+    if (!rules) return createOnboardingSchemas(undefined, options);
     const overrides: RuleOverrides = Object.fromEntries(
       rules.map((r) => [r.id, { active: r.active, severity: r.severity }]),
     );
-    return createOnboardingSchemas(overrides);
-  }, [rules]);
+    return createOnboardingSchemas(overrides, options);
+  }, [rules, secretsOnFile]);
 }
 export const useSettings = () => useQuery({ queryKey: keys.settings, queryFn: api.getSettings });
 export const useAuditLog = () => useQuery({ queryKey: keys.auditLog, queryFn: api.listAuditLog });

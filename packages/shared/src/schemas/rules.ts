@@ -60,6 +60,13 @@ const atLeastMinVersion = (value: string) => {
 const CURRENCIES = ["GBP", "EUR", "CHF", "USD", "CAD"] as const;
 
 const digitsOnly = /^\d+$/;
+
+/**
+ * The web pay sheet's e-mail fields take several addresses "separated by
+ * semicolons (;) without spaces". One address is a list of one.
+ */
+const emailList = (value: string) =>
+  !/\s/.test(value) && value.split(";").every((part) => part !== "" && email.safeParse(part).success);
 const isNumber = (val: string) => !isNaN(Number(val.trim())) && val.trim() !== "";
 
 export const VALIDATION_RULES: RuleDefinition[] = [
@@ -176,15 +183,15 @@ export const VALIDATION_RULES: RuleDefinition[] = [
   },
   {
     id: 17, key: "opId", field: "Operator ID", category: "System", type: "Digits",
-    pattern: "^\\d+$", severity: "error", active: true,
-    description: "Operator unique number, e.g. 46722",
-    message: "Operator ID must be digits only",
-    check: (value) => digitsOnly.test(value),
+    pattern: "^\\d{5}$", severity: "error", active: true,
+    description: "Unique operator number, 5 digits, e.g. 55555 (validation, web pay and connect sheets)",
+    message: "Operator ID must be exactly 5 digits",
+    check: (value) => /^\d{5}$/.test(value),
   },
   {
     id: 18, key: "providerId", field: "Provider ID", category: "System", type: "Digits",
     pattern: "^\\d+$", severity: "error", active: true,
-    description: "Provider unique identifier number",
+    description: "Provided by PS ITOPS: > 100 for a car park operator, ≤ 100 for an authorisation provider",
     message: "Provider ID must be digits only",
     check: (value) => digitsOnly.test(value),
   },
@@ -343,11 +350,11 @@ export const VALIDATION_RULES: RuleDefinition[] = [
     check: matches(email),
   },
   {
-    id: 41, key: "incidentEmail", field: "Maintenance / Incident Email", category: "Contact", type: "Email",
-    pattern: "name@domain.tld", severity: "error", active: true,
-    description: "Distribution list for maintenance and incident alerts",
-    message: "Must be a valid email address",
-    check: matches(email),
+    id: 41, key: "incidentEmail", field: "Maintenance / Incident Email", category: "Contact", type: "Email list",
+    pattern: "a@x.com;b@y.com", severity: "error", active: true,
+    description: "Distribution list for maintenance and incident alerts; several addresses separated by ; without spaces",
+    message: "Enter valid e-mail addresses separated by semicolons, without spaces",
+    check: emailList,
   },
   {
     id: 42, key: "onboardingEmail", field: "Onboarding Progress Notification Email", category: "Contact", type: "Email",
@@ -358,10 +365,10 @@ export const VALIDATION_RULES: RuleDefinition[] = [
   },
   {
     id: 43, key: "tenantShortname", field: "Tenant Shortname", category: "System", type: "Regex",
-    pattern: "^[a-z0-9_-]{1,20}$", severity: "error", active: true,
-    description: "Max 20 chars, small letters/digits only (part of URL)",
-    message: "Max 20 characters, lowercase letters, numbers, or dashes only",
-    check: (value) => /^[a-z0-9_-]{1,20}$/.test(value),
+    pattern: "^[a-z]{1,20}$", severity: "error", active: true,
+    description: "Company name, max 20 characters, small letters only — becomes part of the URL (validation sheet v4.4)",
+    message: "Use up to 20 lowercase letters only — no digits, spaces or characters like _ - . ! $",
+    check: (value) => /^[a-z]{1,20}$/.test(value),
   },
   {
     id: 44, key: "privacyUrl", field: "Privacy Policy URL", category: "System", type: "URL",
@@ -376,6 +383,49 @@ export const VALIDATION_RULES: RuleDefinition[] = [
     description: "Maximum daily parking fee",
     message: "Daily maximum must be a valid number",
     check: isNumber,
+  },
+  // ── smart web pay sheet v3.1 ─────────────────────────────────────────────
+  {
+    id: 46, key: "contactUsEmails", field: "Contact Us E-mail", category: "Contact", type: "Email list",
+    pattern: "a@x.com;b@y.com", severity: "error", active: true,
+    description: "Shown to drivers as the contact address; several separated by ; without spaces",
+    message: "Enter valid e-mail addresses separated by semicolons, without spaces",
+    check: emailList,
+  },
+  {
+    id: 47, key: "receiptEmails", field: "E-mail Receipt", category: "Contact", type: "Email list",
+    pattern: "a@x.com;b@y.com", severity: "error", active: true,
+    description: "Receives a copy of payment receipts; several separated by ; without spaces",
+    message: "Enter valid e-mail addresses separated by semicolons, without spaces",
+    check: emailList,
+  },
+  {
+    id: 48, key: "shiftHandlingTime", field: "Shift Handling Time", category: "System", type: "Time",
+    pattern: "hh:mm or hh:mm:ss", severity: "error", active: true,
+    description: "Default 00:15",
+    message: "Use hh:mm, e.g. 00:15",
+    check: (value) => /^\d{2}:[0-5]\d(:[0-5]\d)?$/.test(value),
+  },
+  {
+    id: 49, key: "inPayAfterEntry", field: "In-pay Time After Entry", category: "System", type: "Digits",
+    pattern: "Minutes, default 0", severity: "error", active: true,
+    description: "Minutes a driver may pay in the app after entering",
+    message: "Enter whole minutes, e.g. 0 or 15",
+    check: (value) => digitsOnly.test(value),
+  },
+  {
+    id: 50, key: "inPayAfterPayment", field: "In-pay Time After Payment", category: "System", type: "Digits",
+    pattern: "Minutes, default 0", severity: "error", active: true,
+    description: "Minutes to leave after paying",
+    message: "Enter whole minutes, e.g. 0 or 15",
+    check: (value) => digitsOnly.test(value),
+  },
+  {
+    id: 51, key: "serviceFee", field: "Service Fee", category: "Finance", type: "Number",
+    pattern: "Amount or percentage", severity: "error", active: true,
+    description: "Fixed amount or percentage, when a service fee is charged",
+    message: "Service fee must be a number, e.g. 0.50 or 2.5",
+    check: (value) => isNumber(value) && Number(value) >= 0,
   },
 ];
 

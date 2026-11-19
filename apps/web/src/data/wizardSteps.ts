@@ -33,9 +33,9 @@ export const WIZARD_STEPS: WizardStepDef[] = [
   {
     num: 4,
     label: "Step 04",
-    name: "App & Payment",
+    name: "Product Settings",
     subtitle:
-      "Configure the mobile app features and select a payment service provider.",
+      "What each selected product's onboarding sheet asks for, including the payment service provider for smart web pay.",
   },
   {
     num: 5,

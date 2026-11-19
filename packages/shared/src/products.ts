@@ -1,4 +1,9 @@
+import { VALIDATION_MEDIA_TYPES } from "./domain.js";
 import type { CellComputer, Facility, OnboardingForm, ProductId } from "./domain.js";
+
+const LEGACY_METHODS: Record<string, string> = {
+  Visa: "visa", Mastercard: "mastercard", "Apple Pay": "applepay", "Google Pay": "googlepay", PayPal: "paypal", SEPA: "sepa",
+};
 
 /**
  * The wizard stores its product selection as one comma-separated string — the
@@ -60,13 +65,35 @@ export function normalizeDraft(input: OnboardingForm | null | undefined): Onboar
   for (const key of Object.keys(LEGACY_CELL_FIELDS)) delete flat[key];
 
   const cells = draft.cellComputers ?? [];
+  // Media types used to be one free-text field for the whole onboarding; the
+  // validation sheet asks per facility.
+  const legacyMedia = typeof flat.mediatypes === "string"
+    ? VALIDATION_MEDIA_TYPES.filter((m) => (flat.mediatypes as string).toLowerCase().includes(m.toLowerCase()))
+    : [];
   if (Array.isArray(draft.facilities)) {
     const products = parseProducts(draft.product);
-    draft.facilities = draft.facilities.map((row): Facility => ({
-      ...row,
-      cellComputer: row.cellComputer ?? (cells.length === 1 ? cells[0].key : undefined),
-      services: row.services ?? (products.length > 0 ? [...products] : undefined),
-    }));
+    draft.facilities = draft.facilities.map((row): Facility => {
+      const services = row.services ?? (products.length > 0 ? [...products] : undefined);
+      const next: Facility = {
+        ...row,
+        cellComputer: row.cellComputer ?? (cells.length === 1 ? cells[0].key : undefined),
+        services,
+      };
+      if (services?.includes("smart-validation") && !row.mediaTypes && legacyMedia.length) next.mediaTypes = [...legacyMedia];
+      // The connect sheet's default carpark type.
+      if (services?.includes("entervo-connect") && !row.carparkType) next.carparkType = "PA";
+      return next;
+    });
+  }
+
+  // Payment methods were per-name toggles (`pm_Visa`); the PSP forms keep them
+  // as the sheet's values in `pspConfig.methods`.
+  if (!draft.pspConfig) {
+    const legacyMethods = Object.entries(flat)
+      .filter(([k, v]) => k.startsWith("pm_") && v === true)
+      .map(([k]) => LEGACY_METHODS[k.slice(3)])
+      .filter((m): m is string => Boolean(m));
+    if (legacyMethods.length) draft.pspConfig = { fields: {}, methods: legacyMethods };
   }
   return draft;
 }

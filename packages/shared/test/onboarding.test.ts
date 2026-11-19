@@ -13,17 +13,26 @@ import type { OnboardingForm } from "../src/index.js";
 
 const cell = (over: Record<string, string> = {}) => ({
   key: "k1", name: "CC-01", cellId: "100", url: "", ip: "10.0.0.1", port: "8443",
-  uiUserId: "", uiPassword: "", deviceId: "", sshPort: "", ...over,
+  uiUserId: "42", uiPassword: "", deviceId: "799", sshPort: "", hostName: "Central Garage", ...over,
 });
 
 const complete = (over: Partial<OnboardingForm> = {}): OnboardingForm => ({
   product: "smart-validation",
-  opName: "Operator", opEmail: "ops@example.com", country: "GB", lang: "en-GB",
+  opName: "Operator", opId: "55555", opEmail: "ops@example.com", country: "GB", lang: "en-GB", currency: "GBP",
+  tenantShortname: "centralgarage", tenantDescription: "Central Garage validation", subtechEmail: "it@example.com",
   cellComputers: [cell()],
-  facilities: [{ id: "1", name: "P1", city: "", inpayEntry: "", inpayPayment: "", cellComputer: "k1", services: ["smart-validation"] }],
+  facilities: [{ id: "1", name: "P1", city: "", inpayEntry: "", inpayPayment: "", cellComputer: "k1", services: ["smart-validation"], timezone: "Europe/London", mediaTypes: ["Barcode"] }],
   contractDate: "2099-01-01", salesApproved: true,
   ...over,
 });
+
+/** The web pay sheet's required fields, on top of `complete()`. */
+const webPayExtras: Partial<OnboardingForm> = {
+  city: "London", opDescription: "Central Garage car parks", contactUsEmails: "hello@example.com",
+  incidentEmail: "ops@example.com", receiptEmails: "receipts@example.com", tocUrl: "https://example.com/terms",
+  pgsLocationDescription: "Central Garage London", decimals: "2", inPayAfterEntry: "0", inPayAfterPayment: "0",
+  serviceFeeType: "none",
+};
 
 const { onboardingDraftSchema, validateStep, fieldsForStep } = createOnboardingSchemas();
 const errorsOf = (draft: OnboardingForm) => {
@@ -36,11 +45,12 @@ test("a complete Validation-only draft passes without a PSP", () => {
   assert.deepEqual(errorsOf(complete()), {});
 });
 
-test("a web pay draft needs a PSP, then a merchant ID", () => {
-  const webPay = complete({ product: "smart-web-pay", facilities: [{ ...complete().facilities![0], services: ["smart-web-pay"] }] });
+test("a web pay draft needs a PSP, then that PSP's fields, then a payment method", () => {
+  const webPay = complete({ ...webPayExtras, product: "smart-web-pay", facilities: [{ ...complete().facilities![0], services: ["smart-web-pay"] }] });
   assert.equal(errorsOf(webPay).psp, "Select a payment service provider");
-  assert.equal(errorsOf({ ...webPay, psp: "fiserv" }).pspMid, "Merchant ID is required");
-  assert.deepEqual(errorsOf({ ...webPay, psp: "fiserv", pspMid: "M1" }), {});
+  assert.equal(errorsOf({ ...webPay, psp: "fiserv" }).pspConfig, "Fiserv / Telecash: Store ID is required");
+  assert.equal(errorsOf({ ...webPay, psp: "fiserv", pspConfig: { fields: { storeId: "S1" }, methods: [] } }).pspConfig, "Fiserv / Telecash: choose at least one payment method");
+  assert.deepEqual(errorsOf({ ...webPay, psp: "fiserv", pspConfig: { fields: { storeId: "S1" }, methods: ["visa"] } }), {});
 });
 
 test("the PSP check runs alongside other errors, not after them", () => {
@@ -65,7 +75,7 @@ test("cell computers need a name, a numeric ID and an IP, and IDs are unique", (
   assert.match(errorsOf(complete({ cellComputers: [] })).cellComputers, /at least one/);
   assert.match(errorsOf(complete({ cellComputers: [cell({ name: "" })] })).cellComputers, /name is required/);
   assert.match(errorsOf(complete({ cellComputers: [cell({ cellId: "" })] })).cellComputers, /Cell computer ID is required/);
-  assert.match(errorsOf(complete({ cellComputers: [cell({ ip: "" })] })).cellComputers, /Static public IP is required/);
+  assert.match(errorsOf(complete({ cellComputers: [cell({ ip: "" })] })).cellComputers, /public IP and port, or a URL/);
   assert.match(errorsOf(complete({ cellComputers: [cell({ port: "99999" })] })).cellComputers, /Port/);
   assert.match(errorsOf(complete({ cellComputers: [cell(), cell({ key: "k2", name: "CC-02" })] })).cellComputers, /used twice/);
 });
@@ -84,6 +94,7 @@ test("locale now lives on the operator step; connection details on the cell comp
   assert.ok(!fieldsForStep(1).includes("ip" as never));
   assert.deepEqual(fieldsForStep(2), ["cellComputers"]);
   assert.equal(validateStep(1, { opName: "x", opEmail: "a@b.co" }).country, "Country is required");
+  assert.ok(fieldsForStep(4).includes("tenantShortname"), "product fields live on the product step");
 });
 
 test("an administrator switching the IP rule off stops it applying to cell computers", () => {

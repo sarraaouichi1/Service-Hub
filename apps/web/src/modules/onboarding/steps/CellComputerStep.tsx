@@ -1,5 +1,5 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
-import { EMPTY_CELL_COMPUTER, newCellComputerKey, parseProducts } from "@service-hub/shared";
+import { CELL_REQUIREMENTS, EMPTY_CELL_COMPUTER, newCellComputerKey, parseProducts } from "@service-hub/shared";
 import type { OnboardingForm } from "../../../types";
 import { Icon } from "../../../components/Icon";
 import { Field } from "../../../components/Field";
@@ -19,10 +19,22 @@ export function CellComputerStep() {
   const { fields, append, remove } = useFieldArray({ control, name: "cellComputers", keyName: "_rowId" });
   const { toggle, values } = useStepFields();
   const secretsOnFile = useSecretsOnFile();
-  const hasConnect = parseProducts(values.product).includes("entervo-connect");
+  const products = parseProducts(values.product);
+  const hasConnect = products.includes("entervo-connect");
+  const hasWebPay = products.includes("smart-web-pay");
+  const hasValidation = products.includes("smart-validation");
+  // What the selected products' sheets require of each cell computer.
+  const wants = (list: readonly string[]) => products.some(p => list.includes(p));
+  const needsAddress = wants(CELL_REQUIREMENTS.needsAddress);
+  const needsUser = wants(CELL_REQUIREMENTS.needsUser);
+  const needsHostName = wants(CELL_REQUIREMENTS.needsHostName);
 
   const addCellComputer = () => {
-    append({ ...EMPTY_CELL_COMPUTER, key: newCellComputerKey(), name: `CC-${String(fields.length + 1).padStart(2, "0")}` });
+    append({
+      ...EMPTY_CELL_COMPUTER, key: newCellComputerKey(), name: `CC-${String(fields.length + 1).padStart(2, "0")}`,
+      // The validation sheet's default cashier device.
+      deviceId: hasValidation ? "799" : "",
+    });
   };
 
   // Removing a cell computer that facilities still point at would orphan them
@@ -38,7 +50,7 @@ export function CellComputerStep() {
     remove(index);
   };
 
-  const field = (i: number, key: keyof typeof EMPTY_CELL_COMPUTER, extra = "") => ({
+  const field = (i: number, key: keyof typeof EMPTY_CELL_COMPUTER | "hostName" | "address" | "cashierContractId" | "cashierConsumerId", extra = "") => ({
     ...register(`cellComputers.${i}.${key}` as const),
     className: `form-input${extra ? ` ${extra}` : ""}`,
   });
@@ -71,32 +83,46 @@ export function CellComputerStep() {
               <Field label="Name / identifier" required hint="How people refer to it, e.g. CC-01 or CC-North">
                 <input {...field(i, "name")} placeholder="e.g. CC-North" />
               </Field>
-              <Field label="Cell Computer ID" required hint="Numeric ID from the entervo system">
+              <Field label="Cell Computer ID" required hint="Numeric ID from the entervo system, e.g. 7123">
                 <input {...field(i, "cellId", "mono")} placeholder="e.g. 4438" />
               </Field>
-              <Field label="URL" hint="Domain or IP:port it is reached on">
-                <input {...field(i, "url")} placeholder="carpark.organisation.com" />
-              </Field>
-              <Field label="Static Public IP Address" required hint="External IP of this cell computer">
+              {hasWebPay && (
+                <Field label="Host name" required={needsHostName} hint="The facility name shown to customers">
+                  <input {...field(i, "hostName")} placeholder="e.g. Central Garage" />
+                </Field>
+              )}
+              <Field label="Public IP address" required={needsAddress} hint="The public cell IP, not the local IP. Give IP and port, or a URL">
                 <input {...field(i, "ip", "mono")} placeholder="195.171.142.1" />
               </Field>
-              <Field label="Communication Port" hint="Standard: 8443 (1–65535)">
+              <Field label="Public port" required={needsAddress} hint={hasValidation ? "Preferred 8443, otherwise 8400–8450" : "Standard 8443 (1–65535)"}>
                 <input {...field(i, "port", "mono")} placeholder="8443" />
               </Field>
-              <Field label="Cashier Terminal Device ID">
-                <input {...field(i, "deviceId", "mono")} placeholder="e.g. 750" />
+              <Field label="Public URL" hint="Instead of IP and port. Takes priority when filled in">
+                <input {...field(i, "url")} placeholder="carpark.organisation.com" />
               </Field>
-              <Field label="UI User ID" hint="Digits only">
+              <Field label={hasConnect ? "Username / participant ID" : "Username"} required={needsUser}
+                hint={hasConnect ? "Digits only. For entervo connect: the participant with the \u201cSuperuser S&B\u201d profile" : "Authorises the S&B server on the cell computer; digits only"}>
                 <input {...field(i, "uiUserId", "mono")} placeholder="e.g. 98" />
               </Field>
-              <Field label="UI User Password" hint={passwordStored ? "Stored — type to replace" : "Max 9 chars, no @ or spaces"}>
+              <Field label="Password" required={needsUser} hint={passwordStored ? "Stored — type to replace" : "Max 9 characters, no @ or spaces"}>
                 <input {...field(i, "uiPassword", "mono")} type="password" autoComplete="off"
                   placeholder={passwordStored ? "•••••••• stored" : "••••••••"} />
               </Field>
-              {hasConnect && (
-                <Field label="SSH Port" hint="entervo connect · delivered by DevOps (1–65535)">
-                  <input {...field(i, "sshPort", "mono")} placeholder="e.g. 2222" />
-                </Field>
+              <Field label="Cashier device ID" required={hasValidation} hint={hasValidation ? "smart validation default: 799" : undefined}>
+                <input {...field(i, "deviceId", "mono")} placeholder={hasValidation ? "799" : "e.g. 750"} />
+              </Field>
+              {hasWebPay && (
+                <>
+                  <Field label="Cell computer address" hint="Physical address, not the network address">
+                    <input {...field(i, "address")} placeholder="Street, city" />
+                  </Field>
+                  <Field label="Cashier contract ID">
+                    <input {...field(i, "cashierContractId", "mono")} />
+                  </Field>
+                  <Field label="Cashier consumer ID">
+                    <input {...field(i, "cashierConsumerId", "mono")} />
+                  </Field>
+                </>
               )}
             </div>
           </section>
@@ -118,22 +144,11 @@ export function CellComputerStep() {
         <Toggle label="Network communication forwarding set" sub="Port forwarding tested and confirmed" {...toggle("forwarding")} />
       </div>
 
-      {hasConnect && (
-        <>
-          <div className="form-section-title" style={{ marginTop: 24 }}>entervo connect — provider services</div>
-          <div className="toggle-grid cols-3">
-            <Toggle label="Online Authorization" sub="Provider service" {...toggle("onlineAuth")} />
-            <Toggle label="Customer & Media" sub="Provider service" {...toggle("customerMedia")} />
-            <Toggle label="Counting" sub="Smart CONTRACT" {...toggle("counting")} />
-          </div>
-        </>
-      )}
-
       <div className="form-section-title" style={{ marginTop: 24 }}>Peripherals</div>
       <div className="toggle-grid cols-3">
         <Toggle label="LPR (Licence Plate Recognition)" {...toggle("lpr")} />
         <Toggle label="Barcode" {...toggle("barcode")} />
-        <Toggle label="LFK (Remote key fob)" {...toggle("lfk")} />
+        <Toggle label="LFK (remote key fob)" {...toggle("lfk")} />
       </div>
     </div>
   );

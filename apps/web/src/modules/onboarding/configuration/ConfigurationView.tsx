@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
+import { PSP_DEFINITIONS } from "@service-hub/shared";
 import type { OnboardingForm } from "../../../types";
+
+const PSP_SECRET_KEYS = PSP_DEFINITIONS.flatMap((p) => p.fields.filter((f) => f.secret).map((f) => f.key));
 import { Icon } from "../../../components/Icon";
 import { useProducts, usePsps } from "../../../queries";
 import { buildConfigurationSections, sectionsToText } from "./sections";
@@ -18,6 +21,11 @@ function withoutCredentials(data: OnboardingForm): OnboardingForm {
   delete copy.pspKey;
   delete copy.pspSecret;
   if (copy.cellComputers) copy.cellComputers = copy.cellComputers.map((cell) => ({ ...cell, uiPassword: "" }));
+  if (copy.pspConfig) {
+    const fields = { ...(copy.pspConfig.fields ?? {}) };
+    for (const key of PSP_SECRET_KEYS) delete fields[key];
+    copy.pspConfig = { ...copy.pspConfig, fields };
+  }
   return copy;
 }
 

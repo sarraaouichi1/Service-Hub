@@ -1,6 +1,7 @@
 // Reference data the wizard offers as choices. Read-only: configured by S&B,
 // not edited through the hub, so it is served from here rather than a table.
 
+import { PSP_DEFINITIONS } from "@service-hub/shared";
 import type { ProductDefinition, Psp, PatchBulletin, PatchStage, PatchServiceTier } from "@service-hub/shared";
 
 export const PRODUCTS: ProductDefinition[] = [
@@ -11,7 +12,7 @@ export const PRODUCTS: ProductDefinition[] = [
     icon: "💳",
     color: "#1A6FD4",
     bg: "#E8F0FB",
-    fields: ["Operator Data", "Cell Computer IP/Port", "Receipt & App Config", "PSP / Payment Gateway"],
+    fields: ["Operator & e-mail lists", "Cell computer host & access", "Payment settings & fees", "PSP credentials & methods"],
   },
   {
     id: "entervo-connect",
@@ -20,7 +21,7 @@ export const PRODUCTS: ProductDefinition[] = [
     icon: "🔗",
     color: "#7C3AED",
     bg: "#EDE9FE",
-    fields: ["Business Partner", "Tech Admin & Cell", "Services (Auth/Count)", "Connection Points / Facilities"],
+    fields: ["Business partner & contact person", "Administrator & cell participant", "Services & providers", "Facilities & carpark type"],
   },
   {
     id: "smart-validation",
@@ -29,7 +30,7 @@ export const PRODUCTS: ProductDefinition[] = [
     icon: "✅",
     color: "#1AB870",
     bg: "#E8FAF1",
-    fields: ["Tenant Profile & URL", "Distribution Lists", "Cell Computer IP/Port", "Carpark & Mediatypes"],
+    fields: ["Tenant & generated URLs", "SUBtech & incident e-mail", "Cell computer IP/port or URL", "Facility time zone & media types"],
   },
   {
     id: "mobility-connect",
@@ -60,14 +61,9 @@ export const PRODUCTS: ProductDefinition[] = [
   },
 ];
 
-export const PSP_LIST: Psp[] = [
-  { id: "fiserv", name: "Fiserv / Telecash", tag: "EU / Global" },
-  { id: "planet", name: "Planet", tag: "Hospitality" },
-  { id: "trustcommerce", name: "TrustCommerce", tag: "US / CA" },
-  { id: "nmi", name: "NMI", tag: "US / EU" },
-  { id: "ccv", name: "CCV", tag: "Benelux" },
-  { id: "worldline", name: "Worldline", tag: "EU" },
-];
+// Derived from the shared PSP definitions (the web pay sheet's list), so the
+// catalogue and the forms the wizard draws from it cannot drift apart.
+export const PSP_LIST: Psp[] = PSP_DEFINITIONS.map(({ id, name, tag }) => ({ id, name, tag }));
 
 export const PATCH_BULLETINS: PatchBulletin[] = [
   { id: "KB5034441", name: "Windows Server 2022 – Security Update", severity: "Critical", released: "Mar 12, 2025", systems: 14, status: "deployed", risk: "RCE" },

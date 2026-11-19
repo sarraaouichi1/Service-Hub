@@ -1,4 +1,7 @@
-import { needsPaymentProvider, parseProducts } from "@service-hub/shared";
+import {
+  CONNECT_SERVICES, PAYMENT_METHOD_LABELS, SERVICE_FEE_TYPES, needsPaymentProvider, parseProducts, pspDefinition,
+  validationGeneratedUrls, validationLocationId,
+} from "@service-hub/shared";
 import type { IconName, OnboardingForm } from "../../../types";
 
 /**
@@ -44,11 +47,13 @@ export function buildConfigurationSections(
       rows: [
         ["Operator name", dash(data.opName)],
         ["Operator ID", dash(data.opId)],
+        ...(has("smart-web-pay") ? [["Description", dash(data.opDescription)] as [string, string]] : []),
         ["Operator email", dash(data.opEmail)],
         ["Technical support email", dash(data.techEmail)],
         ["Phone", dash(data.phone)],
         ["Parking system version", dash(data.version)],
         ["Address", dash(data.address)],
+        ["City", dash(data.city)],
         ["Country", dash(data.country)],
         ["Language tag", dash(data.lang)],
         ["Currency", dash(data.currency)],
@@ -67,12 +72,17 @@ export function buildConfigurationSections(
         title: c.name || `Cell computer ${i + 1}`,
         rows: [
           ["Cell computer ID", dash(c.cellId)],
-          ["URL", dash(c.url)],
-          ["Static public IP", dash(c.ip)],
-          ["Port", dash(c.port)],
-          ["UI user ID", dash(c.uiUserId)],
+          ...(has("smart-web-pay") ? [["Host name", dash(c.hostName)] as [string, string]] : []),
+          ["Public IP", dash(c.ip)],
+          ["Public port", dash(c.port)],
+          ["Public URL", dash(c.url)],
+          [has("entervo-connect") ? "Username / participant ID" : "Username", dash(c.uiUserId)],
           ["Cashier device ID", dash(c.deviceId)],
-          ...(has("entervo-connect") ? [["SSH port", dash(c.sshPort)] as [string, string]] : []),
+          ...(has("smart-web-pay") ? [
+            ["Cell computer address", dash(c.address)],
+            ["Cashier contract ID", dash(c.cashierContractId)],
+            ["Cashier consumer ID", dash(c.cashierConsumerId)],
+          ] as [string, string][] : []),
         ],
       })),
     },
@@ -86,6 +96,16 @@ export function buildConfigurationSections(
           ["Cell computer", cellName(f.cellComputer)],
           ["Services", (f.services ?? []).map(lookups.productName).join(", ") || "—"],
           ["InPay entry / payment (min)", `${dash(f.inpayEntry)} / ${dash(f.inpayPayment)}`],
+          ...((f.services ?? []).includes("smart-validation") ? [
+            ["Time zone", dash(f.timezone)],
+            ["Media types", (f.mediaTypes ?? []).join(", ") || "—"],
+            ["Location-ID", validationLocationId(cells.find(c => c.key === f.cellComputer)?.cellId, f.id) || "—"],
+          ] as [string, string][] : []),
+          ...((f.services ?? []).includes("entervo-connect") ? [["Carpark type", dash(f.carparkType)] as [string, string]] : []),
+          ...((f.services ?? []).includes("smart-web-pay") && (f.address || f.parentId) ? [
+            ["Facility address", dash(f.address)],
+            ["Parent facility ID", dash(f.parentId)],
+          ] as [string, string][] : []),
         ],
       })),
     },
@@ -95,22 +115,35 @@ export function buildConfigurationSections(
     sections.push({
       id: "web-pay", title: "smart web pay", icon: "creditCard",
       rows: [
-        ["Financial information", dash(data.financialInfo)],
-        ["Terms & conditions URL", dash(data.tocUrl)],
+        ["Contact-us e-mail", dash(data.contactUsEmails)],
+        ["Incident e-mail", dash(data.incidentEmail)],
+        ["E-mail receipt", dash(data.receiptEmails)],
+        ["Terms of use link", dash(data.tocUrl)],
+        ["PGS location description", dash(data.pgsLocationDescription)],
+        ["Financial info", dash(data.financialInfo)],
         ["Tariff class", dash(data.tariff)],
-        ["Vouchers / Prepayment / Top-up", [data.vouchers && "Vouchers", data.prepay && "Prepayment", data.topup && "Top-up"].filter(Boolean).join(", ") || "—"],
+        ["In-pay after entry / payment (min)", `${dash(data.inPayAfterEntry)} / ${dash(data.inPayAfterPayment)}`],
+        ["Shift handling time", dash(data.shiftHandlingTime)],
+        ["Service fee", data.serviceFeeType && data.serviceFeeType !== "none"
+          ? `${SERVICE_FEE_TYPES.find(t => t.value === data.serviceFeeType)?.label}: ${dash(data.serviceFee)}`
+          : dash(SERVICE_FEE_TYPES.find(t => t.value === data.serviceFeeType)?.label)],
+        ["Prepayment / late payment", `${yesNo(data.prepay)} / ${yesNo(data.latePayment)}`],
+        ['Show "in-pay time" after payment', yesNo(data.showInPayTime)],
       ],
     });
   }
   if (needsPaymentProvider(products)) {
-    const methods = Object.entries(data).filter(([k, v]) => k.startsWith("pm_") && v).map(([k]) => k.slice(3));
+    // Only the chosen PSP's own fields, and never a secret one — the value is
+    // stripped before it gets here, and naming it "—" would only mislead.
+    const definition = pspDefinition(data.psp);
+    const fields = data.pspConfig?.fields ?? {};
     sections.push({
       id: "psp", title: "Payment service provider", icon: "creditCard",
       rows: [
         ["PSP", data.psp ? lookups.pspName(data.psp) : "—"],
-        ["Merchant ID", dash(data.pspMid)],
-        ["Terminal ID", dash(data.pspTid)],
-        ["Payment methods", methods.join(", ") || "—"],
+        ...(definition?.fields.filter(f => !f.secret).map(f => [f.label, dash(fields[f.key])] as [string, string]) ?? []),
+        ...(definition?.fields.some(f => f.secret) ? [["Credentials", "Stored securely, not shown"] as [string, string]] : []),
+        ["Payment methods", (data.pspConfig?.methods ?? []).map(m => PAYMENT_METHOD_LABELS[m] ?? m).join(", ") || "—"],
       ],
     });
   }
@@ -119,11 +152,15 @@ export function buildConfigurationSections(
       id: "connect", title: "entervo connect", icon: "cpu",
       rows: [
         ["Provider ID", dash(data.providerId)],
-        ["Contact email", dash(data.contactEmail)],
-        ["Contact phone", dash(data.contactPhone)],
-        ["Technical admin", dash(data.adminUsername)],
-        ["Admin email", dash(data.adminEmail)],
-        ["Services", [data.onlineAuth && "Online authorization", data.customerMedia && "Customer & media", data.counting && "Counting"].filter(Boolean).join(", ") || "—"],
+        ["Contact person", [data.salutation, data.contactTitle, data.contactFirstname, data.contactSurname].filter(Boolean).join(" ") || "—"],
+        ["Contact address", [data.contactStreet, data.contactCity].filter(Boolean).join(", ") || "—"],
+        ["Contact e-mail / phone", `${dash(data.contactEmail)} / ${dash(data.contactPhone)}`],
+        ["Administrator", `${dash(data.adminName)} (${dash(data.adminUsername)})`],
+        ["Administrator e-mail / phone", `${dash(data.adminEmail)} / ${dash(data.adminPhone)}`],
+        ...CONNECT_SERVICES.map(svc => [
+          svc.label,
+          data[svc.toggle] ? `Yes — provider: ${dash(data[svc.provider])}` : "No",
+        ] as [string, string]),
       ],
     });
   }
@@ -133,10 +170,20 @@ export function buildConfigurationSections(
       rows: [
         ["Tenant shortname", dash(data.tenantShortname)],
         ["Tenant description", dash(data.tenantDescription)],
-        ["SUBTECH email", dash(data.subtechEmail)],
-        ["Incident email", dash(data.incidentEmail)],
-        ["Onboarding email", dash(data.onboardingEmail)],
-        ["Media types", dash(data.mediatypes)],
+        ["SUBtech e-mail", dash(data.subtechEmail)],
+        ["Incident / maintenance e-mail", dash(data.incidentEmail)],
+        ["Show LPN in report", yesNo(data.showLpnInReport)],
+        ...(() => {
+          const urls = validationGeneratedUrls(data.tenantShortname);
+          return urls ? ([
+            ["Generated URL", urls.url],
+            ["Sender e-mail", urls.senderEmail],
+            ["SUBtech forward e-mail", urls.subtechEmail],
+            ["OVAL Admin", urls.ovalAdminUrl],
+            ["CPI Admin", urls.cpiAdminUrl],
+            ["Kiosk app", urls.kioskUrl],
+          ] as [string, string][]) : [];
+        })(),
       ],
     });
   }

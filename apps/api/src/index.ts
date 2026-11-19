@@ -2,6 +2,10 @@ import { prisma } from "./db.js";
 import { env } from "./env.js";
 import { purgeExpiredSessions } from "./auth/session.js";
 import { buildServer } from "./server.js";
+import { syncRules } from "./data/syncRules.js";
+
+// New releases can add validation rules; make sure the admin table lists them.
+await syncRules();
 
 const app = await buildServer();
 
