@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { changePasswordSchema, loginSchema } from "@service-hub/shared";
+import { changePasswordSchema, loginSchema, passwordSchema } from "@service-hub/shared";
 import { prisma } from "../db.js";
 import { env } from "../env.js";
 import { requireSignedIn } from "../rbac/guard.js";
@@ -10,6 +10,7 @@ import { beginLogin, isOidcConfigured } from "./providers/oidc.js";
 import { AuthenticationError } from "./providers/types.js";
 import { checkLoginRate, clearLoginAttempts, recordFailedLogin } from "./rateLimit.js";
 import { linkOrCreateUser } from "./provisioning.js";
+import { findByActivationToken } from "./activation.js";
 import {
   SESSION_COOKIE, cookieOptions, createSession,
   revokeAllSessions, revokeSession, toAuthUser,
@@ -103,6 +104,41 @@ export async function authRoutes(app: FastifyInstance) {
       return { user: toAuthUser(updated) };
     },
   );
+
+  // ── Invitation links ────────────────────────────────────────────────────
+  // Unauthenticated by design: the token is the credential. An unknown, used
+  // and expired token all answer the same, so a link can't be probed.
+  const INVALID_LINK = "This invitation link is invalid or has expired. Ask your administrator for a new one.";
+
+  app.get<{ Querystring: { token?: string } }>("/auth/activation", async (request, reply) => {
+    const user = await findByActivationToken(request.query.token ?? "");
+    if (!user) return reply.code(410).send({ message: INVALID_LINK });
+    return { email: user.email, name: user.name };
+  });
+
+  app.post("/auth/activate", async (request, reply) => {
+    const parsed = z.object({ token: z.string(), password: passwordSchema }).safeParse(request.body);
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0]);
+        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+      }
+      return reply.code(422).send({ message: "Check the form", fieldErrors });
+    }
+    const user = await findByActivationToken(parsed.data.token);
+    if (!user) return reply.code(410).send({ message: INVALID_LINK });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: await hashPassword(parsed.data.password),
+        status: "active",
+        activationTokenHash: null,
+        activationExpiresAt: null,
+      },
+    });
+    return { email: user.email };
+  });
 
   app.post("/auth/login", async (request, reply) => {
     if (env.AUTH_PROVIDER === "oidc") {

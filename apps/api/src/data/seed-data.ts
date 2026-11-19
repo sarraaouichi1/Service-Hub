@@ -88,18 +88,20 @@ export const AUDIT_LOG: AuditLogEntry[] = [
  * steps that matter.
  */
 export const DEMO_ONBOARDING_DRAFT = {
-  ip: "195.171.142.1",
-  port: "8443",
+  product: "smart-web-pay",
   opName: "Medway Hospital",
   version: "V3R0M4",
   opEmail: "medwayft.carparking@nhs.net",
-  domain: "204.96.89.10",
   opId: "49666",
   lang: "en-GB",
   country: "GB",
   currency: "GBP",
-  cellId: "4438",
   vat: "20",
+  // One operator, two cell computers: each has its own address and port.
+  cellComputers: [
+    { key: "cc-medway-1", name: "CC-North", cellId: "4438", url: "204.96.89.10", ip: "195.171.142.1", port: "8443", uiUserId: "98", uiPassword: "", deviceId: "750", sshPort: "" },
+    { key: "cc-medway-2", name: "CC-South", cellId: "4442", url: "", ip: "195.171.142.2", port: "8443", uiUserId: "", uiPassword: "", deviceId: "", sshPort: "" },
+  ],
   lpr: true,
   barcode: true,
   reachable: true,
@@ -109,8 +111,8 @@ export const DEMO_ONBOARDING_DRAFT = {
   contractDate: "2027-12-31",
   tariff: "0",
   facilities: [
-    { id: "4439", name: "Car Park D – Public", city: "Gillingham", inpayEntry: 30, inpayPayment: 30 },
-    { id: "4440", name: "Car Park D – Public (2)", city: "Gillingham", inpayEntry: 30, inpayPayment: 30 },
-    { id: "4441", name: "Car Park B – Staff", city: "Gillingham", inpayEntry: 30, inpayPayment: 30 },
+    { id: "4439", name: "Car Park D – Public", city: "Gillingham", inpayEntry: 30, inpayPayment: 30, cellComputer: "cc-medway-1", services: ["smart-web-pay"] },
+    { id: "4440", name: "Car Park D – Public (2)", city: "Gillingham", inpayEntry: 30, inpayPayment: 30, cellComputer: "cc-medway-1", services: ["smart-web-pay"] },
+    { id: "4441", name: "Car Park B – Staff", city: "Gillingham", inpayEntry: 30, inpayPayment: 30, cellComputer: "cc-medway-2", services: ["smart-web-pay"] },
   ],
 };

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { FormErrors, FormTextKey, OnboardingForm } from "../domain.js";
+import { needsPaymentProvider, parseProducts } from "../products.js";
 import { blockingRulesFor, type RuleOverrides } from "./rules.js";
 
 /**
@@ -50,18 +51,85 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     );
   }
 
+  /**
+   * The first message a row value earns: required first, then the registry's
+   * rules for that field. Rows have nowhere to render per-cell messages yet, so
+   * callers prefix it with the row it came from.
+   */
+  function rowValueError(value: unknown, key: FormTextKey, label: string, required: boolean): string | undefined {
+    const trimmed = typeof value === "string" ? value.trim() : typeof value === "number" ? String(value) : "";
+    if (!trimmed) return required ? `${label} is required` : undefined;
+    const broken = blockingRulesFor(key, overrides).find((rule) => !rule.check!(trimmed));
+    return broken ? `${label}: ${broken.message}` : undefined;
+  }
+
+  const cellComputer = z.object({
+    key: z.string().optional(),
+    name: z.string().optional(),
+    cellId: z.string().optional(),
+    url: z.string().optional(),
+    ip: z.string().optional(),
+    port: z.string().optional(),
+    uiUserId: z.string().optional(),
+    uiPassword: z.string().optional(),
+    deviceId: z.string().optional(),
+    sshPort: z.string().optional(),
+  });
+
+  /**
+   * Cell computers repeat, so — like facilities — their errors collapse into
+   * one message naming the first offending row and field. Each value is still
+   * checked against the registry rule for that field, so the admin toggles on
+   * "IP Address" or "Communication Port" keep governing them.
+   */
+  const cellComputers = z.preprocess(
+    (value) => value ?? [],
+    z.array(cellComputer).superRefine((rows, ctx) => {
+      if (rows.length === 0) {
+        ctx.addIssue({ code: "custom", message: "Add at least one cell computer" });
+        return;
+      }
+      const seenIds = new Set<string>();
+      for (const [i, row] of rows.entries()) {
+        const label = row.name?.trim() || `Cell computer ${i + 1}`;
+        const problem =
+          (row.name?.trim() ? undefined : `Cell computer ${i + 1}: name is required`) ??
+          rowValueError(row.cellId, "cellId", `${label} — Cell computer ID`, true) ??
+          rowValueError(row.ip, "ip", `${label} — Static public IP`, true) ??
+          rowValueError(row.port, "port", `${label} — Port`, false) ??
+          rowValueError(row.uiUserId, "uiUserId", `${label} — UI user ID`, false) ??
+          rowValueError(row.uiPassword, "uiPassword", `${label} — UI password`, false) ??
+          rowValueError(row.sshPort, "sshPort", `${label} — SSH port`, false);
+        if (problem) {
+          ctx.addIssue({ code: "custom", message: problem });
+          return;
+        }
+        const id = row.cellId!.trim();
+        if (seenIds.has(id)) {
+          ctx.addIssue({ code: "custom", message: `${label}: cell computer ID ${id} is used twice` });
+          return;
+        }
+        seenIds.add(id);
+      }
+    }),
+  );
+
   const facility = z.object({
     id: z.string().optional(),
     name: z.string().optional(),
     city: z.string().optional(),
     inpayEntry: z.union([z.string(), z.number()]).optional(),
     inpayPayment: z.union([z.string(), z.number()]).optional(),
+    cellComputer: z.string().optional(),
+    services: z.array(z.string()).optional(),
   });
 
   /**
    * Facilities are a repeating row rather than a single control, so their errors
    * collapse into one message naming the first offending row — there is nowhere
-   * per-row to render them yet.
+   * per-row to render them yet. Whether a facility's cell computer and services
+   * actually exist depends on other steps, so that is checked on the whole draft
+   * below.
    */
   const facilities = z.preprocess(
     (value) => value ?? [],
@@ -79,6 +147,14 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
         ctx.addIssue({ code: "custom", message: `Facility ${i + 1}: ID must be digits only` });
         return;
       }
+      if (!row.cellComputer) {
+        ctx.addIssue({ code: "custom", message: `Facility ${i + 1}: choose the cell computer it is connected to` });
+        return;
+      }
+      if (!row.services || row.services.length === 0) {
+        ctx.addIssue({ code: "custom", message: `Facility ${i + 1}: select at least one service enabled at this location` });
+        return;
+      }
     }
     }),
   );
@@ -94,10 +170,13 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     techEmail: text("techEmail"),
     phone: text("phone"),
     version: text("version"),
-    ip: text("ip", "Static public IP is required"),
-    port: text("port"),
-    domain: text("domain"),
     address: text("address"),
+    // Locale is the operator's, shared by every cell computer it runs.
+    country: text("country", "Country is required"),
+    lang: text("lang", "Language tag is required"),
+    currency: text("currency"),
+    decimals: text("decimals"),
+    vat: text("vat"),
     // Connect & Validation & Mobility additions
     providerId: text("providerId"),
     contactEmail: text("contactEmail"),
@@ -111,17 +190,7 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
   });
 
   const cellComputerStep = z.object({
-    cellId: text("cellId", "Cell computer ID is required"),
-    cellName: text("cellName"),
-    lang: text("lang", "Language tag is required"),
-    country: text("country", "Country is required"),
-    currency: text("currency"),
-    decimals: text("decimals"),
-    uiUserId: text("uiUserId"),
-    uiPassword: text("uiPassword"),
-    deviceId: text("deviceId"),
-    vat: text("vat"),
-    sshPort: text("sshPort"),
+    cellComputers,
   });
 
   const facilitiesStep = z.object({
@@ -143,8 +212,9 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     financialInfo: text("financialInfo"),
     tocUrl: text("tocUrl"),
     tariff: text("tariff"),
-    psp: text("psp", "Select a payment service provider"),
-    pspMid: text("pspMid", "Merchant ID is required"),
+    // Required only when a payment product is selected — see `requirePayment`.
+    psp: text("psp"),
+    pspMid: text("pspMid"),
     pspTid: text("pspTid"),
     dailyMax: text("dailyMax"),
     subtechEmail: text("subtechEmail"),
@@ -211,6 +281,41 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     ),
   });
 
+  /**
+   * Checks that span steps. They run on the whole draft — the wizard's resolver
+   * and the submit endpoint both validate that — and `when: () => true` makes
+   * them run even while other fields still have errors, so a missing PSP is
+   * reported alongside everything else rather than only once the rest is fixed.
+   */
+  function crossStepChecks(draft: Record<string, unknown>, ctx: z.RefinementCtx) {
+    const products = parseProducts(typeof draft.product === "string" ? draft.product : "");
+
+    if (needsPaymentProvider(products)) {
+      if (!String(draft.psp ?? "").trim()) {
+        ctx.addIssue({ code: "custom", path: ["psp"], message: "Select a payment service provider" });
+      } else if (!String(draft.pspMid ?? "").trim()) {
+        ctx.addIssue({ code: "custom", path: ["pspMid"], message: "Merchant ID is required" });
+      }
+    }
+
+    const cells = Array.isArray(draft.cellComputers) ? (draft.cellComputers as { key?: string }[]) : [];
+    const cellKeys = new Set(cells.map((c) => c.key).filter(Boolean));
+    const rows = Array.isArray(draft.facilities)
+      ? (draft.facilities as { cellComputer?: string; services?: string[] }[])
+      : [];
+    for (const [i, row] of rows.entries()) {
+      if (row.cellComputer && !cellKeys.has(row.cellComputer)) {
+        ctx.addIssue({ code: "custom", path: ["facilities"], message: `Facility ${i + 1}: its cell computer was removed — choose another` });
+        return;
+      }
+      const stray = (row.services ?? []).find((s) => !products.includes(s as never));
+      if (stray) {
+        ctx.addIssue({ code: "custom", path: ["facilities"], message: `Facility ${i + 1}: ${stray} is not one of the selected products` });
+        return;
+      }
+    }
+  }
+
   /** Indexed by wizard step number — the order the user walks them in. */
   const STEP_SCHEMAS = [
     productStep,
@@ -232,7 +337,7 @@ export function createOnboardingSchemas(overrides?: RuleOverrides) {
     ...facilitiesStep.shape,
     ...appPaymentStep.shape,
     ...salesApprovalStep.shape,
-  });
+  }).superRefine(crossStepChecks, { when: () => true });
 
   /**
    * The fields a given step owns, read straight off its schema so the step

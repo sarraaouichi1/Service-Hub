@@ -218,10 +218,15 @@ async function main() {
   const ipRule = ((await call("/api/rules", { cookie: admin.cookie })).body?.rules as { id: number; field: string; active: boolean }[])
     .find(r => r.field === "IP Address")!;
 
-  const badIp = { ...DEMO_ONBOARDING_DRAFT, product: "smart-web-pay", salesApproved: true, ip: "999.1.1.1" };
+  // The IP now lives on each cell computer; the registry rule still governs it.
+  const withCellIp = (ip: string) => ({
+    ...DEMO_ONBOARDING_DRAFT, salesApproved: true,
+    cellComputers: DEMO_ONBOARDING_DRAFT.cellComputers.map((c, i) => (i === 1 ? { ...c, ip } : c)),
+  });
+  const badIp = withCellIp("999.1.1.1");
   const rejected = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(badIp) });
   check("a bad IP is rejected while the rule is on", rejected.status, 422);
-  check("and the message names the rule", (rejected.body?.fieldErrors as Record<string, string>)?.ip, "Must be a valid IPv4 address");
+  check("and the message names the cell computer and the rule", (rejected.body?.fieldErrors as Record<string, string>)?.cellComputers, "CC-South — Static public IP: Must be a valid IPv4 address");
 
   await call(`/api/rules/${ipRule.id}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ active: false }) });
   const allowed = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(badIp) });
@@ -229,7 +234,7 @@ async function main() {
   await prisma.project.deleteMany({ where: { id: (allowed.body?.project as { id: number }).id } });
 
   await call(`/api/rules/${ipRule.id}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ severity: "warning" }) });
-  const softened = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify({ ...badIp, ip: "999.1.1.1" }) });
+  const softened = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(badIp) });
   check("a rule softened to a warning stops blocking too", softened.status, 201);
   await prisma.project.deleteMany({ where: { id: (softened.body?.project as { id: number }).id } });
   await call(`/api/rules/${ipRule.id}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ active: true, severity: "error" }) });
@@ -329,6 +334,83 @@ async function main() {
   const settingsRes = await call("/api/settings", { cookie: admin.cookie });
   check("settings returns 200", settingsRes.status, 200);
   check("settings body has settings and config", !!(settingsRes.body?.settings && settingsRes.body?.config), true);
+
+  // ── v1.1: customers submit their own onboarding ────────────────────────
+  const customerSubmit = await call("/api/projects/submit", { method: "POST", cookie: customer.cookie, body: JSON.stringify({ ...DEMO_ONBOARDING_DRAFT, salesApproved: true }) });
+  check("a customer may submit an onboarding request", customerSubmit.status, 201);
+  const customerProject = customerSubmit.body?.project as { id: number; status: string };
+  check("and it waits for Sales", customerProject.status, "sales-approval");
+  check("a customer may not confirm payment on it", (await call(`/api/projects/${customerProject.id}`, { method: "PATCH", cookie: customer.cookie, body: JSON.stringify({ status: "approved" }) })).status, 403);
+  check("nor skip straight to onboarded", (await call(`/api/projects/${customerProject.id}`, { method: "PATCH", cookie: customer.cookie, body: JSON.stringify({ status: "onboarded" }) })).status, 403);
+  check("a project manager may not skip Sales and DevOps either", (await call(`/api/projects/${customerProject.id}`, { method: "PATCH", cookie: (await login(PM)).cookie, body: JSON.stringify({ status: "onboarded" }) })).status, 403);
+  check("a customer may not edit a project someone else submitted", (await call("/api/projects/1", { method: "PATCH", cookie: customer.cookie, body: JSON.stringify({ name: "Hijacked" }) })).status, 404);
+
+  // The stored configuration: visible to its submitter and to S&B, without credentials.
+  const ownConfig = await call(`/api/projects/${customerProject.id}/configuration`, { cookie: customer.cookie });
+  check("the submitter can read the configuration", ownConfig.status, 200);
+  const config = ownConfig.body?.configuration as { cellComputers: { name: string; uiPassword: string }[]; facilities: { cellComputer: string }[] };
+  check("with both cell computers", config.cellComputers.map(c => c.name), ["CC-North", "CC-South"]);
+  check("and each facility's cell computer", config.facilities.map(f => f.cellComputer), ["cc-medway-1", "cc-medway-1", "cc-medway-2"]);
+  check("sales can read it too", (await call(`/api/projects/${customerProject.id}/configuration`, { cookie: sales.cookie })).status, 200);
+  check("a partner who didn't submit it cannot", (await call(`/api/projects/${customerProject.id}/configuration`, { cookie: (await login("partner@scheidt-bachmann.de")).cookie })).status, 404);
+  check("a project from before v1.1 has no stored configuration", (await call("/api/projects/1/configuration", { cookie: admin.cookie })).body?.configuration, null);
+  await prisma.project.delete({ where: { id: customerProject.id } });
+
+  // ── v1.1: the payment provider only where a product takes payments ──────
+  const validationOnly = {
+    ...DEMO_ONBOARDING_DRAFT, salesApproved: true, product: "smart-validation", psp: "", pspMid: "",
+    facilities: DEMO_ONBOARDING_DRAFT.facilities.map(f => ({ ...f, services: ["smart-validation"] })),
+  };
+  const noPsp = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(validationOnly) });
+  check("a Validation-only onboarding needs no PSP", noPsp.status, 201);
+  check("and stores none", (noPsp.body?.project as { psp: string }).psp, "");
+  await prisma.project.delete({ where: { id: (noPsp.body?.project as { id: number }).id } });
+  const webPayNoPsp = await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify({ ...DEMO_ONBOARDING_DRAFT, salesApproved: true, psp: "" }) });
+  check("web pay without a PSP is refused", webPayNoPsp.status, 422);
+  check("naming the PSP field", (webPayNoPsp.body?.fieldErrors as Record<string, string>)?.psp, "Select a payment service provider");
+
+  // ── v1.1: facilities point at a cell computer and name their services ──
+  const orphan = { ...DEMO_ONBOARDING_DRAFT, salesApproved: true, facilities: [{ ...DEMO_ONBOARDING_DRAFT.facilities[0], cellComputer: "cc-gone" }] };
+  check("a facility on a removed cell computer is refused", (await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(orphan) })).body?.fieldErrors, { facilities: "Facility 1: its cell computer was removed — choose another" });
+  const stray = { ...DEMO_ONBOARDING_DRAFT, salesApproved: true, facilities: [{ ...DEMO_ONBOARDING_DRAFT.facilities[0], services: ["smart-validation"] }] };
+  check("a facility service outside the selected products is refused", (await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(stray) })).status, 422);
+  const noServices = { ...DEMO_ONBOARDING_DRAFT, salesApproved: true, facilities: [{ ...DEMO_ONBOARDING_DRAFT.facilities[0], services: [] }] };
+  check("a facility with no service is refused", (await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(noServices) })).status, 422);
+  const dupCells = { ...DEMO_ONBOARDING_DRAFT, salesApproved: true, cellComputers: DEMO_ONBOARDING_DRAFT.cellComputers.map(c => ({ ...c, cellId: "4438" })) };
+  check("two cell computers with one ID are refused", (await call("/api/projects/submit", { method: "POST", cookie: admin.cookie, body: JSON.stringify(dupCells) })).status, 422);
+
+  // ── v1.1: drafts saved in the old single-cell shape still open ──────────
+  await call("/api/draft", { method: "PUT", cookie: admin.cookie, body: JSON.stringify({ opName: "Legacy", product: "smart-web-pay", ip: "10.0.0.1", port: "8443", cellId: "77", uiPassword: "old-secret", facilities: [{ id: "1", name: "P1", city: "", inpayEntry: 0, inpayPayment: 0 }] }) });
+  const legacy = (await call("/api/draft", { cookie: admin.cookie })).body as { draft: { cellComputers: { key: string; ip: string; cellId: string; uiPassword: string }[]; facilities: { cellComputer: string; services: string[] }[]; ip?: string }; secretsOnFile: string[] };
+  check("a legacy draft becomes one cell computer", legacy.draft.cellComputers.map(c => [c.ip, c.cellId]), [["10.0.0.1", "77"]]);
+  check("its flat IP field is gone", legacy.draft.ip, undefined);
+  check("its facilities are linked to that cell computer", legacy.draft.facilities[0].cellComputer, legacy.draft.cellComputers[0].key);
+  check("and keep the selected products as services", legacy.draft.facilities[0].services, ["smart-web-pay"]);
+  check("its UI password is not sent back", legacy.draft.cellComputers[0].uiPassword, "");
+  check("but is reported as on file", legacy.secretsOnFile, [`cellComputers.${legacy.draft.cellComputers[0].key}.uiPassword`]);
+
+  // Saving the form back (password blank, as the client never has it) keeps it.
+  await call("/api/draft", { method: "PUT", cookie: admin.cookie, body: JSON.stringify(legacy.draft) });
+  check("a cell computer's password survives a save that omits it", ((await call("/api/draft", { cookie: admin.cookie })).body as { secretsOnFile: string[] }).secretsOnFile.length, 1);
+  const stored = (await prisma.onboardingDraft.findUniqueOrThrow({ where: { userId: adminId } })).data as { cellComputers: { uiPassword: string }[] };
+  check("and is still the original value in storage", stored.cellComputers[0].uiPassword, "old-secret");
+  await call("/api/draft", { method: "DELETE", cookie: admin.cookie });
+
+  // ── v1.1: invitation links ──────────────────────────────────────────────
+  const invited = await call("/api/users", { method: "POST", cookie: admin.cookie, body: JSON.stringify({ email: "z@y.com", name: "Zed Invite", roles: ["Customer"] }) });
+  const invitation = invited.body?.invitation as { activationPath: string };
+  check("creating a user without a password returns an invitation link", /^\/activate\?token=[\w-]{40,}$/.test(invitation?.activationPath ?? ""), true);
+  const token = invitation.activationPath.split("token=")[1];
+  check("the link's token is not stored as-is", (await prisma.user.findUniqueOrThrow({ where: { email: "z@y.com" } })).activationTokenHash === token, false);
+  check("the link identifies the account", (await call(`/api/auth/activation?token=${token}`)).body?.email, "z@y.com");
+  check("a made-up token is refused", (await call("/api/auth/activation?token=nope")).status, 410);
+  check("a weak password is refused", (await call("/api/auth/activate", { method: "POST", body: JSON.stringify({ token, password: "short" }) })).status, 422);
+  check("choosing a password activates the account", (await call("/api/auth/activate", { method: "POST", body: JSON.stringify({ token, password: "A-much-better-pass1" }) })).status, 200);
+  check("who can then sign in", (await login("z@y.com", "A-much-better-pass1")).status, 200);
+  check("the link works only once", (await call("/api/auth/activate", { method: "POST", body: JSON.stringify({ token, password: "Another-good-pass2" }) })).status, 410);
+  const zedId = (await prisma.user.findUniqueOrThrow({ where: { email: "z@y.com" } })).id;
+  check("an active account needs no new link", (await call(`/api/users/${zedId}/activation-link`, { method: "POST", cookie: admin.cookie })).status, 409);
+  await prisma.user.deleteMany({ where: { email: "z@y.com" } });
 
   // ── Sign out ────────────────────────────────────────────────────────────
   check("logout succeeds", (await call("/api/auth/logout", { method: "POST", cookie: admin.cookie })).status, 200);

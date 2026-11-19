@@ -5,6 +5,7 @@ import { prisma } from "../db.js";
 import { hashPassword } from "../auth/password.js";
 import { revokeAllSessions, toAuthUser } from "../auth/session.js";
 import { requirePermission } from "../rbac/guard.js";
+import { issueActivationLink } from "../auth/activation.js";
 
 const ROLE_VALUES = [
   "Admin", "Project Manager", "Sales", "Reviewer", "DevOps", "Partner", "Customer",
@@ -80,8 +81,26 @@ export async function userRoutes(app: FastifyInstance) {
         passwordHash: parsed.data.password ? await hashPassword(parsed.data.password) : null,
       },
     });
-    return reply.code(201).send({ user: toAuthUser(user) });
+    // No password given means the person sets their own through an invitation
+    // link. Email isn't wired up yet, so the link comes back for the
+    // administrator to copy and send.
+    const invitation = parsed.data.password ? null : await issueActivationLink(user.id);
+    return reply.code(201).send({ user: toAuthUser(user), invitation });
   });
+
+  /** A new link for someone who lost or never received theirs. Replaces the old one. */
+  app.post<{ Params: { id: string } }>(
+    "/users/:id/activation-link",
+    { preHandler: requirePermission("user:write") },
+    async (request, reply) => {
+      const target = await prisma.user.findUnique({ where: { id: request.params.id } });
+      if (!target) return reply.code(404).send({ message: "No such user" });
+      if (target.status !== "pending") {
+        return reply.code(409).send({ message: "This account is already active — it doesn't need an invitation link" });
+      }
+      return { invitation: await issueActivationLink(target.id) };
+    },
+  );
 
   app.patch<{ Params: { id: string } }>(
     "/users/:id",

@@ -1,8 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { can, createOnboardingSchemas } from "@service-hub/shared";
+import { can, createOnboardingSchemas, needsPaymentProvider, normalizeDraft, parseProducts } from "@service-hub/shared";
 import type { RuleOverrides } from "@service-hub/shared";
-import type { OnboardingForm } from "@service-hub/shared";
+import type { AuthUser, OnboardingForm } from "@service-hub/shared";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { requireAnyPermission, requirePermission, requireSignedIn } from "../rbac/guard.js";
@@ -16,8 +16,79 @@ const STATUSES = ["draft", "progress", "review", "approved", "sales-approval", "
  * This is a floor, not a solution: they are still stored in the draft's JSON
  * rather than encrypted in a secret store, which is what a real PSP integration
  * needs. Anything added here must be added to that store too.
+ *
+ * Top-level ones are named directly; each cell computer carries its own UI
+ * password, reported as `cellComputers.<key>.uiPassword`.
  */
-const SECRET_FIELDS = ["pspKey", "pspSecret", "uiPassword"] as const;
+const SECRET_FIELDS = ["pspKey", "pspSecret"] as const;
+const CELL_SECRET_FIELDS = ["uiPassword"] as const;
+
+/** A copy of the draft with every credential removed, and the list of those on file. */
+export function withoutSecrets(stored: OnboardingForm): { draft: OnboardingForm; secretsOnFile: string[] } {
+  const draft: OnboardingForm = { ...stored };
+  const secretsOnFile: string[] = [];
+  for (const key of SECRET_FIELDS) {
+    if (typeof stored[key] === "string" && stored[key]!.length > 0) secretsOnFile.push(key);
+    delete draft[key];
+  }
+  if (Array.isArray(stored.cellComputers)) {
+    draft.cellComputers = stored.cellComputers.map((cell) => {
+      const copy = { ...cell };
+      for (const key of CELL_SECRET_FIELDS) {
+        if (typeof cell[key] === "string" && cell[key].length > 0) secretsOnFile.push(`cellComputers.${cell.key}.${key}`);
+        copy[key] = "";
+      }
+      return copy;
+    });
+  }
+  return { draft, secretsOnFile };
+}
+
+/**
+ * A blank credential means "leave it alone", not "clear it" — the client is
+ * never sent the current value, so it cannot echo one back. Cell computers are
+ * matched by their stable key, so reordering or renaming one keeps its password.
+ */
+export function mergeSecrets(incoming: OnboardingForm, stored: OnboardingForm): OnboardingForm {
+  const merged: OnboardingForm = { ...incoming };
+  for (const key of SECRET_FIELDS) {
+    const supplied = incoming[key];
+    if (typeof supplied === "string" && supplied.length > 0) continue;
+    if (typeof stored[key] === "string") merged[key] = stored[key];
+    else delete merged[key];
+  }
+  if (Array.isArray(incoming.cellComputers)) {
+    const storedCells = new Map((stored.cellComputers ?? []).map((c) => [c.key, c]));
+    merged.cellComputers = incoming.cellComputers.map((cell) => {
+      const copy = { ...cell };
+      for (const key of CELL_SECRET_FIELDS) {
+        if (typeof cell[key] === "string" && cell[key].length > 0) continue;
+        copy[key] = storedCells.get(cell.key)?.[key] ?? "";
+      }
+      return copy;
+    });
+  }
+  return merged;
+}
+
+/**
+ * Whether this person may see a given project's details. S&B roles hold
+ * project:read-any; partners and customers see the projects they submitted.
+ */
+function canSeeProject(user: AuthUser, project: { createdById: string | null }) {
+  return can(user.permissions, "project:read-any") || project.createdById === user.id;
+}
+
+/**
+ * Status moves and the one permission each needs. A status change not listed
+ * here is refused for everyone but an administrator: `project:update` edits a
+ * project's details, it does not let anyone skip the Sales or DevOps step.
+ */
+const TRANSITIONS: Record<string, { to: string; permission: "payment:confirm" | "project:deploy" | "project:approve"; message: string }[]> = {
+  "sales-approval": [{ to: "approved", permission: "payment:confirm", message: "Only Sales may confirm sales delivery" }],
+  review: [{ to: "approved", permission: "project:approve", message: "Only a reviewer may approve" }],
+  approved: [{ to: "onboarded", permission: "project:deploy", message: "Only DevOps may complete deployment" }],
+};
 
 const updateProjectSchema = z.object({
   name: z.string().min(1).optional(),
@@ -93,6 +164,28 @@ export async function projectRoutes(app: FastifyInstance) {
     },
   );
 
+  /**
+   * The full configuration a project was submitted with, for the one-page
+   * configuration view and its copy button. Credentials are stripped exactly
+   * as they are from a draft.
+   */
+  app.get<{ Params: { id: string } }>(
+    "/projects/:id/configuration",
+    { preHandler: requirePermission("project:read") },
+    async (request, reply) => {
+      const project = await prisma.project.findUnique({ where: { id: Number(request.params.id) } });
+      // 404 rather than 403 for someone else's project, so ids can't be probed.
+      if (!project || !canSeeProject(request.authUser!, project)) {
+        return reply.code(404).send({ message: "No such project" });
+      }
+      if (!project.data) {
+        return { configuration: null, secretsOnFile: [], submittedAt: project.createdAt };
+      }
+      const { draft, secretsOnFile } = withoutSecrets(normalizeDraft(project.data as OnboardingForm));
+      return { configuration: draft, secretsOnFile, submittedAt: project.createdAt };
+    },
+  );
+
   app.patch<{ Params: { id: string } }>(
     "/projects/:id",
     { preHandler: requireAnyPermission("project:update", "payment:confirm", "project:deploy") },
@@ -107,22 +200,24 @@ export async function projectRoutes(app: FastifyInstance) {
         return reply.code(404).send({ message: "No such project" });
       }
 
-      const permissions = request.authUser!.permissions;
-      const isAdmin = request.authUser?.roles?.includes("Admin");
-      const canUpdate = can(permissions, "project:update");
-      const canConfirmPayment = can(permissions, "payment:confirm");
-      const canDeploy = can(permissions, "project:deploy");
+      const user = request.authUser!;
+      const isAdmin = user.roles?.includes("Admin");
+      const { status, ...details } = parsed.data;
 
       if (!isAdmin) {
-        if (existing.status === "sales-approval" && parsed.data.status === "approved") {
-          if (!canConfirmPayment) {
-            return reply.code(403).send({ message: "Only Sales may confirm sales delivery" });
+        if (!canSeeProject(user, existing)) {
+          return reply.code(404).send({ message: "No such project" });
+        }
+        if (status !== undefined && status !== existing.status) {
+          const move = TRANSITIONS[existing.status]?.find((t) => t.to === status);
+          if (!move) {
+            return reply.code(403).send({ message: `A project cannot move from ${existing.status} to ${status}` });
           }
-        } else if (existing.status === "approved" && parsed.data.status === "onboarded") {
-          if (!canDeploy) {
-            return reply.code(403).send({ message: "Only DevOps may complete deployment" });
+          if (!can(user.permissions, move.permission)) {
+            return reply.code(403).send({ message: move.message });
           }
-        } else if (!canUpdate) {
+        }
+        if (Object.keys(details).length > 0 && !can(user.permissions, "project:update")) {
           return reply.code(403).send({ message: "You do not have permission to do that" });
         }
       }
@@ -151,7 +246,14 @@ export async function projectRoutes(app: FastifyInstance) {
       };
     }
     const schemas = createOnboardingSchemas(overrides);
-    const result = schemas.onboardingDraftSchema.safeParse(request.body);
+    // Credentials typed in an earlier session live only in the saved draft, so
+    // fold them back in before checking — the form never had them to resend.
+    const savedDraft = await prisma.onboardingDraft.findUnique({ where: { userId: request.authUser!.id } });
+    const draft = mergeSecrets(
+      normalizeDraft(request.body as OnboardingForm),
+      normalizeDraft((savedDraft?.data as OnboardingForm | undefined) ?? {}),
+    );
+    const result = schemas.onboardingDraftSchema.safeParse(draft);
     if (!result.success) {
       return reply.code(422).send({
         message: "Check the form — some entries need attention",
@@ -159,7 +261,14 @@ export async function projectRoutes(app: FastifyInstance) {
       });
     }
 
-    const draft = request.body as OnboardingForm;
+    // A product without payments has no business carrying a PSP — values left
+    // over from an earlier product choice would otherwise ride along unseen.
+    if (!needsPaymentProvider(parseProducts(draft.product))) {
+      for (const key of Object.keys(draft) as (keyof OnboardingForm)[]) {
+        if (["psp", "pspMid", "pspTid", "pspKey", "pspSecret"].includes(key) || String(key).startsWith("pm_")) delete draft[key];
+      }
+    }
+
     const project = await prisma.project.create({
       data: {
         name: draft.opName ?? "Untitled onboarding",
@@ -171,6 +280,8 @@ export async function projectRoutes(app: FastifyInstance) {
         psp: draft.psp ?? "",
         country: draft.country ?? "",
         product: draft.product ?? "smart-web-pay",
+        data: draft as unknown as Prisma.InputJsonObject,
+        createdById: request.authUser!.id,
       },
     });
 
@@ -195,30 +306,15 @@ export async function projectRoutes(app: FastifyInstance) {
     const row = await prisma.onboardingDraft.findUnique({ where: { userId: request.authUser!.id } });
     if (!row) return { draft: null, secretsOnFile: [], updatedAt: null };
 
-    const stored = row.data as OnboardingForm;
-    const draft = { ...stored };
-    const secretsOnFile: string[] = [];
-    for (const key of SECRET_FIELDS) {
-      if (typeof stored[key] === "string" && stored[key]!.length > 0) secretsOnFile.push(key);
-      delete draft[key];
-    }
+    const { draft, secretsOnFile } = withoutSecrets(normalizeDraft(row.data as OnboardingForm));
     return { draft, secretsOnFile, updatedAt: row.updatedAt };
   });
 
   app.put("/draft", { preHandler: requirePermission("project:update") }, async (request) => {
-    const incoming = (request.body ?? {}) as OnboardingForm;
+    const incoming = normalizeDraft((request.body ?? {}) as OnboardingForm);
     const existing = await prisma.onboardingDraft.findUnique({ where: { userId: request.authUser!.id } });
-    const stored = (existing?.data as OnboardingForm | undefined) ?? {};
-
-    // A blank credential means "leave it alone", not "clear it" — the client is
-    // never sent the current value, so it cannot echo one back.
-    const merged: OnboardingForm = { ...incoming };
-    for (const key of SECRET_FIELDS) {
-      const supplied = incoming[key];
-      if (typeof supplied === "string" && supplied.length > 0) continue;
-      if (typeof stored[key] === "string") merged[key] = stored[key];
-      else delete merged[key];
-    }
+    const stored = normalizeDraft((existing?.data as OnboardingForm | undefined) ?? {});
+    const merged = mergeSecrets(incoming, stored);
 
     // Prisma's Json input type can't express OnboardingForm's template-literal
     // keys, so the shape is asserted here; it is validated on submit, which is
@@ -230,12 +326,7 @@ export async function projectRoutes(app: FastifyInstance) {
       create: { userId: request.authUser!.id, data },
     });
 
-    const saved = { ...(row.data as OnboardingForm) };
-    const secretsOnFile: string[] = [];
-    for (const key of SECRET_FIELDS) {
-      if (typeof saved[key] === "string" && saved[key]!.length > 0) secretsOnFile.push(key);
-      delete saved[key];
-    }
+    const { draft: saved, secretsOnFile } = withoutSecrets(row.data as OnboardingForm);
     return { draft: saved, secretsOnFile, updatedAt: row.updatedAt };
   });
 

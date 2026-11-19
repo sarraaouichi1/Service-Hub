@@ -43,6 +43,10 @@ model User {
   /// The provider's stable subject claim. Never the email — addresses get reassigned.
   externalId   String?
 
+  /// HMAC of a one-time invitation token; the token itself is only ever in the link.
+  activationTokenHash String?   @unique
+  activationExpiresAt DateTime?
+
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -85,10 +89,16 @@ model Project {
   psp       String   @default("")
   country   String   @default("")
   product   String   @default("smart-web-pay")
+  /// The submitted onboarding configuration, credentials included. Read only
+  /// through the configuration endpoint, which strips the credentials.
+  data        Json?
+  /// Who submitted it. Roles without project:read-any see only their own.
+  createdById String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([status])
+  @@index([createdById])
 }
 
 model Template {

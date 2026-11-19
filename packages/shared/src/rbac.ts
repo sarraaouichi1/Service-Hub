@@ -16,6 +16,10 @@ import type { UserRole } from "./domain.js";
 
 export const PERMISSIONS = [
   "project:read",
+  // Reading the full configuration of *any* project, not just one's own. A
+  // submitted configuration holds IP addresses, ports and contacts, so roles
+  // outside S&B see only the projects they created themselves.
+  "project:read-any",
   "project:create",
   "project:update",
   "project:submit",
@@ -42,14 +46,15 @@ export type Permission = (typeof PERMISSIONS)[number];
 export const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
   Admin: PERMISSIONS,
   "Project Manager": [
-    "project:read", "project:create", "project:update", "project:submit",
+    "project:read", "project:read-any", "project:create", "project:update", "project:submit",
     "template:read", "rule:read",
   ],
-  Sales: ["project:read", "payment:confirm"],
-  Reviewer: ["project:read", "project:review", "project:approve", "rule:read", "audit:read"],
-  DevOps: ["project:read", "project:deploy", "patch:read", "patch:schedule"],
+  Sales: ["project:read", "project:read-any", "payment:confirm"],
+  Reviewer: ["project:read", "project:read-any", "project:review", "project:approve", "rule:read", "audit:read"],
+  DevOps: ["project:read", "project:read-any", "project:deploy", "patch:read", "patch:schedule"],
   Partner: ["project:read", "project:create", "project:update", "project:submit"],
-  Customer: ["project:read"],
+  // A customer (the operator) fills in and submits their own onboarding request.
+  Customer: ["project:read", "project:create", "project:update", "project:submit"],
 };
 
 /** Everything the given roles allow, flattened and de-duplicated. */

@@ -82,12 +82,40 @@ export interface AppNotification {
   iconColor: string;
 }
 
+/**
+ * One cell computer belonging to the operator.
+ *
+ * An operator can run several, each reached on its own address with its own
+ * credentials, so connection details live here rather than on the operator.
+ * `key` is a stable handle the facilities point at: the user may still edit
+ * `cellId` and `name`, and a facility's link must survive that.
+ */
+export interface CellComputer {
+  key: string;
+  /** Display name, e.g. CC-01 or CC-North. */
+  name: string;
+  /** Numeric ID from the entervo system. */
+  cellId: string;
+  url: string;
+  ip: string;
+  port: string;
+  uiUserId: string;
+  /** Write-only: accepted on save, never returned by a read. */
+  uiPassword: string;
+  deviceId: string;
+  sshPort: string;
+}
+
 export interface Facility {
   id: string;
   name: string;
   city: string;
   inpayEntry: string | number;
   inpayPayment: string | number;
+  /** The `key` of the cell computer this facility is connected to. */
+  cellComputer?: string;
+  /** Products enabled at this physical location — a subset of those selected. */
+  services?: ProductId[];
 }
 
 /** Free-text fields captured by the onboarding wizard across all products. */
@@ -131,16 +159,17 @@ export type FormBoolKey =
  */
 export type OnboardingForm = { [K in FormTextKey]?: string } & {
   [K in FormBoolKey]?: boolean;
-} & { facilities?: Facility[] } & {
+} & { facilities?: Facility[]; cellComputers?: CellComputer[] } & {
   [key: `pm_${string}`]: boolean | undefined;
 };
 
 /**
- * Validation messages keyed by the field that produced them. Facilities are a
- * repeating row rather than a single control, so they share one key.
+ * Validation messages keyed by the field that produced them. Facilities and
+ * cell computers are repeating rows rather than single controls, so each list
+ * shares one key and the message names the row.
  */
 export type FormErrors = Partial<
-  Record<FormTextKey | FormBoolKey | "facilities", string>
+  Record<FormTextKey | FormBoolKey | "facilities" | "cellComputers", string>
 >;
 
 export type TemplateStatus = "active" | "draft";
