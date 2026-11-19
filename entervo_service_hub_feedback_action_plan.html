@@ -2,21 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>entervo Service Hub — System Enhancement &amp; Action Plan</title>
+<title>entervo Service Hub — Action Plan One-Pager</title>
 <style>
   @page {
     size: A4 portrait;
-    margin: 15mm 14mm 16mm 14mm;
+    margin: 10mm 12mm 10mm 12mm;
     @bottom-right {
-      content: "Page " counter(page) " of " counter(pages);
-      font-size: 8.5pt;
-      color: #64748B;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-    @bottom-left {
-      content: "Scheidt & Bachmann · entervo Service Hub · Feedback Action Plan";
-      font-size: 8.5pt;
-      color: #64748B;
+      content: "Scheidt & Bachmann · entervo Service Hub";
+      font-size: 7.5pt;
+      color: #94A3B8;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
   }
@@ -29,511 +23,300 @@
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: #1E293B;
+    color: #0F172A;
     background: #FFFFFF;
-    line-height: 1.5;
-    font-size: 9.5pt;
+    line-height: 1.35;
+    font-size: 8.5pt;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .page-break {
-    page-break-after: always;
-  }
-
-  /* Cover Header */
-  .doc-header {
+  /* Header */
+  .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 3px solid #00A3E0;
-    padding-bottom: 14px;
-    margin-bottom: 20px;
+    border-bottom: 2.5px solid #00A3E0;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
   }
 
-  .sb-brand {
-    font-size: 20pt;
+  .brand {
+    font-size: 16pt;
     font-weight: 800;
-    letter-spacing: -0.5px;
     color: #0A1C2A;
+    letter-spacing: -0.5px;
   }
-  .sb-brand span {
-    color: #00A3E0;
-  }
+  .brand span { color: #00A3E0; }
 
-  .badge-tag {
+  .badge-top {
     background: #F1F5F9;
     border: 1px solid #CBD5E1;
-    color: #0F172A;
-    font-size: 8pt;
+    color: #334155;
+    font-size: 7.5pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    padding: 4px 10px;
+    padding: 3px 8px;
     border-radius: 4px;
+    letter-spacing: 0.5px;
   }
 
-  .doc-title-block {
+  /* Banner */
+  .title-banner {
     background: linear-gradient(135deg, #0A1C2A 0%, #15385B 100%);
     color: #FFFFFF;
-    padding: 22px 24px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-
-  .doc-tagline {
-    color: #00A3E0;
-    font-size: 9pt;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 6px;
-  }
-
-  .doc-title {
-    font-size: 19pt;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    line-height: 1.25;
-    margin-bottom: 8px;
-  }
-
-  .doc-subtitle {
-    font-size: 10pt;
-    color: #CBD5E1;
-    max-width: 90%;
-  }
-
-  /* Metadata Strip */
-  .meta-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-
-  .meta-card {
-    background: #F8FAFC;
-    border: 1px solid #E2E8F0;
+    padding: 12px 16px;
     border-radius: 6px;
-    padding: 10px 14px;
+    margin-bottom: 12px;
   }
 
-  .meta-label {
-    font-size: 7.5pt;
-    text-transform: uppercase;
-    color: #64748B;
-    font-weight: 700;
-    letter-spacing: 0.5px;
+  .title-banner h1 {
+    font-size: 14pt;
+    font-weight: 800;
+    letter-spacing: -0.3px;
     margin-bottom: 3px;
   }
 
-  .meta-val {
-    font-size: 9.5pt;
-    font-weight: 700;
-    color: #0F172A;
-  }
-
-  /* Section Styling */
-  .section-heading {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12pt;
-    font-weight: 800;
-    color: #0A1C2A;
-    margin-top: 18px;
-    margin-bottom: 12px;
-    padding-bottom: 6px;
-    border-bottom: 1.5px solid #E2E8F0;
-  }
-
-  .section-num {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    background: #00A3E0;
-    color: #FFFFFF;
+  .title-banner p {
     font-size: 8.5pt;
-    font-weight: 800;
-    border-radius: 50%;
+    color: #94A3B8;
   }
 
-  /* Action Item Cards */
-  .item-card {
+  /* 2-Column Grid for Pillars */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .card {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-left: 4px solid #0066CC;
-    border-radius: 6px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    page-break-inside: avoid;
+    border-left: 3.5px solid #0066CC;
+    border-radius: 5px;
+    padding: 9px 11px;
   }
 
-  .item-card.p1 { border-left-color: #DC2626; }
-  .item-card.p2 { border-left-color: #EA580C; }
-  .item-card.p3 { border-left-color: #0284C7; }
-  .item-card.p4 { border-left-color: #16A34A; }
+  .card.c-red { border-left-color: #DC2626; }
+  .card.c-blue { border-left-color: #0284C7; }
+  .card.c-orange { border-left-color: #EA580C; }
+  .card.c-green { border-left-color: #16A34A; }
+  .card.c-purple { border-left-color: #7C3AED; }
 
-  .item-header {
+  .card-head {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 6px;
-  }
-
-  .item-title {
-    font-size: 10.5pt;
-    font-weight: 700;
-    color: #0F172A;
-  }
-
-  .badge-p1 { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size: 7.5pt; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; }
-  .badge-p2 { background: #FFF7ED; color: #EA580C; border: 1px solid #FFEDD5; font-size: 7.5pt; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; }
-  .badge-p3 { background: #F0F9FF; color: #0284C7; border: 1px solid #BAE6FD; font-size: 7.5pt; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; }
-  .badge-p4 { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; font-size: 7.5pt; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; }
-
-  .feedback-box {
-    background: #F8FAFC;
-    border: 1px dashed #CBD5E1;
-    border-radius: 5px;
-    padding: 6px 10px;
-    font-size: 8.5pt;
-    color: #475569;
-    font-style: italic;
-    margin-bottom: 8px;
-  }
-
-  .feedback-box strong {
-    color: #0F172A;
-    font-style: normal;
-  }
-
-  .action-list {
-    margin-left: 18px;
-    font-size: 9pt;
-    color: #334155;
-  }
-
-  .action-list li {
+    align-items: center;
     margin-bottom: 4px;
   }
 
-  /* Priority Table */
-  table.p-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 14px;
-    margin-bottom: 18px;
-    font-size: 8.5pt;
+  .card-title {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #0A1C2A;
   }
 
-  table.p-table th {
+  .pill {
+    font-size: 6.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 1.5px 5px;
+    border-radius: 3px;
+  }
+  .pill-red { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+  .pill-blue { background: #F0F9FF; color: #0284C7; border: 1px solid #BAE6FD; }
+  .pill-orange { background: #FFF7ED; color: #EA580C; border: 1px solid #FFEDD5; }
+  .pill-green { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+
+  .quote {
+    font-size: 7.5pt;
+    color: #64748B;
+    font-style: italic;
+    background: #F8FAFC;
+    padding: 3px 6px;
+    border-radius: 3px;
+    margin-bottom: 5px;
+    border-left: 2px solid #CBD5E1;
+  }
+
+  .points {
+    margin-left: 14px;
+    font-size: 8pt;
+    color: #334155;
+  }
+  .points li {
+    margin-bottom: 2px;
+  }
+  .points strong {
+    color: #0F172A;
+  }
+
+  /* Full Width Card */
+  .full-card {
+    grid-column: span 2;
+  }
+
+  /* Compact Table */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7.5pt;
+    margin-top: 4px;
+  }
+
+  .summary-table th {
     background: #0A1C2A;
     color: #FFFFFF;
     text-align: left;
-    padding: 8px 10px;
+    padding: 5px 8px;
     font-weight: 700;
   }
 
-  table.p-table td {
-    padding: 8px 10px;
+  .summary-table td {
+    padding: 4.5px 8px;
     border-bottom: 1px solid #E2E8F0;
-    vertical-align: top;
   }
 
-  table.p-table tr:nth-child(even) td {
+  .summary-table tr:nth-child(even) td {
     background: #F8FAFC;
   }
 
-  .callout-box {
-    background: #EFF6FF;
-    border: 1px solid #BFDBFE;
-    border-radius: 6px;
-    padding: 12px 16px;
-    margin: 16px 0;
-  }
-
-  .callout-box h4 {
-    color: #1E40AF;
-    font-size: 9.5pt;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .callout-box p {
-    color: #1E3A8A;
-    font-size: 8.5pt;
-    line-height: 1.45;
-  }
-
-  .footer-signoff {
-    margin-top: 24px;
-    padding-top: 14px;
-    border-top: 1px solid #E2E8F0;
+  /* Footer */
+  .footer {
     display: flex;
     justify-content: space-between;
-    font-size: 8pt;
+    align-items: center;
+    border-top: 1px solid #E2E8F0;
+    padding-top: 6px;
+    margin-top: 8px;
+    font-size: 7pt;
     color: #64748B;
   }
 </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <div class="doc-header">
-    <div class="sb-brand">SCHEIDT<span>&amp;</span>BACHMANN</div>
-    <div class="badge-tag">Action Plan &middot; Version 1.1</div>
+  <!-- Top Header -->
+  <div class="header">
+    <div class="brand">SCHEIDT<span>&amp;</span>BACHMANN</div>
+    <div class="badge-top">Action Plan &middot; 1-Page Summary</div>
   </div>
 
-  <!-- Document Title Block -->
-  <div class="doc-title-block">
-    <div class="doc-tagline">entervo Service Hub &middot; Engineering Specification</div>
-    <h1 class="doc-title">System Enhancement &amp; Action Plan</h1>
-    <p class="doc-subtitle">Consolidated implementation requirements based on stakeholder feedback for User Management, Operator/Cell Computer Hierarchy, Facility Mapping, and Product Configuration.</p>
+  <!-- Title Banner -->
+  <div class="title-banner">
+    <h1>entervo Service Hub — Simple Action Plan</h1>
+    <p>A simple overview of changes requested by the team and how we will implement them.</p>
   </div>
 
-  <!-- Metadata Grid -->
-  <div class="meta-grid">
-    <div class="meta-card">
-      <div class="meta-label">Platform</div>
-      <div class="meta-val">entervo Service Hub</div>
+  <!-- Grid of 5 Clear Action Pillars -->
+  <div class="grid-2">
+
+    <!-- Card 1 -->
+    <div class="card c-red">
+      <div class="card-head">
+        <span class="card-title">1. Operators &amp; Cell Computers</span>
+        <span class="pill pill-red">Priority 1</span>
+      </div>
+      <div class="quote">"Connection details should belong to cell computers; one operator can have several."</div>
+      <ul class="points">
+        <li><strong>Operator Level:</strong> Set Country, Language, Currency, and VAT once at the top.</li>
+        <li><strong>Cell Computers:</strong> Add multiple cell computers per operator, each with its own IP, Port, URL, and login details.</li>
+      </ul>
     </div>
-    <div class="meta-card">
-      <div class="meta-label">Target Release</div>
-      <div class="meta-val">v1.1 Architecture Overhaul</div>
+
+    <!-- Card 2 -->
+    <div class="card c-red">
+      <div class="card-head">
+        <span class="card-title">2. Facilities &amp; Services</span>
+        <span class="pill pill-red">Priority 1</span>
+      </div>
+      <div class="quote">"Each facility needs a cell computer link, and only uses certain services."</div>
+      <ul class="points">
+        <li><strong>Cell Computer Link:</strong> Pick which cell computer runs each parking facility.</li>
+        <li><strong>Service Checkboxes:</strong> Check off only the active services (e.g. <em>Validation</em>, <em>entervo connect</em>) instead of forcing all of them.</li>
+      </ul>
     </div>
-    <div class="meta-card">
-      <div class="meta-label">Date</div>
-      <div class="meta-val">November 2026</div>
+
+    <!-- Card 3 -->
+    <div class="card c-blue">
+      <div class="card-head">
+        <span class="card-title">3. Smart Payment (PSP) Display</span>
+        <span class="pill pill-blue">Priority 1</span>
+      </div>
+      <div class="quote">"A Payment Provider is not needed for Validation onboarding."</div>
+      <ul class="points">
+        <li><strong>Clean Workflow:</strong> Automatically hide payment &amp; PSP fields when onboarding Validation-only sites.</li>
+        <li><strong>No Confusion:</strong> Payment fields only show up when a real payment product (like <em>smart-web-pay</em>) is selected.</li>
+      </ul>
     </div>
-    <div class="meta-card">
-      <div class="meta-label">Action Items</div>
-      <div class="meta-val">9 Key Enhancements</div>
+
+    <!-- Card 4 -->
+    <div class="card c-orange">
+      <div class="card-head">
+        <span class="card-title">4. All-in-One Products Page</span>
+        <span class="pill pill-orange">Priority 2</span>
+      </div>
+      <div class="quote">"Make all steps in one page with a copy button for new Excel versions."</div>
+      <ul class="points">
+        <li><strong>Single Page:</strong> Review and edit all product settings on one clean page instead of clicking back and forth.</li>
+        <li><strong>Copy Button:</strong> 1-click button to copy the entire configuration to clipboard. Ready for the new Excel sheets!</li>
+      </ul>
     </div>
+
+    <!-- Card 5 (Full Width) -->
+    <div class="card c-green full-card">
+      <div class="card-head">
+        <span class="card-title">5. Usability, Drafts &amp; Split-Screen Layout</span>
+        <span class="pill pill-green">Priority 2 &amp; 3</span>
+      </div>
+      <div class="quote">"Couldn't restore saved draft; half-screen cuts off content; no email on user creation."</div>
+      <ul class="points" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div>
+          <li><strong>Easy Draft Restore:</strong> Clear "Resume Saved Draft" banner so your work is never lost.</li>
+          <li><strong>Split-Screen Friendly:</strong> Collapsible sidebar and smooth scrolling so nothing is cut off on half a screen.</li>
+        </div>
+        <div>
+          <li><strong>User Invite Link:</strong> Send an invite email or copy the activation link directly.</li>
+          <li><strong>Dark Mode:</strong> Optional switch for comfortable night/dark viewing.</li>
+        </div>
+      </ul>
+    </div>
+
   </div>
 
-  <!-- Section 1 -->
-  <div class="section-heading">
-    <span class="section-num">1</span>
-    Operator &amp; Cell Computer Hierarchy (Core Domain)
-  </div>
-
-  <div class="item-card p1">
-    <div class="item-header">
-      <div class="item-title">1.1 Split Operator vs. Cell Computer Architecture &amp; Multiple Cell Computers</div>
-      <span class="badge-p1">P1 &middot; Critical</span>
-    </div>
-    <div class="feedback-box">
-      <strong>Stakeholder Feedback:</strong> "The connection details currently shown under the operator should belong to the cell computer. One operator can have multiple cell computers, each with different URLs, IP addresses, ports, and credentials... The platform therefore needs the option to assign multiple cell computers to one operator."
-    </div>
-    <ul class="action-list">
-      <li><strong>Operator-Level Scope:</strong> Retain common enterprise/locale attributes strictly at the Operator entity: Country, Language Tag, Currency, Decimal Places, and VAT Percentage.</li>
-      <li><strong>Cell Computer Entity:</strong> Create a child repeatable model linked to the Operator. Each cell computer maintains: Identifier/Name (e.g. CC-01, CC-North), URL, Host IP Address, Port, and Connection Credentials.</li>
-      <li><strong>UI Implementation:</strong> Provide an interactive "Add Cell Computer" sub-form within the wizard allowing dynamic multi-instance configuration per operator.</li>
-    </ul>
-  </div>
-
-  <!-- Section 2 -->
-  <div class="section-heading">
-    <span class="section-num">2</span>
-    Facilities Mapping &amp; Service Association
-  </div>
-
-  <div class="item-card p1">
-    <div class="item-header">
-      <div class="item-title">2.1 Facility-to-Cell Computer Reference &amp; Granular Service Selection</div>
-      <span class="badge-p1">P1 &middot; Critical</span>
-    </div>
-    <div class="feedback-box">
-      <strong>Stakeholder Feedback:</strong> "Each facility needs a reference to its corresponding cell computer. It should be possible to select which service a facility belongs to. A facility used for Validation is not necessarily also used for entervo connect or another smart service. Clarify description."
-    </div>
-    <ul class="action-list">
-      <li><strong>Cell Computer Link:</strong> Add an explicit dropdown in each Facility card referencing one of the operator's defined Cell Computers.</li>
-      <li><strong>Per-Facility Service Matrix:</strong> Replace global service inheritance with per-facility checkboxes: <code>[x] Validation</code>, <code>[x] entervo connect</code>, <code>[x] smart-web-pay</code>, etc.</li>
-      <li><strong>UI Clarification:</strong> Update helper banners to clearly state: <em>"Select only the specific digital services actively enabled at this physical location."</em></li>
-    </ul>
-  </div>
-
-  <!-- Section 3 -->
-  <div class="section-heading">
-    <span class="section-num">3</span>
-    Application &amp; Payment Gating
-  </div>
-
-  <div class="item-card p1">
-    <div class="item-header">
-      <div class="item-title">3.1 Conditional Payment Service Provider (PSP) Display</div>
-      <span class="badge-p1">P1 &middot; Critical</span>
-    </div>
-    <div class="feedback-box">
-      <strong>Stakeholder Feedback:</strong> "A payment service provider is not required for a Validation onboarding. Displaying this field in the Validation workflow could therefore be misleading."
-    </div>
-    <ul class="action-list">
-      <li><strong>Conditional Rendering:</strong> If the selected product is exclusively <strong>Validation</strong> (or non-payment smart services), completely hide the PSP dropdown, merchant ID, and credential fields.</li>
-      <li><strong>Dynamic Validation Schema:</strong> Update Zod validation in <code>@service-hub/shared</code> so PSP is strictly required only when payment-handling products (e.g. <em>smart-web-pay</em>) are selected.</li>
-    </ul>
-  </div>
-
-  <div class="page-break"></div>
-
-  <!-- Section 4 -->
-  <div class="section-heading">
-    <span class="section-num">4</span>
-    Product Configuration Overhaul
-  </div>
-
-  <div class="item-card p2">
-    <div class="item-header">
-      <div class="item-title">4.1 Single-Page Consolidated Product View with Quick-Copy Button</div>
-      <span class="badge-p2">P2 &middot; High</span>
-    </div>
-    <div class="feedback-box">
-      <strong>Stakeholder Feedback:</strong> "...change the products aspect because we will use different excel sheets with newer version and we will change the view of products to make all the steps in one page with a copy button."
-    </div>
-    <ul class="action-list">
-      <li><strong>All-in-One Configuration Page:</strong> Consolidate multi-tab product parameters into a clean, collapsible single-page layout for rapid review and editing.</li>
-      <li><strong>One-Click "Copy Configuration" Button:</strong> Add a dedicated action button at the top of the product view to instantly copy formatted configuration parameters (or JSON payload) to clipboard.</li>
-      <li><strong>Updated Excel Sheet Parser:</strong> Adapt data models and import logic to ingest the new specification spreadsheet versions and new product schema definitions.</li>
-    </ul>
-  </div>
-
-  <!-- Section 5 -->
-  <div class="section-heading">
-    <span class="section-num">5</span>
-    User Management &amp; Usability
-  </div>
-
-  <div class="item-card p2">
-    <div class="item-header">
-      <div class="item-title">5.1 Saved Draft Restoration &amp; Discovery</div>
-      <span class="badge-p2">P2 &middot; High</span>
-    </div>
-    <div class="feedback-box">
-      <strong>Stakeholder Feedback:</strong> "I saved the onboarding process as a draft, but I could not find or restore it afterwards."
-    </div>
-    <ul class="action-list">
-      <li><strong>Resume Draft Banner:</strong> Display an automatic notification card on the Onboarding Hub dashboard when an active draft is detected in the database.</li>
-      <li><strong>New Project Prompt:</strong> When clicking "New Onboarding", prompt the user: <em>"A saved draft exists from [Date]. Would you like to resume or start fresh?"</em></li>
-      <li><strong>Draft Column &amp; Quick Link:</strong> Surface active user drafts visibly in the Project Portfolio table with direct one-click resume.</li>
-    </ul>
-  </div>
-
-  <div class="item-card p2">
-    <div class="item-header">
-      <div class="item-title">5.2 Responsive Split-Screen Layout &amp; Collapsible Navigation</div>
-      <span class="badge-p2">P2 &middot; High</span>
-    </div>
-    <div class="feedback-box">
-      <strong>Stakeholder Feedback:</strong> "When the browser uses only half of the screen, parts of the page become inaccessible because the content cannot be scrolled horizontally and the navigation panel cannot be collapsed."
-    </div>
-    <ul class="action-list">
-      <li><strong>Collapsible Sidebar:</strong> Implement a collapse toggle button reducing the sidebar to compact icon-only mode, expanding main viewport area.</li>
-      <li><strong>Horizontal Scroll Containers:</strong> Wrap wide tables, complex forms, and multi-column views in <code>overflow-x-auto</code> wrappers.</li>
-      <li><strong>Fluid Breakpoints:</strong> Refine CSS media queries (<code>md:</code> and <code>lg:</code>) so cards, fields, and headers stack gracefully on 50% split-screen desktop windows.</li>
-    </ul>
-  </div>
-
-  <div class="item-card p3">
-    <div class="item-header">
-      <div class="item-title">5.3 User Invitation Email &amp; Direct Registration Link Fallback</div>
-      <span class="badge-p3">P3 &middot; Medium</span>
-    </div>
-    <div class="feedback-box">
-      <strong>Stakeholder Feedback:</strong> "When I created a user, I did not receive an email to continue the registration process."
-    </div>
-    <ul class="action-list">
-      <li><strong>Transactional Email Integration:</strong> Wire <code>POST /api/users</code> to SMTP service dispatching an official invitation email with secure activation link.</li>
-      <li><strong>Direct Copy Fallback:</strong> Provide a modal dialog upon creation: <em>"User created! Copy activation link to send manually."</em></li>
-    </ul>
-  </div>
-
-  <div class="item-card p4">
-    <div class="item-header">
-      <div class="item-title">5.4 Optional Dark Mode Theme</div>
-      <span class="badge-p4">P4 &middot; Enhancement</span>
-    </div>
-    <div class="feedback-box">
-      <strong>Stakeholder Feedback:</strong> "A dark mode would be a useful optional improvement."
-    </div>
-    <ul class="action-list">
-      <li>Implement a Light / Dark / System theme switcher in the user profile menu and top navigation bar utilizing Tailwind dark theme tokens.</li>
-    </ul>
-  </div>
-
-  <!-- Priority Summary Table -->
-  <div class="section-heading">
-    <span class="section-num">6</span>
-    Execution Matrix &amp; Recommended Phasing
-  </div>
-
-  <table class="p-table">
+  <!-- Implementation Roadmap -->
+  <table class="summary-table">
     <thead>
       <tr>
-        <th style="width: 15%;">Priority</th>
-        <th style="width: 30%;">Work Item</th>
-        <th style="width: 25%;">Impacted Packages</th>
-        <th style="width: 30%;">Deliverable</th>
+        <th style="width: 14%;">Phase</th>
+        <th style="width: 28%;">What We Are Changing</th>
+        <th style="width: 58%;">User Benefit</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><span class="badge-p1">P1 &middot; Critical</span></td>
-        <td><strong>Operator &amp; Cell Computer Hierarchy</strong></td>
-        <td><code>packages/shared</code>, <code>apps/api</code>, <code>apps/web</code></td>
-        <td>Multi-cell computer support; locale at operator level.</td>
+        <td><strong>Phase 1 (Now)</strong></td>
+        <td>Cell Computers, Facility Links &amp; Hide PSP</td>
+        <td>Match real-world parking hardware; remove misleading payment fields.</td>
       </tr>
       <tr>
-        <td><span class="badge-p1">P1 &middot; Critical</span></td>
-        <td><strong>Facility-to-Cell Computer &amp; Service Mapping</strong></td>
-        <td><code>packages/shared</code>, <code>apps/web</code></td>
-        <td>Facility dropdown &amp; per-service selection checkboxes.</td>
+        <td><strong>Phase 2 (Next)</strong></td>
+        <td>Single-Page Product View + Copy Button</td>
+        <td>Configure products 3x faster and copy setups in 1 click from new Excel sheets.</td>
       </tr>
       <tr>
-        <td><span class="badge-p1">P1 &middot; Critical</span></td>
-        <td><strong>Conditional PSP Gating</strong></td>
-        <td><code>packages/shared</code>, <code>apps/web</code></td>
-        <td>Auto-hide payment fields during Validation onboarding.</td>
-      </tr>
-      <tr>
-        <td><span class="badge-p2">P2 &middot; High</span></td>
-        <td><strong>Single-Page Product View + Copy</strong></td>
-        <td><code>apps/web</code>, <code>packages/shared</code></td>
-        <td>All-in-one product view with 1-click clipboard copy.</td>
-      </tr>
-      <tr>
-        <td><span class="badge-p2">P2 &middot; High</span></td>
-        <td><strong>Draft Resume &amp; Discovery</strong></td>
-        <td><code>apps/web</code>, <code>apps/api</code></td>
-        <td>Persistent draft alert banner and portfolio quick link.</td>
-      </tr>
-      <tr>
-        <td><span class="badge-p2">P2 &middot; High</span></td>
-        <td><strong>Responsive Layout &amp; Collapsible Nav</strong></td>
-        <td><code>apps/web</code></td>
-        <td>Sidebar collapse toggle &amp; half-screen overflow fix.</td>
-      </tr>
-      <tr>
-        <td><span class="badge-p3">P3 &middot; Medium</span></td>
-        <td><strong>User Invitation Email &amp; Fallback Link</strong></td>
-        <td><code>apps/api</code>, <code>apps/web</code></td>
-        <td>Email dispatch on user creation with copyable link.</td>
-      </tr>
-      <tr>
-        <td><span class="badge-p4">P4 &middot; Polish</span></td>
-        <td><strong>Dark Mode Theme Toggle</strong></td>
-        <td><code>apps/web</code></td>
-        <td>User toggle for light/dark theme preference.</td>
+        <td><strong>Phase 3 (Final)</strong></td>
+        <td>Draft Restore, Split-Screen &amp; User Invites</td>
+        <td>Never lose draft work; comfortably use the app on any screen size.</td>
       </tr>
     </tbody>
   </table>
 
-  <!-- Footer Signoff -->
-  <div class="footer-signoff">
-    <div><strong>Scheidt &amp; Bachmann GmbH</strong> &middot; Parking Solutions Digital Products</div>
-    <div>entervo Service Hub Architecture &middot; Action Plan v1.1</div>
+  <!-- Footer -->
+  <div class="footer">
+    <div><strong>Scheidt &amp; Bachmann GmbH</strong> &middot; entervo Service Hub</div>
+    <div>Executive 1-Page Summary &middot; November 2026</div>
   </div>
 
 </body>
