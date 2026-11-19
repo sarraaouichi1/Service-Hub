@@ -774,3 +774,33 @@
   .reveal { opacity: 1; transform: none; }
   .stat-card.stat-animated { opacity: 1; transform: none; }
 }
+
+/* ── Dark-theme fixes for components that paint ink on sky ───────────────── */
+[data-theme="dark"] .app-brand img,
+[data-theme="dark"] .brand-wordmark:not(.inverse) { filter: brightness(0) invert(1); }
+[data-theme="dark"] .icon-tile.ink { color: var(--sb-grey-50); }
+
+/* ── Modal dialog (native <dialog>) ──────────────────────────────────────── */
+.modal {
+  width: min(560px, calc(100vw - 32px));
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-lg);
+}
+.modal::backdrop { background: rgba(10, 12, 14, 0.45); }
+.modal-head { display: flex; gap: var(--space-4); align-items: flex-start; margin-bottom: var(--space-5); }
+.modal-title { font-size: var(--text-h3); font-weight: var(--weight-semibold); margin: 0 0 var(--space-1); color: var(--color-text); }
+.modal-desc { font-size: var(--text-small); color: var(--color-text-muted); margin: 0; line-height: var(--leading-body); }
+.modal-note { display: flex; gap: var(--space-2); align-items: flex-start; font-size: var(--text-caption); color: var(--color-text-subtle); margin: var(--space-4) 0 0; }
+.modal-note svg { flex-shrink: 0; margin-top: 2px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-6); flex-wrap: wrap; }
+.icon-tile.success { background: var(--color-success-soft); color: var(--color-success-text); }
+.copy-field { display: flex; gap: var(--space-2); }
+.copy-field .form-input { flex: 1; min-width: 0; }
+
+.menu-narrow { width: 200px; }
+.menu-item.selected { font-weight: var(--weight-semibold); }
+.menu-item-check { margin-left: auto; color: var(--color-accent); display: inline-flex; }

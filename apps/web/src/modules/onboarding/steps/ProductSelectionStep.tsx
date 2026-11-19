@@ -109,7 +109,7 @@ export function ProductSelectionStep() {
                 padding: "20px 22px",
                 cursor: "pointer",
                 transition: "all 0.15s",
-                background: isSelected ? p.bg : "white",
+                background: isSelected ? p.bg : "var(--color-surface)",
                 boxShadow: isSelected ? `0 0 0 4px ${p.color}18` : "var(--shadow-sm)",
                 position: "relative",
               }}>

@@ -4,6 +4,7 @@ import { Toggle } from "../../../components/Toggle";
 import { PRODUCT_FORM_SCHEMAS } from "../data/productFormSchemas";
 import { useStepFields } from "./useStepFields";
 import type { ProductFieldSchema } from "../data/productFormSchemas";
+import type { FormBoolKey, FormTextKey } from "../../../types";
 
 interface Props {
   stepIndex: number; // 1 = Step 2, 2 = Step 3, 3 = Step 4, 4 = Step 5
@@ -24,7 +25,7 @@ export function DynamicProductStep({ stepIndex }: Props) {
   }
 
   const renderField = (f: ProductFieldSchema) => {
-    const errorMsg = message(f.id as any);
+    const errorMsg = message(f.id);
 
     if (f.type === "boolean") {
       return (
@@ -32,12 +33,12 @@ export function DynamicProductStep({ stepIndex }: Props) {
           key={f.id}
           label={f.label}
           sub={f.hint || `Enable or disable ${f.label}`}
-          {...toggle(f.id as any)}
+          {...toggle(f.id as FormBoolKey)}
         />
       );
     }
 
-    const inputProps = input(f.id as any);
+    const inputProps = input(f.id as FormTextKey);
 
     return (
       <Field key={f.id} label={f.label} required={f.required} hint={f.hint} error={errorMsg}>
@@ -96,7 +97,7 @@ export function DynamicProductStep({ stepIndex }: Props) {
             — {stepSchema.title}: {stepSchema.description}
           </span>
         </div>
-        <div style={{ fontSize: 11, background: "white", padding: "3px 8px", borderRadius: 4, border: "1px solid var(--gray-200)", color: "var(--gray-600)" }}>
+        <div style={{ fontSize: 11, background: "var(--color-surface)", padding: "3px 8px", borderRadius: 4, border: "1px solid var(--gray-200)", color: "var(--gray-600)" }}>
           Source: {schema.excelSource}
         </div>
       </div>

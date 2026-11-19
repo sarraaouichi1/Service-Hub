@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Icon } from "../../../../components/Icon";
 import { Toggle } from "../../../../components/Toggle";
 import { useOnboarding } from "../../context/onboardingContext";
@@ -7,13 +7,22 @@ import { updateMyProfile, ApiError } from "../../../../api";
 
 export function PrivacySecurityView() {
   const { currentUser } = useOnboarding();
+  // Seeded once from what the account has saved; the form owns the values after that.
+  const saved = (currentUser?.privacySettings ?? {}) as {
+    tfaEnabled?: boolean;
+    alerts?: { unrecognizedLogin: boolean; passwordChanged: boolean; tfaChanged: boolean; adminEscalation: boolean; rolePermissionChange: boolean };
+    visibility?: "team" | "public" | "admins";
+    hideEmail?: boolean;
+    showOnlineStatus?: boolean;
+    privacy?: { analytics: boolean; auditReports: boolean; thirdPartySharing: boolean };
+  };
 
   // 2FA state
-  const [tfaEnabled, setTfaEnabled] = useState(true);
+  const [tfaEnabled, setTfaEnabled] = useState(typeof saved.tfaEnabled === "boolean" ? saved.tfaEnabled : true);
   const [showSetup2fa, setShowSetup2fa] = useState(false);
 
   // Security Alerts Toggles
-  const [alerts, setAlerts] = useState({
+  const [alerts, setAlerts] = useState(saved.alerts ?? {
     unrecognizedLogin: true,
     passwordChanged: true,
     tfaChanged: true,
@@ -22,12 +31,12 @@ export function PrivacySecurityView() {
   });
 
   // Profile Visibility Controls
-  const [visibility, setVisibility] = useState<"team" | "public" | "admins">("team");
-  const [hideEmail, setHideEmail] = useState(false);
-  const [showOnlineStatus, setShowOnlineStatus] = useState(true);
+  const [visibility, setVisibility] = useState<"team" | "public" | "admins">(saved.visibility ?? "team");
+  const [hideEmail, setHideEmail] = useState(typeof saved.hideEmail === "boolean" ? saved.hideEmail : false);
+  const [showOnlineStatus, setShowOnlineStatus] = useState(typeof saved.showOnlineStatus === "boolean" ? saved.showOnlineStatus : true);
 
   // Data Privacy Controls
-  const [privacy, setPrivacy] = useState({
+  const [privacy, setPrivacy] = useState(saved.privacy ?? {
     analytics: false,
     auditReports: true,
     thirdPartySharing: false,
@@ -38,24 +47,6 @@ export function PrivacySecurityView() {
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [saveError, setSaveError] = useState("");
 
-  useEffect(() => {
-    if (currentUser?.privacySettings) {
-      const saved = currentUser.privacySettings as {
-        tfaEnabled?: boolean;
-        alerts?: typeof alerts;
-        visibility?: "team" | "public" | "admins";
-        hideEmail?: boolean;
-        showOnlineStatus?: boolean;
-        privacy?: typeof privacy;
-      };
-      if (typeof saved.tfaEnabled === "boolean") setTfaEnabled(saved.tfaEnabled);
-      if (saved.alerts) setAlerts(saved.alerts);
-      if (saved.visibility) setVisibility(saved.visibility);
-      if (typeof saved.hideEmail === "boolean") setHideEmail(saved.hideEmail);
-      if (typeof saved.showOnlineStatus === "boolean") setShowOnlineStatus(saved.showOnlineStatus);
-      if (saved.privacy) setPrivacy(saved.privacy);
-    }
-  }, [currentUser]);
 
   const handleSavePrivacySecurity = async () => {
     setIsSaving(true);
@@ -218,7 +209,7 @@ export function PrivacySecurityView() {
           {/* PASSWORD MANAGEMENT CARD */}
           <div
             style={{
-              background: "white",
+              background: "var(--color-surface)",
               border: "1px solid var(--gray-200)",
               borderRadius: 12,
               padding: 24,
@@ -272,7 +263,7 @@ export function PrivacySecurityView() {
           {/* TWO-FACTOR AUTHENTICATION (2FA) CARD */}
           <div
             style={{
-              background: "white",
+              background: "var(--color-surface)",
               border: "1px solid var(--gray-200)",
               borderRadius: 12,
               padding: 24,
@@ -334,7 +325,7 @@ export function PrivacySecurityView() {
         {/* ACTIVE SESSIONS TABLE */}
         <div
           style={{
-            background: "white",
+            background: "var(--color-surface)",
             border: "1px solid var(--gray-200)",
             borderRadius: 12,
             overflow: "hidden",
@@ -408,7 +399,7 @@ export function PrivacySecurityView() {
         {/* LOGIN HISTORY TABLE */}
         <div
           style={{
-            background: "white",
+            background: "var(--color-surface)",
             border: "1px solid var(--gray-200)",
             borderRadius: 12,
             overflow: "hidden",
@@ -459,7 +450,7 @@ export function PrivacySecurityView() {
         {/* TRUSTED DEVICES LIST */}
         <div
           style={{
-            background: "white",
+            background: "var(--color-surface)",
             border: "1px solid var(--gray-200)",
             borderRadius: 12,
             padding: 24,
@@ -513,7 +504,7 @@ export function PrivacySecurityView() {
           {/* SECURITY ALERTS SETTINGS */}
           <div
             style={{
-              background: "white",
+              background: "var(--color-surface)",
               border: "1px solid var(--gray-200)",
               borderRadius: 12,
               padding: 24,
@@ -564,7 +555,7 @@ export function PrivacySecurityView() {
           {/* PROFILE VISIBILITY & DATA PRIVACY CONTROLS */}
           <div
             style={{
-              background: "white",
+              background: "var(--color-surface)",
               border: "1px solid var(--gray-200)",
               borderRadius: 12,
               padding: 24,
@@ -604,7 +595,7 @@ export function PrivacySecurityView() {
                       type="radio"
                       name="visibility"
                       checked={visibility === v.id}
-                      onChange={() => setVisibility(v.id as any)}
+                      onChange={() => setVisibility(v.id as "team" | "public" | "admins")}
                     />
                     {v.label}
                   </label>
@@ -673,7 +664,7 @@ export function PrivacySecurityView() {
         {/* DOWNLOAD / DELETE ACCOUNT DATA ACTIONS */}
         <div
           style={{
-            background: "white",
+            background: "var(--color-surface)",
             border: "1px solid var(--gray-200)",
             borderRadius: 12,
             padding: 24,
@@ -730,7 +721,7 @@ export function PrivacySecurityView() {
           <div
             className="fade-in"
             style={{
-              background: "white",
+              background: "var(--color-surface)",
               borderRadius: 12,
               padding: 28,
               maxWidth: 480,

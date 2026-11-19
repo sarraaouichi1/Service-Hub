@@ -30,7 +30,7 @@ export function UserSettingsTabs() {
       {/* Header bar with User summary */}
       <div
         style={{
-          background: "white",
+          background: "var(--color-surface)",
           border: "1px solid var(--gray-200)",
           borderRadius: "12px",
           padding: "20px 24px",

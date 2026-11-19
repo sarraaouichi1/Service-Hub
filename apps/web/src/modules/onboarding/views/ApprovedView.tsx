@@ -76,7 +76,7 @@ export function ApprovedView() {
               {STATUS_MAP[status].label} ({projects.length})
             </div>
             {projects.length === 0 ? (
-              <div style={{ background: "white", border: "1px dashed var(--gray-200)", borderRadius: 10, padding: "24px", fontSize: 13, color: "var(--gray-400)", textAlign: "center" }}>
+              <div style={{ background: "var(--color-surface)", border: "1px dashed var(--gray-200)", borderRadius: 10, padding: "24px", fontSize: 13, color: "var(--gray-400)", textAlign: "center" }}>
                 No projects in this stage yet.
               </div>
             ) : projects.map(p => (

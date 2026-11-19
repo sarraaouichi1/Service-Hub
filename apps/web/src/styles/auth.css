@@ -82,3 +82,7 @@
   .auth-panel { padding: var(--space-8); }
   .auth-panel-modules { display: none; }
 }
+
+/* The activation page has no brand panel — just the card, centred. */
+.auth-root.single { grid-template-columns: 1fr; }
+.auth-card-logo { width: 140px; margin-bottom: var(--space-6); }

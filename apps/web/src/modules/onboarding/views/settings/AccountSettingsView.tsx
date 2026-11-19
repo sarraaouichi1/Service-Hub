@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Icon } from "../../../../components/Icon";
 import { Field } from "../../../../components/Field";
 import { useOnboarding } from "../../context/onboardingContext";
@@ -37,28 +37,6 @@ export function AccountSettingsView() {
     country: currentUser.country || "DE",
   });
 
-  useEffect(() => {
-    const parts = currentUser.name.split(" ");
-    setProfile({
-      firstName: parts[0] ?? "",
-      lastName: parts.slice(1).join(" ") ?? "",
-      username: currentUser.username || currentUser.email.split("@")[0] || "user",
-      email: currentUser.email,
-      phone: currentUser.phone || "+49 2166 454-0",
-      jobTitle: currentUser.jobTitle || (currentUser.roles.includes("Admin")
-        ? "Senior IT Security & Platform Admin"
-        : currentUser.roles.includes("Project Manager")
-        ? "Lead Onboarding Manager"
-        : currentUser.roles.includes("Sales")
-        ? "Regional Commercial Account Lead"
-        : "Systems Specialist"),
-      company: currentUser.company || currentUser.partner || "Scheidt & Bachmann GmbH",
-      department: currentUser.department || "entervo IT Security & Platform Solutions",
-      language: currentUser.language || "en-GB",
-      timezone: currentUser.timezone || "Europe/Berlin",
-      country: currentUser.country || "DE",
-    });
-  }, [currentUser]);
 
   // Handle Photo Upload with 256x256 canvas resize
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -208,7 +186,7 @@ export function AccountSettingsView() {
           <form
             onSubmit={handleSaveProfile}
             style={{
-              background: "white",
+              background: "var(--color-surface)",
               border: "1px solid var(--gray-200)",
               borderRadius: 12,
               padding: 24,
@@ -437,7 +415,7 @@ export function AccountSettingsView() {
           <form
             onSubmit={handleChangePassword}
             style={{
-              background: "white",
+              background: "var(--color-surface)",
               border: "1px solid var(--gray-200)",
               borderRadius: 12,
               padding: 24,
@@ -520,7 +498,7 @@ export function AccountSettingsView() {
           {/* CONNECTED ACCOUNTS CARD */}
           <div
             style={{
-              background: "white",
+              background: "var(--color-surface)",
               border: "1px solid var(--gray-200)",
               borderRadius: 12,
               padding: 20,
@@ -633,7 +611,7 @@ export function AccountSettingsView() {
           {/* DOWNLOAD DATA CARD */}
           <div
             style={{
-              background: "white",
+              background: "var(--color-surface)",
               border: "1px solid var(--gray-200)",
               borderRadius: 12,
               padding: 20,
@@ -707,7 +685,7 @@ export function AccountSettingsView() {
           <div
             className="fade-in"
             style={{
-              background: "white",
+              background: "var(--color-surface)",
               borderRadius: 12,
               padding: 28,
               maxWidth: 440,

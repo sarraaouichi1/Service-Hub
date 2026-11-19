@@ -7,6 +7,7 @@ import { ProjectMeta } from "../components/ProjectMeta";
 import { Can } from "../../auth/Can";
 import { useAuth } from "../../auth/useAuth";
 import { clickable } from "../../../components/clickable";
+import { formatSavedAt } from "../context/formatSavedAt";
 import { useOnboarding } from "../context/onboardingContext";
 import { Button, Icon, PageHeader, SectionHeader, StatCard } from "../../../design-system";
 import type { Project, ProjectStatus } from "../../../types";
@@ -28,17 +29,14 @@ const greeting = () => {
 
 export function DashboardView() {
   const navigate = useNavigate();
-  const { currentUser, resetDraft } = useOnboarding();
+  const { currentUser, requestNewOnboarding, savedDraft, resumeDraft, startFresh } = useOnboarding();
   const projects = useProjects();
   const { can } = useAuth();
 
   const openProject = (p: Project) =>
     navigate({ to: "/onboarding/wizard/$step", params: { step: String(p.step) }, search: { project: p.id } });
 
-  const startNewOnboarding = () => {
-    resetDraft();
-    navigate({ to: "/onboarding/wizard/$step", params: { step: "0" }, search: { project: undefined } });
-  };
+  const startNewOnboarding = requestNewOnboarding;
 
   /**
    * Filter and sort projects based on user context:
@@ -99,6 +97,19 @@ export function DashboardView() {
         title={`${greeting()}, ${currentUser.name.split(" ")[0]}`}
         description="Where every onboarding project stands, from first draft to live."
       />
+      {savedDraft && (
+        <div className="resume-banner" role="status">
+          <div className="icon-tile sm"><Icon name="fileText" size={18} /></div>
+          <div className="resume-banner-text">
+            <div className="resume-banner-title">Continue where you left off</div>
+            <div>Your draft <strong>{savedDraft.title}</strong> was saved {formatSavedAt(savedDraft.savedAt)}.</div>
+          </div>
+          <div className="resume-banner-actions">
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => { if (window.confirm("Delete the saved draft? This can't be undone.")) startFresh(); }}>Discard</button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={resumeDraft}>Resume draft <Icon name="arrowRight" size={14} /></button>
+          </div>
+        </div>
+      )}
       <AsyncSection query={projects} label="projects">
         {(list) => {
           const displayProjects = filterAndSortProjects(list);
@@ -125,12 +136,13 @@ export function DashboardView() {
                         target = "/onboarding/projects?status=approved";
                       }
                       if (target?.includes("?")) {
-                        const [path, searchStr] = target.split("?");
+                        const [, searchStr] = target.split("?");
                         const params = new URLSearchParams(searchStr);
                         const statusVal = params.get("status") as ProjectStatus;
-                        navigate({ to: path as any, search: { status: statusVal, q: undefined } as any });
+                        // Every status card with a query string points at the projects list.
+                        navigate({ to: "/onboarding/projects", search: { status: statusVal, q: undefined } });
                       } else if (target) {
-                        navigate({ to: target as any });
+                        navigate({ to: target as "/onboarding/review-queue" | "/onboarding/approved" });
                       } else {
                         navigate({ to: "/onboarding/projects", search: { status: c.status, q: undefined } });
                       }

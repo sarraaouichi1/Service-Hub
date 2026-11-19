@@ -234,3 +234,64 @@
   --radius: var(--radius-md);
   --shadow: var(--shadow-md);
 }
+
+/* ── Dark theme ────────────────────────────────────────────────────────────
+ * Chosen from the theme menu (light / dark / system) and applied to <html>
+ * before first paint. The grey ramp is inverted, so anything built on the
+ * semantic tokens — and most legacy inline styles, which resolve through them —
+ * follows automatically. The tints (-50 soft backgrounds) become low-alpha
+ * washes and the -700/-800 text tones lighten, so status badges keep AA
+ * contrast on a dark surface. Brand ink becomes near-white: it marks "active"
+ * and "primary", and black on graphite would make those invisible.
+ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --sb-ink: #ECEEF0;
+  --sb-graphite: #D3D7DC;
+  --sb-cloud: #1E2226;
+
+  --sb-grey-0: #17191C;
+  --sb-grey-25: #1B1E22;
+  --sb-grey-50: #111315;
+  --sb-grey-100: #23272C;
+  --sb-grey-200: #2D3238;
+  --sb-grey-300: #3B4148;
+  --sb-grey-400: #59606A;
+  --sb-grey-500: #8A919A;
+  --sb-grey-600: #A8AEB6;
+  --sb-grey-700: #C3C8CE;
+  --sb-grey-800: #D9DDE1;
+  --sb-grey-900: #EDEFF1;
+
+  --sb-sky-50: rgba(76, 199, 245, 0.12);
+  --sb-sky-100: rgba(76, 199, 245, 0.18);
+  --sb-sky-200: rgba(76, 199, 245, 0.32);
+  --sb-sky-700: #5CCDF7;
+  --sb-sky-800: #8ADDFF;
+
+  --sb-green-50: rgba(46, 139, 87, 0.2);
+  --sb-green-700: #7ED7A4;
+  --sb-amber-50: rgba(227, 155, 23, 0.18);
+  --sb-amber-700: #F3C672;
+  --sb-red-50: rgba(208, 58, 58, 0.2);
+  --sb-red-700: #F49C9C;
+  --sb-plum-50: rgba(123, 63, 140, 0.28);
+  --sb-plum-500: #CB98DA;
+  --sb-rose-50: rgba(180, 40, 91, 0.25);
+  --sb-rose-500: #F08DB0;
+  --sb-teal-50: rgba(15, 124, 120, 0.25);
+  --sb-teal-500: #5CC7C2;
+
+  --color-surface-ink: #0B0C0E;
+  --color-text-on-inverse: #FFFFFF;
+  --color-action: #ECEEF0;
+  --color-action-hover: #FFFFFF;
+  --color-action-text: #111315;
+  --color-accent: var(--sb-sky-700);
+
+  --shadow-header: 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+}

@@ -15,12 +15,14 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "echo 'no lint config for shared'"
+    "lint": "echo 'no lint config for shared'",
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3"
   },
   "files": [

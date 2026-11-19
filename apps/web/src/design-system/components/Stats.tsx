@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 /**
  * One headline figure. `tone` is any colour token — the project-status tokens
@@ -89,35 +89,20 @@ function AnimatedNumber({
   delay?: number;
   duration?: number;
 }) {
-  const parsed = parseStatValue(value);
-  const [displayValue, setDisplayValue] = useState<ReactNode>(() => {
-    if (parsed) {
-      return `${parsed.prefix}0${parsed.suffix}`;
-    }
-    return value;
-  });
+  const parsed = useMemo(() => parseStatValue(value), [value]);
+  const reducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const animate = Boolean(parsed) && !reducedMotion;
+  // Frames are only ever set from animation callbacks; the resting states
+  // (before it scrolls into view, without animation) are derived, not stored.
+  const [frame, setFrame] = useState<ReactNode | null>(null);
 
   useEffect(() => {
-    if (!parsed) {
-      setDisplayValue(value);
-      return;
-    }
-
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setDisplayValue(value);
-      return;
-    }
-
-    if (!inView) {
-      setDisplayValue(`${parsed.prefix}0${parsed.suffix}`);
-      return;
-    }
+    if (!parsed || !animate || !inView) return;
 
     let rafId: number;
     let startTimestamp: number | null = null;
-    let timeoutId: ReturnType<typeof setTimeout>;
 
-    timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       const step = (timestamp: number) => {
         if (!startTimestamp) startTimestamp = timestamp;
         const elapsed = timestamp - startTimestamp;
@@ -129,13 +114,8 @@ function AnimatedNumber({
           ? currentNum.toFixed(parsed.decimals)
           : Math.round(currentNum).toString();
 
-        setDisplayValue(`${parsed.prefix}${formattedNum}${parsed.suffix}`);
-
-        if (progress < 1) {
-          rafId = requestAnimationFrame(step);
-        } else {
-          setDisplayValue(value);
-        }
+        setFrame(progress < 1 ? `${parsed.prefix}${formattedNum}${parsed.suffix}` : value);
+        if (progress < 1) rafId = requestAnimationFrame(step);
       };
 
       rafId = requestAnimationFrame(step);
@@ -145,9 +125,11 @@ function AnimatedNumber({
       clearTimeout(timeoutId);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [inView, value, delay, duration]);
+  }, [parsed, animate, inView, value, delay, duration]);
 
-  return <>{displayValue}</>;
+  if (!parsed || !animate) return <>{value}</>;
+  if (!inView) return <>{`${parsed.prefix}0${parsed.suffix}`}</>;
+  return <>{frame ?? `${parsed.prefix}0${parsed.suffix}`}</>;
 }
 
 /** The slate counter band from the S&B home page: large sky figures on slate. */

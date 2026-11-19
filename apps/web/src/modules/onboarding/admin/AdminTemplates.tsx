@@ -50,7 +50,7 @@ export function AdminTemplates() {
 
       {/* New template form */}
       {showNew && (
-        <div className="fade-in" style={{ background: "white", border: "2px solid var(--blue-bright)", borderRadius: 10, padding: 24, marginBottom: 24, boxShadow: "var(--shadow)" }}>
+        <div className="fade-in" style={{ background: "var(--color-surface)", border: "2px solid var(--blue-bright)", borderRadius: 10, padding: 24, marginBottom: 24, boxShadow: "var(--shadow)" }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: "var(--navy)", marginBottom: 18 }}>New Template</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
             {([
@@ -73,7 +73,7 @@ export function AdminTemplates() {
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, color: "var(--gray-800)", marginBottom: 5 }}>Default PSP</div>
               <select
-                style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--gray-200)", borderRadius: 7, fontFamily: "var(--font)", fontSize: 13, background: "white" }}
+                style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--gray-200)", borderRadius: 7, fontFamily: "var(--font)", fontSize: 13, background: "var(--color-surface)" }}
                 value={newTpl.psp}
                 onChange={e => setNewTpl({ ...newTpl, psp: e.target.value })}
               >
@@ -95,7 +95,7 @@ export function AdminTemplates() {
       <div style={{ display: "grid", gap: 10 }}>
         {templates.map(t => (
           <div key={t.id}
-            style={{ background: "white", border: `1px solid ${selected === t.id ? "var(--blue-bright)" : "var(--gray-200)"}`, borderRadius: 10, padding: "16px 20px", boxShadow: "var(--shadow-sm)", cursor: "pointer", transition: "all 0.15s" }}
+            style={{ background: "var(--color-surface)", border: `1px solid ${selected === t.id ? "var(--blue-bright)" : "var(--gray-200)"}`, borderRadius: 10, padding: "16px 20px", boxShadow: "var(--shadow-sm)", cursor: "pointer", transition: "all 0.15s" }}
             {...clickable(() => setSelected(selected === t.id ? null : t.id))}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

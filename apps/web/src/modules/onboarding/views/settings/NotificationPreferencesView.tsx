@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Icon } from "../../../../components/Icon";
 import { UserSettingsTabs } from "./UserSettingsTabs";
 import { useOnboarding } from "../../context/onboardingContext";
@@ -74,9 +74,14 @@ const DEFAULT_CATEGORIES: CategorySetting[] = [
 
 export function NotificationPreferencesView() {
   const { currentUser } = useOnboarding();
+  // Seeded once from what the account has saved; the form owns the values after that.
+  const saved = (currentUser?.notificationSettings ?? {}) as {
+    channels?: { inApp: boolean; email: boolean; sms: boolean; teams: boolean; push: boolean };
+    categories?: CategorySetting[];
+  };
 
   // Global channel toggles
-  const [channels, setChannels] = useState({
+  const [channels, setChannels] = useState(saved.channels ?? {
     inApp: true,
     email: true,
     sms: false,
@@ -85,18 +90,8 @@ export function NotificationPreferencesView() {
   });
 
   // Notification categories state
-  const [categories, setCategories] = useState<CategorySetting[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<CategorySetting[]>(Array.isArray(saved.categories) ? saved.categories : DEFAULT_CATEGORIES);
 
-  useEffect(() => {
-    if (currentUser?.notificationSettings) {
-      const saved = currentUser.notificationSettings as {
-        channels?: typeof channels;
-        categories?: CategorySetting[];
-      };
-      if (saved.channels) setChannels(saved.channels);
-      if (saved.categories && Array.isArray(saved.categories)) setCategories(saved.categories);
-    }
-  }, [currentUser]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -150,7 +145,7 @@ export function NotificationPreferencesView() {
         {/* SECTION 1: GLOBAL NOTIFICATION CHANNELS */}
         <div
           style={{
-            background: "white",
+            background: "var(--color-surface)",
             border: "1px solid var(--gray-200)",
             borderRadius: 12,
             padding: 24,
@@ -224,7 +219,7 @@ export function NotificationPreferencesView() {
         {/* SECTION 2: NOTIFICATION CATEGORIES & FREQUENCIES */}
         <div
           style={{
-            background: "white",
+            background: "var(--color-surface)",
             border: "1px solid var(--gray-200)",
             borderRadius: 12,
             padding: 24,
@@ -253,7 +248,7 @@ export function NotificationPreferencesView() {
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-start", maxWidth: 500 }}>
-                    <span style={{ fontSize: 24, padding: "8px 10px", background: "white", borderRadius: 8, border: "1px solid var(--gray-200)" }}>
+                    <span style={{ fontSize: 24, padding: "8px 10px", background: "var(--color-surface)", borderRadius: 8, border: "1px solid var(--gray-200)" }}>
                       {cat.icon}
                     </span>
                     <div>
@@ -267,7 +262,7 @@ export function NotificationPreferencesView() {
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6 }}>
                       Delivery Frequency
                     </div>
-                    <div style={{ display: "flex", gap: 6, background: "white", padding: 4, borderRadius: 8, border: "1px solid var(--gray-200)" }}>
+                    <div style={{ display: "flex", gap: 6, background: "var(--color-surface)", padding: 4, borderRadius: 8, border: "1px solid var(--gray-200)" }}>
                       {[
                         { id: "instant", label: "Instant" },
                         { id: "daily", label: "Daily Digest" },

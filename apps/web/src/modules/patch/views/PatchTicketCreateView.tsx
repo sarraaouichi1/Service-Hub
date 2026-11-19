@@ -100,11 +100,12 @@ export function PatchTicketCreateView() {
         numberOfDevices: Number(form.numberOfDevices) || 1,
       });
       setCreatedTicket(res.ticket);
-    } catch (err: any) {
-      if (err?.fieldErrors) {
-        setErrors(err.fieldErrors);
+    } catch (err: unknown) {
+      const problem = err as { fieldErrors?: Record<string, string>; message?: string } | undefined;
+      if (problem?.fieldErrors) {
+        setErrors(problem.fieldErrors);
       }
-      setServerError(err?.message || "Failed to submit patch request ticket. Please verify your inputs.");
+      setServerError(problem?.message || "Failed to submit patch request ticket. Please verify your inputs.");
     } finally {
       setLoading(false);
     }
@@ -135,7 +136,7 @@ export function PatchTicketCreateView() {
           <div style={{ fontSize: 14, color: "var(--gray-600)", marginBottom: 16 }}>
             Your patch deployment request has been logged in the Scheidt &amp; Bachmann Service System.
           </div>
-          <div style={{ display: "inline-block", background: "white", padding: "10px 24px", borderRadius: 8, border: "1px solid var(--gray-200)", fontSize: 18, fontWeight: 700, color: "var(--navy)", marginBottom: 24 }}>
+          <div style={{ display: "inline-block", background: "var(--color-surface)", padding: "10px 24px", borderRadius: 8, border: "1px solid var(--gray-200)", fontSize: 18, fontWeight: 700, color: "var(--navy)", marginBottom: 24 }}>
             Ticket Number: {createdTicket.ticketNumber}
           </div>
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
@@ -174,7 +175,7 @@ export function PatchTicketCreateView() {
           )}
 
           {/* Section 1: Car Park & Account Identification */}
-          <div className="card" style={{ padding: 24, background: "white", borderRadius: 12, border: "1px solid var(--gray-200)" }}>
+          <div className="card" style={{ padding: 24, background: "var(--color-surface)", borderRadius: 12, border: "1px solid var(--gray-200)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, borderBottom: "1px solid var(--gray-100)", paddingBottom: 12 }}>
               <Icon name="building" size={18} color="var(--sb-sky-500, #00A3E0)" />
               <div style={{ fontWeight: 700, fontSize: 16, color: "var(--navy)" }}>1. Car Park &amp; Account Details</div>
@@ -239,7 +240,7 @@ export function PatchTicketCreateView() {
           </div>
 
           {/* Section 2: Contact Information */}
-          <div className="card" style={{ padding: 24, background: "white", borderRadius: 12, border: "1px solid var(--gray-200)" }}>
+          <div className="card" style={{ padding: 24, background: "var(--color-surface)", borderRadius: 12, border: "1px solid var(--gray-200)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, borderBottom: "1px solid var(--gray-100)", paddingBottom: 12 }}>
               <Icon name="users" size={18} color="var(--sb-sky-500, #00A3E0)" />
               <div style={{ fontWeight: 700, fontSize: 16, color: "var(--navy)" }}>2. Contact Information</div>
@@ -300,7 +301,7 @@ export function PatchTicketCreateView() {
           </div>
 
           {/* Section 3: Technical Specifications & IP Addresses */}
-          <div className="card" style={{ padding: 24, background: "white", borderRadius: 12, border: "1px solid var(--gray-200)" }}>
+          <div className="card" style={{ padding: 24, background: "var(--color-surface)", borderRadius: 12, border: "1px solid var(--gray-200)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, borderBottom: "1px solid var(--gray-100)", paddingBottom: 12 }}>
               <Icon name="server" size={18} color="var(--sb-sky-500, #00A3E0)" />
               <div style={{ fontWeight: 700, fontSize: 16, color: "var(--navy)" }}>3. Technical Details &amp; Network</div>

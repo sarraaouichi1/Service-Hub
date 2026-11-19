@@ -1,115 +1,136 @@
+import { useFieldArray, useFormContext } from "react-hook-form";
+import { EMPTY_CELL_COMPUTER, newCellComputerKey, parseProducts } from "@service-hub/shared";
+import type { OnboardingForm } from "../../../types";
+import { Icon } from "../../../components/Icon";
 import { Field } from "../../../components/Field";
 import { Toggle } from "../../../components/Toggle";
+import { useSecretsOnFile } from "../../../queries";
 import { useStepFields } from "./useStepFields";
-import { useTemplates } from "../../../queries";
+import { RowListError } from "./RowListError";
 
+/**
+ * An operator can run several cell computers, each with its own address, port
+ * and credentials — so this step is a repeatable list rather than one form.
+ * Locale lives on the operator (previous step); facilities pick one of these
+ * on the next.
+ */
 export function CellComputerStep() {
-  const { input, select, toggle, message, choose, values } = useStepFields();
-  const templatesQuery = useTemplates();
-  const templates = templatesQuery.data ?? [];
+  const { control, register, getValues } = useFormContext<OnboardingForm>();
+  const { fields, append, remove } = useFieldArray({ control, name: "cellComputers", keyName: "_rowId" });
+  const { toggle, values } = useStepFields();
+  const secretsOnFile = useSecretsOnFile();
+  const hasConnect = parseProducts(values.product).includes("entervo-connect");
 
-  const selectedStr = (values.product as string) || "";
-  const selectedList = selectedStr ? selectedStr.split(",").filter(Boolean) : [];
-  const selectedCountry = values.country as string | undefined;
-
-  // Whenever country changes, automatically prefill default values from active Country Templates
-  const handleCountryChange = (countryCode: string) => {
-    choose("country", countryCode);
-    if (!countryCode) return;
-
-    const matchedTemplate = templates.find(t => t.country?.toUpperCase() === countryCode.toUpperCase());
-    if (matchedTemplate) {
-      if (matchedTemplate.lang && !values.lang) choose("lang", matchedTemplate.lang);
-      if (matchedTemplate.currency && !values.currency) choose("currency", matchedTemplate.currency);
-      if (matchedTemplate.vat && !values.vat) choose("vat", matchedTemplate.vat);
-      if (matchedTemplate.psp && !values.psp) choose("psp", matchedTemplate.psp);
-    }
+  const addCellComputer = () => {
+    append({ ...EMPTY_CELL_COMPUTER, key: newCellComputerKey(), name: `CC-${String(fields.length + 1).padStart(2, "0")}` });
   };
+
+  // Removing a cell computer that facilities still point at would orphan them
+  // silently; say so instead.
+  const linkedFacilities = (key: string) =>
+    (getValues("facilities") ?? []).filter((f) => f.cellComputer === key).length;
+
+  const removeCellComputer = (index: number, key: string, name: string) => {
+    const linked = linkedFacilities(key);
+    if (linked > 0 && !window.confirm(`${name || "This cell computer"} is used by ${linked} ${linked === 1 ? "facility" : "facilities"}. Remove it anyway? You will need to choose another cell computer for ${linked === 1 ? "it" : "them"}.`)) {
+      return;
+    }
+    remove(index);
+  };
+
+  const field = (i: number, key: keyof typeof EMPTY_CELL_COMPUTER, extra = "") => ({
+    ...register(`cellComputers.${i}.${key}` as const),
+    className: `form-input${extra ? ` ${extra}` : ""}`,
+  });
 
   return (
     <div className="slide-in">
-      <div className="form-grid">
-        <Field label="Cell Computer ID" required hint="Numeric ID from entervo system (digits only)" error={message("cellId")}>
-          <input {...input("cellId", "mono")} placeholder="e.g. 4438" />
-        </Field>
-        <Field label="Cell Computer Name" hint="Display name shown in frontend" error={message("cellName")}>
-          <input {...input("cellName")} placeholder="e.g. MedwayHZR" />
-        </Field>
-
-        {/* 1. Country placed BEFORE Language Tag */}
-        <Field label="Country" required error={message("country")} hint="Loads regional defaults">
-          <select
-            className={`form-select${message("country") ? " error" : values.country ? " valid" : ""}`}
-            value={selectedCountry ?? ""}
-            onChange={(e) => handleCountryChange(e.target.value)}
-          >
-            <option value="">Select country…</option>
-            <option value="GB">United Kingdom (GB)</option>
-            <option value="DE">Germany (DE)</option>
-            <option value="FR">France (FR)</option>
-            <option value="NL">Netherlands (NL)</option>
-            <option value="CH">Switzerland (CH)</option>
-            <option value="AT">Austria (AT)</option>
-            <option value="BE">Belgium (BE)</option>
-            <option value="ES">Spain (ES)</option>
-            <option value="US">United States (US)</option>
-            <option value="CA">Canada (CA)</option>
-          </select>
-        </Field>
-
-        {/* 2. Language Tag placed AFTER Country */}
-        <Field label="Language Tag" required hint="ISO 639-1 + country code" error={message("lang")}>
-          <select {...select("lang")}>
-            <option value="">Select language…</option>
-            <option>en-GB</option><option>en-US</option><option>de-DE</option><option>de-AT</option><option>de-CH</option>
-            <option>fr-FR</option><option>nl-NL</option><option>nl-BE</option><option>es-ES</option>
-          </select>
-        </Field>
-
-        <Field label="Currency Code" hint="ISO 4217" error={message("currency")}>
-          <select {...select("currency")}>
-            <option value="">Select currency…</option>
-            <option>GBP</option><option>EUR</option><option>CHF</option><option>USD</option><option>CAD</option>
-          </select>
-        </Field>
-        <Field label="Decimal Places in Currency" hint="0 to 4 digits" error={message("decimals")}>
-          <input {...input("decimals", "mono")} placeholder="2" />
-        </Field>
-        <Field label="UI User ID" hint="Digits only (1234567890)" error={message("uiUserId")}>
-          <input {...input("uiUserId", "mono")} placeholder="e.g. 98" />
-        </Field>
-        <Field label="UI User Password" hint="Max 9 chars, no @ or spaces" error={message("uiPassword")}>
-          <input {...input("uiPassword", "mono")} type="password" placeholder="••••••••" />
-        </Field>
-        <Field label="Cashier Terminal Device ID" error={message("deviceId")}>
-          <input {...input("deviceId", "mono")} placeholder="e.g. 750" />
-        </Field>
-        <Field label="VAT Percentage" hint="Whole number 0–100" error={message("vat")}>
-          <input {...input("vat", "mono")} placeholder="e.g. 20" />
-        </Field>
-
-        {/* entervo connect specific cell details */}
-        {selectedList.includes("entervo-connect") && (
-          <div style={{ gridColumn: "span 2", marginTop: 8, padding: "14px 16px", background: "var(--gray-50)", border: "1px solid var(--gray-200)", borderRadius: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy)", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
-              <span>🔗 entervo connect — Network Port & Services</span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--purple)", background: "#EDE9FE", padding: "2px 8px", borderRadius: 4 }}>Product Specific</span>
-            </div>
-            <div className="form-grid">
-              <Field label="SSH Port" hint="Delivered by DevOps (1–65535)" error={message("sshPort")}>
-                <input {...input("sshPort", "mono")} placeholder="e.g. 2222" />
-              </Field>
-            </div>
-            <div style={{ marginTop: 12, display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr 1fr" }}>
-              <Toggle label="Online Authorization" sub="Provider service" {...toggle("onlineAuth")} />
-              <Toggle label="Customer & Media" sub="Provider service" {...toggle("customerMedia")} />
-              <Toggle label="Counting" sub="Smart CONTRACT" {...toggle("counting")} />
-            </div>
-          </div>
-        )}
+      <div className="notif-bar info">
+        <Icon name="info" size={14} />
+        Add every cell computer this operator runs. Each has its own address, port and credentials; you will connect facilities to them on the next step.
       </div>
 
-      <div style={{ marginTop: 18, display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr 1fr" }}>
+      {fields.length === 0 && (
+        <div className="empty-panel">No cell computers yet. Add the first one to continue.</div>
+      )}
+
+      {fields.map((row, i) => {
+        const passwordStored = secretsOnFile.includes(`cellComputers.${row.key}.uiPassword`);
+        return (
+          <section className="row-card" key={row._rowId} aria-label={`Cell computer ${i + 1}`}>
+            <div className="row-card-head">
+              <div className="row-card-title">
+                <Icon name="server" size={15} />
+                {values.cellComputers?.[i]?.name || `Cell computer ${i + 1}`}
+              </div>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeCellComputer(i, row.key, values.cellComputers?.[i]?.name ?? "")} aria-label={`Remove cell computer ${i + 1}`}>
+                <Icon name="trash" size={14} /> Remove
+              </button>
+            </div>
+            <div className="form-grid">
+              <Field label="Name / identifier" required hint="How people refer to it, e.g. CC-01 or CC-North">
+                <input {...field(i, "name")} placeholder="e.g. CC-North" />
+              </Field>
+              <Field label="Cell Computer ID" required hint="Numeric ID from the entervo system">
+                <input {...field(i, "cellId", "mono")} placeholder="e.g. 4438" />
+              </Field>
+              <Field label="URL" hint="Domain or IP:port it is reached on">
+                <input {...field(i, "url")} placeholder="carpark.organisation.com" />
+              </Field>
+              <Field label="Static Public IP Address" required hint="External IP of this cell computer">
+                <input {...field(i, "ip", "mono")} placeholder="195.171.142.1" />
+              </Field>
+              <Field label="Communication Port" hint="Standard: 8443 (1–65535)">
+                <input {...field(i, "port", "mono")} placeholder="8443" />
+              </Field>
+              <Field label="Cashier Terminal Device ID">
+                <input {...field(i, "deviceId", "mono")} placeholder="e.g. 750" />
+              </Field>
+              <Field label="UI User ID" hint="Digits only">
+                <input {...field(i, "uiUserId", "mono")} placeholder="e.g. 98" />
+              </Field>
+              <Field label="UI User Password" hint={passwordStored ? "Stored — type to replace" : "Max 9 chars, no @ or spaces"}>
+                <input {...field(i, "uiPassword", "mono")} type="password" autoComplete="off"
+                  placeholder={passwordStored ? "•••••••• stored" : "••••••••"} />
+              </Field>
+              {hasConnect && (
+                <Field label="SSH Port" hint="entervo connect · delivered by DevOps (1–65535)">
+                  <input {...field(i, "sshPort", "mono")} placeholder="e.g. 2222" />
+                </Field>
+              )}
+            </div>
+          </section>
+        );
+      })}
+
+      <RowListError name="cellComputers" />
+
+      <button type="button" className="btn btn-secondary" style={{ marginTop: 4 }} onClick={addCellComputer}>
+        <Icon name="plus" /> Add cell computer
+      </button>
+
+      <div className="form-section-title" style={{ marginTop: 28 }}>
+        Network checks
+        <span>Confirm once tested for every cell computer above.</span>
+      </div>
+      <div className="toggle-grid cols-2">
+        <Toggle label="Cell computers reachable from outside network" sub="Confirm after testing each static IP" {...toggle("reachable")} />
+        <Toggle label="Network communication forwarding set" sub="Port forwarding tested and confirmed" {...toggle("forwarding")} />
+      </div>
+
+      {hasConnect && (
+        <>
+          <div className="form-section-title" style={{ marginTop: 24 }}>entervo connect — provider services</div>
+          <div className="toggle-grid cols-3">
+            <Toggle label="Online Authorization" sub="Provider service" {...toggle("onlineAuth")} />
+            <Toggle label="Customer & Media" sub="Provider service" {...toggle("customerMedia")} />
+            <Toggle label="Counting" sub="Smart CONTRACT" {...toggle("counting")} />
+          </div>
+        </>
+      )}
+
+      <div className="form-section-title" style={{ marginTop: 24 }}>Peripherals</div>
+      <div className="toggle-grid cols-3">
         <Toggle label="LPR (Licence Plate Recognition)" {...toggle("lpr")} />
         <Toggle label="Barcode" {...toggle("barcode")} />
         <Toggle label="LFK (Remote key fob)" {...toggle("lfk")} />

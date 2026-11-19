@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState } from "react";
-import { Link, Outlet, getRouteApi, useMatches, useNavigate } from "@tanstack/react-router";
+import { Link, Outlet, getRouteApi, useMatches } from "@tanstack/react-router";
 import { NOTIFICATION_STYLE, countByStatus } from "../../data/display";
 import { useProjects } from "../../queries";
 import { clickable } from "../../components/clickable";
-import { AccountMenu, AppHeader, Button, Icon, useDismiss } from "../../design-system";
+import { AccountMenu, AppHeader, Button, Icon, ThemeMenu, useDismiss, useSidebarCollapsed } from "../../design-system";
 import { OnboardingProvider } from "./context/OnboardingProvider";
 import { useOnboarding } from "./context/onboardingContext";
 import { useAuth } from "../auth/useAuth";
@@ -34,11 +34,11 @@ export function OnboardingLayout() {
 }
 
 function OnboardingShell() {
-  const navigate = useNavigate();
   const matches = useMatches();
-  const { resetDraft } = useOnboarding();
+  const { requestNewOnboarding } = useOnboarding();
   const projects = useProjects().data ?? [];
   const { can } = useAuth();
+  const [collapsed, setCollapsed] = useSidebarCollapsed();
 
   // The deepest matched route carries the page title, so the page bar stays in
   // sync with the URL without a parallel view enum. "Admin — Countries" splits
@@ -81,32 +81,45 @@ function OnboardingShell() {
   const renderNav = (items: NavLink[]) => items.map(item => (
     <Link key={item.to} to={item.to} className="nav-item"
       activeProps={{ className: "nav-item active" }}
-      activeOptions={{ exact: !item.fuzzy }}>
+      activeOptions={{ exact: !item.fuzzy }}
+      title={collapsed ? item.label : undefined}
+      aria-label={collapsed ? item.label : undefined}>
       <Icon name={item.icon} />
-      {item.label}
+      <span className="nav-label">{item.label}</span>
       {item.badge !== undefined && <span className="count-badge nav-badge">{item.badge}</span>}
     </Link>
   ));
 
-  const startNewOnboarding = () => {
-    resetDraft();
-    navigate({ to: "/onboarding/wizard/$step", params: { step: "0" }, search: { project: undefined } });
-  };
+  const startNewOnboarding = requestNewOnboarding;
 
   return (
     <div className="app-frame">
-      <AppHeader actions={<><NotificationsMenu /><AccountMenu /></>} />
+      <AppHeader actions={<><ThemeMenu /><NotificationsMenu /><AccountMenu /></>} />
       <div className="app">
-        <aside className="sidebar" aria-label="Onboarding navigation">
+        <aside className={`sidebar${collapsed ? " collapsed" : ""}`} aria-label="Onboarding navigation">
           <div className="sidebar-module">
-            <div className="eyebrow accent">Module</div>
-            <div className="sidebar-module-name">Onboarding</div>
+            <div className="sidebar-module-text">
+              <div className="eyebrow accent">Module</div>
+              <div className="sidebar-module-name">Onboarding</div>
+            </div>
+            <button type="button" className="sidebar-toggle" onClick={() => setCollapsed(!collapsed)}
+              aria-expanded={!collapsed} aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+              title={collapsed ? "Expand navigation" : "Collapse navigation"}>
+              <Icon name={collapsed ? "chevronRight" : "chevronLeft"} size={16} />
+            </button>
           </div>
           {can("project:create") && (
             <div className="sidebar-cta">
-              <Button block icon="plus" onClick={startNewOnboarding} aria-current={onWizard ? "page" : undefined}>
-                New onboarding
-              </Button>
+              {collapsed ? (
+                <button type="button" className="btn btn-primary btn-icon sidebar-cta-icon" onClick={startNewOnboarding}
+                  aria-label="New onboarding" title="New onboarding">
+                  <Icon name="plus" />
+                </button>
+              ) : (
+                <Button block icon="plus" onClick={startNewOnboarding} aria-current={onWizard ? "page" : undefined}>
+                  New onboarding
+                </Button>
+              )}
             </div>
           )}
           <div className="sidebar-section">
@@ -126,7 +139,7 @@ function OnboardingShell() {
             </div>
           )}
           <div className="sidebar-section" style={{ marginTop: "auto" }}>
-            <Link to="/" className="nav-item subtle"><Icon name="chevronLeft" /> Back to hub</Link>
+            <Link to="/" className="nav-item subtle" title={collapsed ? "Back to hub" : undefined}><Icon name="chevronLeft" /> <span className="nav-label">Back to hub</span></Link>
           </div>
         </aside>
 

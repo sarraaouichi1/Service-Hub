@@ -21,6 +21,16 @@ export const listProjects = () =>
 export const getProject = (id: number) =>
   request<{ project: Project }>(`/projects/${id}`).then((r) => r.project);
 
+/** A project's submitted configuration, credentials stripped. Null for projects from before v1.1. */
+export interface ProjectConfigurationResponse {
+  configuration: OnboardingForm | null;
+  secretsOnFile: string[];
+  submittedAt: string;
+}
+
+export const getProjectConfiguration = (id: number) =>
+  request<ProjectConfigurationResponse>(`/projects/${id}/configuration`);
+
 export const updateProject = (id: number, patch: Partial<Project>) =>
   request<{ project: Project }>(`/projects/${id}`, {
     method: "PATCH", body: JSON.stringify(patch),
@@ -99,14 +109,17 @@ export interface PatchTicketInput {
   notes?: string;
 }
 
+/** A stored ticket: what was submitted, plus the number and time the server gave it. */
+export type PatchTicketRecord = PatchTicketInput & { id: number; ticketNumber: string; createdAt: string };
+
 export const createPatchTicket = (data: PatchTicketInput) =>
-  request<{ ok: boolean; ticket: any; message: string }>("/patch/tickets", {
+  request<{ ok: boolean; ticket: PatchTicketRecord; message: string }>("/patch/tickets", {
     method: "POST",
     body: JSON.stringify(data),
   });
 
 export const listPatchTickets = () =>
-  request<{ tickets: any[] }>("/patch/tickets").then((r) => r.tickets);
+  request<{ tickets: PatchTicketRecord[] }>("/patch/tickets").then((r) => r.tickets);
 
 // ─── Country templates ──────────────────────────────────────────────────────
 export const listTemplates = () =>
@@ -170,8 +183,21 @@ export const markRead = markNotificationRead;
 export const listUsers = () =>
   request<{ users: AuthUser[] }>("/users").then((r) => r.users);
 
+/** A one-time link the new person uses to choose a password. Prefix it with the app's origin. */
+export interface Invitation { activationPath: string; expiresAt: string }
+
 export const createUser = (user: { email: string; name: string; partner?: string; roles: UserRole[]; password?: string }) =>
-  request<{ user: AuthUser }>("/users", { method: "POST", body: JSON.stringify(user) }).then((r) => r.user);
+  request<{ user: AuthUser; invitation: Invitation | null }>("/users", { method: "POST", body: JSON.stringify(user) });
+
+export const issueActivationLink = (id: string) =>
+  request<{ invitation: Invitation }>(`/users/${id}/activation-link`, { method: "POST" }).then((r) => r.invitation);
+
+// ─── Account activation (public) ───────────────────────────────────────────
+export const getActivation = (token: string) =>
+  request<{ email: string; name: string }>(`/auth/activation?token=${encodeURIComponent(token)}`);
+
+export const activateAccount = (token: string, password: string) =>
+  request<{ email: string }>("/auth/activate", { method: "POST", body: JSON.stringify({ token, password }) });
 
 export const updateUser = (id: string, patch: { name?: string; partner?: string; status?: string; roles?: UserRole[] }) =>
   request<{ user: AuthUser }>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(patch) }).then((r) => r.user);

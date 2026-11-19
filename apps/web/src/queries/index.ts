@@ -24,6 +24,7 @@ import * as api from "../api";
 export const keys = {
   projects: ["projects"] as const,
   project: (id: number) => ["projects", id] as const,
+  projectConfiguration: (id: number) => ["projects", id, "configuration"] as const,
   draft: ["draft"] as const,
   products: ["catalog", "products"] as const,
   psps: ["catalog", "psps"] as const,
@@ -50,6 +51,8 @@ export const useProject = (id: number | undefined) =>
     queryFn: () => api.getProject(id!),
     enabled: typeof id === "number" && !isNaN(id),
   });
+export const useProjectConfiguration = (id: number) =>
+  useQuery({ queryKey: keys.projectConfiguration(id), queryFn: () => api.getProjectConfiguration(id), enabled: !isNaN(id) });
 export const useProducts = () => useQuery({ queryKey: keys.products, queryFn: api.listProducts, ...REFERENCE });
 export const usePsps = () => useQuery({ queryKey: keys.psps, queryFn: api.listPsps, ...REFERENCE });
 /** `enabled: false` for a caller who may not read bulletins, so it doesn't fetch a 403. */
@@ -145,17 +148,23 @@ export const useUpdateSettings = (options?: UseMutationOptions<PlatformConfig, E
 export const useMarkAllRead = () => useInvalidating<unknown, void>(() => api.markAllRead(), [keys.notifications]);
 export const useMarkRead = () => useInvalidating<unknown, number>((id) => api.markRead(id), [keys.notifications]);
 
-export const useCreateUser = (options?: UseMutationOptions<unknown, Error, { email: string; name: string; partner?: string; roles: UserRole[]; password?: string }>) =>
+export const useCreateUser = (options?: UseMutationOptions<Awaited<ReturnType<typeof api.createUser>>, Error, { email: string; name: string; partner?: string; roles: UserRole[]; password?: string }>) =>
   useInvalidating(api.createUser, [keys.users], options);
 
 export const useUpdateUser = (options?: UseMutationOptions<unknown, Error, { id: string; patch: { name?: string; partner?: string; status?: string; roles?: UserRole[] } }>) =>
   useInvalidating(({ id, patch }) => api.updateUser(id, patch), [keys.users], options);
+
+export const useIssueActivationLink = (options?: UseMutationOptions<api.Invitation, Error, string>) =>
+  useInvalidating(api.issueActivationLink, [keys.users], options);
 
 export const useDeleteUser = (options?: UseMutationOptions<void, Error, string>) =>
   useInvalidating(api.deleteUser, [keys.users], options);
 
 export const useSaveDraft = (options?: UseMutationOptions<unknown, Error, OnboardingForm>) =>
   useInvalidating(api.saveDraft, [keys.draft], options);
+
+export const useDiscardDraft = (options?: UseMutationOptions<void, Error, void>) =>
+  useInvalidating(() => api.discardDraft(), [keys.draft], options);
 
 export const useSubmitDraft = (options?: UseMutationOptions<Project, Error, OnboardingForm>) =>
   useInvalidating(api.submitDraft, [keys.projects, keys.draft], options);

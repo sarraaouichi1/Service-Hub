@@ -3,8 +3,9 @@ import type { InviteDraft, InviteDraftTextKey, UserRole } from "../../../types";
 import { ROLE_COLORS, USER_ROLES } from "../../../data/display";
 import { Icon } from "../../../components/Icon";
 import { AsyncSection } from "../../../components/AsyncSection";
-import { ApiError } from "../../../api";
-import { useCreateUser, useUpdateUser, useUsers } from "../../../queries";
+import { ApiError, type Invitation } from "../../../api";
+import { useCreateUser, useIssueActivationLink, useUpdateUser, useUsers } from "../../../queries";
+import { InvitationDialog } from "./InvitationDialog";
 
 const EMPTY_INVITE: InviteDraft = { name: "", email: "", role: "Customer", partner: "" };
 
@@ -25,18 +26,30 @@ export function AdminUsers() {
   const [invite, setInvite] = useState<InviteDraft>(EMPTY_INVITE);
   const [filter, setFilter] = useState<"all" | UserRole>("all");
   const [failure, setFailure] = useState<string | null>(null);
+  // The link the administrator still has to pass on. Email isn't connected
+  // yet, so this dialog is how a new user gets their way in.
+  const [issued, setIssued] = useState<{ name: string; email: string; invitation: Invitation } | null>(null);
 
   // Server state, so the write goes to the API and the list refreshes from it.
   // The server also refuses anything that would lock the platform out — the
   // last active administrator can't be demoted or deactivated.
   const createUser = useCreateUser({
-    onSuccess: () => { setShowInvite(false); setInvite(EMPTY_INVITE); setFailure(null); },
+    onSuccess: (result) => {
+      setShowInvite(false); setInvite(EMPTY_INVITE); setFailure(null);
+      if (result.invitation) setIssued({ name: result.user.name, email: result.user.email, invitation: result.invitation });
+    },
     onError: (error) => setFailure(error instanceof ApiError ? error.message : "Couldn't invite that user"),
   });
   const updateUser = useUpdateUser({
     onError: (error) => setFailure(error instanceof ApiError ? error.message : "Couldn't update that user"),
     onSuccess: () => setFailure(null),
   });
+
+  const issueLink = useIssueActivationLink({
+    onError: (error) => setFailure(error instanceof ApiError ? error.message : "Couldn't create a new link"),
+  });
+  const resendLink = (user: { id: string; name: string; email: string }) =>
+    issueLink.mutate(user.id, { onSuccess: (invitation) => setIssued({ name: user.name, email: user.email, invitation }) });
 
   const filtered = filter === "all" ? users : users.filter(u => u.roles.includes(filter));
 
@@ -65,7 +78,7 @@ export function AdminUsers() {
 
       {/* Invite form */}
       {showInvite && (
-        <div className="fade-in" style={{ background: "white", border: "2px solid var(--blue-bright)", borderRadius: 10, padding: 24, marginBottom: 24, boxShadow: "var(--shadow)" }}>
+        <div className="fade-in" style={{ background: "var(--color-surface)", border: "2px solid var(--blue-bright)", borderRadius: 10, padding: 24, marginBottom: 24, boxShadow: "var(--shadow)" }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: "var(--navy)", marginBottom: 18 }}>Invite New User</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
             {([
@@ -76,7 +89,7 @@ export function AdminUsers() {
               <div key={f.key}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--gray-800)", marginBottom: 5 }}>{f.label}</div>
                 <input
-                  style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--gray-200)", borderRadius: 7, fontFamily: "var(--font)", fontSize: 13 }}
+                  style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--gray-200)", borderRadius: 7, fontFamily: "var(--font)", fontSize: 13, background: "var(--color-surface)", color: "var(--color-text)" }}
                   placeholder={f.placeholder}
                   value={invite[f.key]}
                   onChange={e => setInvite({ ...invite, [f.key]: e.target.value })}
@@ -86,7 +99,7 @@ export function AdminUsers() {
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, color: "var(--gray-800)", marginBottom: 5 }}>Role</div>
               <select
-                style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--gray-200)", borderRadius: 7, fontFamily: "var(--font)", fontSize: 13, background: "white" }}
+                style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--gray-200)", borderRadius: 7, fontFamily: "var(--font)", fontSize: 13, background: "var(--color-surface)", color: "var(--color-text)" }}
                 value={invite.role}
                 onChange={e => setInvite({ ...invite, role: e.target.value as UserRole })}
               >
@@ -95,7 +108,7 @@ export function AdminUsers() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button className="btn btn-primary" onClick={sendInvite}>Send Invitation</button>
+            <button className="btn btn-primary" onClick={sendInvite} disabled={createUser.isPending}>Create user &amp; invitation link</button>
             <button className="btn btn-secondary" onClick={() => setShowInvite(false)}>Cancel</button>
           </div>
         </div>
@@ -109,7 +122,7 @@ export function AdminUsers() {
           { label: "Customers", value: users.filter(u => u.roles.includes("Customer")).length, color: "var(--blue)" },
           { label: "Pending", value: users.filter(u => u.status === "pending").length, color: "var(--amber)" },
         ].map((s, i) => (
-          <div key={i} style={{ background: "white", border: "1px solid var(--gray-200)", borderRadius: 8, padding: "14px 18px" }}>
+          <div key={i} style={{ background: "var(--color-surface)", border: "1px solid var(--gray-200)", borderRadius: 8, padding: "14px 18px" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", letterSpacing: "0.8px" }}>{s.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: s.color, marginTop: 4 }}>{s.value}</div>
           </div>
@@ -121,7 +134,7 @@ export function AdminUsers() {
         {(["all", ...USER_ROLES] as ("all" | UserRole)[]).map(r => (
           <button key={r} onClick={() => setFilter(r)}
             style={{ padding: "5px 12px", borderRadius: 20, border: "1px solid", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.12s",
-              background: filter === r ? "var(--navy)" : "white",
+              background: filter === r ? "var(--navy)" : "var(--color-surface)",
               color: filter === r ? "white" : "var(--gray-600)",
               borderColor: filter === r ? "var(--navy)" : "var(--gray-200)" }}>
             {r === "all" ? "All Users" : r}
@@ -134,7 +147,7 @@ export function AdminUsers() {
       )}
 
       {/* User list */}
-      <div style={{ background: "white", border: "1px solid var(--gray-200)", borderRadius: 10, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
+      <div style={{ background: "var(--color-surface)", border: "1px solid var(--gray-200)", borderRadius: 10, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
         <div style={{ display: "grid", gridTemplateColumns: "2.5fr 2fr 1.2fr 1.2fr 1.2fr 80px", padding: "10px 18px", background: "var(--gray-50)", borderBottom: "1px solid var(--gray-200)" }}>
           {["User", "Email", "Role", "Organisation", "Last Login", ""].map((h, i) => (
             <div key={i} style={{ fontSize: 11, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", letterSpacing: "0.8px" }}>{h}</div>
@@ -162,6 +175,12 @@ export function AdminUsers() {
             <div style={{ fontSize: 12.5, color: "var(--gray-600)" }}>{u.partner}</div>
             <div style={{ fontSize: 12, color: "var(--gray-400)" }}>{formatLastLogin(u.lastLoginAt)}</div>
             <div style={{ display: "flex", gap: 6 }}>
+              {u.status === "pending" && (
+                <button type="button" className="btn btn-ghost btn-icon btn-sm" title="Copy a new invitation link" aria-label={`New invitation link for ${u.name}`}
+                  onClick={() => resendLink(u)}>
+                  <Icon name="mail" size={14} />
+                </button>
+              )}
               <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--gray-400)", fontWeight: 600, padding: "3px 6px", borderRadius: 5 }}
                 onClick={() => toggleUserStatus(u.id, u.status)} title={u.status === "active" ? "Deactivate" : "Activate"}>
                 <Icon name={u.status === "active" ? "lock" : "check"} size={14} />
@@ -172,6 +191,7 @@ export function AdminUsers() {
           </>}
         </AsyncSection>
       </div>
+      {issued && <InvitationDialog {...issued} onClose={() => setIssued(null)} />}
     </div>
   );
 }

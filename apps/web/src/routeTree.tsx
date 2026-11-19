@@ -31,6 +31,8 @@ import { PatchBulletinsView } from "./modules/patch/views/PatchBulletinsView";
 import { PatchScheduleView } from "./modules/patch/views/PatchScheduleView";
 import { PatchProcessView } from "./modules/patch/views/PatchProcessView";
 import { PatchSystemsView } from "./modules/patch/views/PatchSystemsView";
+import { ActivateView } from "./modules/auth/ActivateView";
+import { ProjectConfigurationView } from "./modules/onboarding/views/ProjectConfigurationView";
 import { PatchAutomoxView } from "./modules/patch/views/PatchAutomoxView";
 import { PatchServiceTiersView } from "./modules/patch/views/PatchServiceTiersView";
 import { PatchTicketCreateView } from "./modules/patch/views/PatchTicketCreateView";
@@ -65,6 +67,18 @@ const loginRoute = createRoute({
   },
   component: LoginView,
   staticData: { title: "Sign in" } satisfies RouteStaticData,
+});
+
+// ─── Invitation links ───────────────────────────────────────────────────────
+// Public: the token in the link is the credential.
+const activateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "activate",
+  component: ActivateView,
+  staticData: { title: "Activate account" } satisfies RouteStaticData,
+  validateSearch: (search: Record<string, unknown>) => ({
+    token: typeof search.token === "string" ? search.token : undefined,
+  }),
 });
 
 // ─── Landing hub ────────────────────────────────────────────────────────────
@@ -123,6 +137,14 @@ const projectsRoute = createRoute({
       q: typeof search.q === "string" && search.q !== "" ? search.q : undefined,
     };
   },
+});
+
+/** Everything a project was submitted with, on one page, ready to copy. */
+const projectConfigurationRoute = createRoute({
+  getParentRoute: () => onboardingRoute,
+  path: "projects/$id/configuration",
+  component: ProjectConfigurationView,
+  staticData: { title: "Projects — Configuration" } satisfies RouteStaticData,
 });
 
 const wizardIndexRoute = createRoute({
@@ -306,12 +328,14 @@ const patchPremiumRoute = createRoute({
 
 export const routeTree = rootRoute.addChildren([
   loginRoute,
+  activateRoute,
   indexRoute,
   styleGuideRoute,
   onboardingRoute.addChildren([
     onboardingIndexRoute,
     dashboardRoute,
     projectsRoute,
+    projectConfigurationRoute,
     wizardIndexRoute,
     wizardRoute,
     reviewQueueRoute,

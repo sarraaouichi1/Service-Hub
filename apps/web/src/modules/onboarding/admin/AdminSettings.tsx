@@ -42,7 +42,7 @@ function SettingsForm({ settings }: { settings: PlatformConfig }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         {/* General */}
-        <div style={{ background: "white", border: "1px solid var(--gray-200)", borderRadius: 10, padding: 24, boxShadow: "var(--shadow-sm)" }}>
+        <div style={{ background: "var(--color-surface)", border: "1px solid var(--gray-200)", borderRadius: 10, padding: 24, boxShadow: "var(--shadow-sm)" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--navy)", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--gray-100)" }}>General</div>
           {([
             { label: "Platform Name", key: "platformName" },
@@ -62,7 +62,7 @@ function SettingsForm({ settings }: { settings: PlatformConfig }) {
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--gray-800)", marginBottom: 5 }}>Default Export Format</div>
             <select
-              style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--gray-200)", borderRadius: 7, fontFamily: "var(--font)", fontSize: 13, background: "white" }}
+              style={{ width: "100%", padding: "8px 12px", border: "1.5px solid var(--gray-200)", borderRadius: 7, fontFamily: "var(--font)", fontSize: 13, background: "var(--color-surface)" }}
               value={cfg.exportFormat}
               onChange={e => setCfg({ ...cfg, exportFormat: e.target.value })}
             >
@@ -74,7 +74,7 @@ function SettingsForm({ settings }: { settings: PlatformConfig }) {
         </div>
 
         {/* Workflow & Notifications */}
-        <div style={{ background: "white", border: "1px solid var(--gray-200)", borderRadius: 10, padding: 24, boxShadow: "var(--shadow-sm)" }}>
+        <div style={{ background: "var(--color-surface)", border: "1px solid var(--gray-200)", borderRadius: 10, padding: 24, boxShadow: "var(--shadow-sm)" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--navy)", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--gray-100)" }}>Workflow & Notifications</div>
           {([
             { label: "Notify reviewer on new submission", key: "notifyOnSubmit", sub: "Email sent to assigned reviewer" },
@@ -92,14 +92,14 @@ function SettingsForm({ settings }: { settings: PlatformConfig }) {
                 style={{ width: 38, height: 22, borderRadius: 11, border: "none", background: cfg[s.key] ? "var(--blue-bright)" : "var(--gray-200)", position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0 }}
                 onClick={() => setCfg({ ...cfg, [s.key]: !cfg[s.key] })}
               >
-                <div style={{ position: "absolute", top: 3, left: cfg[s.key] ? 19 : 3, width: 16, height: 16, background: "white", borderRadius: "50%", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+                <div style={{ position: "absolute", top: 3, left: cfg[s.key] ? 19 : 3, width: 16, height: 16, background: "var(--color-surface)", borderRadius: "50%", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
               </button>
             </div>
           ))}
         </div>
 
         {/* Audit Log */}
-        <div style={{ background: "white", border: "1px solid var(--gray-200)", borderRadius: 10, padding: 24, boxShadow: "var(--shadow-sm)", gridColumn: "span 2" }}>
+        <div style={{ background: "var(--color-surface)", border: "1px solid var(--gray-200)", borderRadius: 10, padding: 24, boxShadow: "var(--shadow-sm)", gridColumn: "span 2" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--navy)", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--gray-100)" }}>Recent Audit Log</div>
           <div style={{ display: "grid", gap: 8 }}>
             {(auditLog.data ?? []).map((log, i) => (

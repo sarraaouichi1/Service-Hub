@@ -1,12 +1,30 @@
+import { parseProducts } from "@service-hub/shared";
 import { Icon } from "../../../components/Icon";
 import { Field } from "../../../components/Field";
-import { Toggle } from "../../../components/Toggle";
 import { useStepFields } from "./useStepFields";
+import { useTemplates } from "../../../queries";
+
+const COUNTRIES: [string, string][] = [
+  ["GB", "United Kingdom"], ["DE", "Germany"], ["FR", "France"], ["NL", "Netherlands"], ["CH", "Switzerland"],
+  ["AT", "Austria"], ["BE", "Belgium"], ["ES", "Spain"], ["US", "United States"], ["CA", "Canada"],
+];
 
 export function OperatorStep() {
-  const { input, toggle, message, values } = useStepFields();
-  const selectedStr = (values.product as string) || "";
-  const selectedList = selectedStr ? selectedStr.split(",").filter(Boolean) : [];
+  const { input, select, message, values, choose } = useStepFields();
+  const selectedList = parseProducts(values.product);
+  const templates = useTemplates().data ?? [];
+
+  // Choosing a country fills the locale from its country template, without
+  // overwriting anything the user already chose.
+  const handleCountryChange = (countryCode: string) => {
+    choose("country", countryCode);
+    const template = templates.find(t => t.country?.toUpperCase() === countryCode.toUpperCase());
+    if (!template) return;
+    if (template.lang && !values.lang) choose("lang", template.lang);
+    if (template.currency && !values.currency) choose("currency", template.currency);
+    if (template.vat && !values.vat) choose("vat", template.vat);
+    if (template.psp && !values.psp) choose("psp", template.psp);
+  };
 
   return (
     <div className="slide-in">
@@ -33,25 +51,50 @@ export function OperatorStep() {
         <Field label="Parking System Version" hint="Minimum: V2R5M5" error={message("version")}>
           <input {...input("version", "mono")} placeholder="e.g. V3R0M4" />
         </Field>
-        <Field label="Static Public IP Address" required error={message("ip")} hint="External IP of the cell computer">
-          <input {...input("ip", "mono")} placeholder="195.171.142.1" />
-        </Field>
-        <Field label="Communication Port" hint="Standard: 8443 (1–65535)" error={message("port")}>
-          <input {...input("port", "mono")} placeholder="8443" />
-        </Field>
-        <Field label="Operator Domain / URL" hint="IP:Port or domain name" span2 error={message("domain")}>
-          <input {...input("domain")} placeholder="204.96.89.10 or carpark.organisation.com" />
-        </Field>
         <Field label="Operator Address" span2 error={message("address")}>
           <input {...input("address")} placeholder="Street, City, Country" />
         </Field>
 
+        <div className="form-section-title span-2">
+          Locale &amp; finance
+          <span>Shared by every cell computer this operator runs. Connection details go on the next step.</span>
+        </div>
+        <Field label="Country" required error={message("country")} hint="Loads the country template's defaults">
+          <select
+            className={`form-select${message("country") ? " error" : values.country ? " valid" : ""}`}
+            value={(values.country as string | undefined) ?? ""}
+            onChange={(e) => handleCountryChange(e.target.value)}
+          >
+            <option value="">Select country…</option>
+            {COUNTRIES.map(([code, name]) => <option key={code} value={code}>{name} ({code})</option>)}
+          </select>
+        </Field>
+        <Field label="Language Tag" required hint="ISO 639-1 + country code" error={message("lang")}>
+          <select {...select("lang")}>
+            <option value="">Select language…</option>
+            <option>en-GB</option><option>en-US</option><option>de-DE</option><option>de-AT</option><option>de-CH</option>
+            <option>fr-FR</option><option>nl-NL</option><option>nl-BE</option><option>es-ES</option>
+          </select>
+        </Field>
+        <Field label="Currency Code" hint="ISO 4217" error={message("currency")}>
+          <select {...select("currency")}>
+            <option value="">Select currency…</option>
+            <option>GBP</option><option>EUR</option><option>CHF</option><option>USD</option><option>CAD</option>
+          </select>
+        </Field>
+        <Field label="Decimal Places in Currency" hint="0 to 4 digits" error={message("decimals")}>
+          <input {...input("decimals", "mono")} placeholder="2" />
+        </Field>
+        <Field label="VAT Percentage" hint="Whole number 0–100" error={message("vat")}>
+          <input {...input("vat", "mono")} placeholder="e.g. 20" />
+        </Field>
+
         {/* Conditional section if entervo connect is selected */}
         {selectedList.includes("entervo-connect") && (
-          <div style={{ gridColumn: "span 2", marginTop: 8, padding: "14px 16px", background: "var(--gray-50)", border: "1px solid var(--gray-200)", borderRadius: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy)", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="product-panel span-2">
+            <div className="product-panel-title">
               <span>🔗 entervo connect — Partner & Contact Person</span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--purple)", background: "#EDE9FE", padding: "2px 8px", borderRadius: 4 }}>Product Specific</span>
+              <span className="product-panel-tag">Product specific</span>
             </div>
             <div className="form-grid">
               <Field label="Provider ID" hint="Unique number > 100 for car park operator" error={message("providerId")}>
@@ -69,10 +112,10 @@ export function OperatorStep() {
 
         {/* Conditional section if smart validation is selected */}
         {selectedList.includes("smart-validation") && (
-          <div style={{ gridColumn: "span 2", marginTop: 8, padding: "14px 16px", background: "var(--gray-50)", border: "1px solid var(--gray-200)", borderRadius: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy)", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="product-panel span-2">
+            <div className="product-panel-title">
               <span>✅ entervo smart validation — Tenant Identity</span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--green)", background: "#E8FAF1", padding: "2px 8px", borderRadius: 4 }}>Product Specific</span>
+              <span className="product-panel-tag">Product specific</span>
             </div>
             <div className="form-grid">
               <Field label="Tenant Shortname" hint="Max 20 chars, small letters/numbers only (URL part)" error={message("tenantShortname")}>
@@ -84,11 +127,6 @@ export function OperatorStep() {
             </div>
           </div>
         )}
-      </div>
-
-      <div style={{ marginTop: 18, display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
-        <Toggle label="Cell reachable from outside network" sub="Confirm after testing the static IP" {...toggle("reachable")} />
-        <Toggle label="Network communication forwarding set" sub="Port forwarding tested and confirmed" {...toggle("forwarding")} />
       </div>
     </div>
   );

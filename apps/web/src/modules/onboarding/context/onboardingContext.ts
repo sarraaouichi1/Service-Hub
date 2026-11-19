@@ -28,6 +28,18 @@ export interface OnboardingContextValue {
   setSubmitted: Dispatch<SetStateAction<boolean>>;
   /** Clear the draft so a new onboarding starts from scratch. */
   resetDraft: () => void;
+
+  /** The draft saved on the server, if there is one — what "Resume" offers. */
+  savedDraft: { title: string; savedAt: string | null } | null;
+  /** Load the saved draft back into the wizard and open it. */
+  resumeDraft: () => void;
+  /** Throw the saved draft away (server too) and open an empty wizard. */
+  startFresh: () => void;
+  /**
+   * What every "New onboarding" button calls. With a saved draft on file it
+   * asks whether to resume or start fresh, rather than silently discarding it.
+   */
+  requestNewOnboarding: () => void;
 }
 
 export const OnboardingContext = createContext<OnboardingContextValue | null>(null);

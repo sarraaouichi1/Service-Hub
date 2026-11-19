@@ -17,7 +17,7 @@ export type IconName =
   | "eye" | "download" | "server" | "mapPin" | "zap" | "users" | "user" | "lock"
   | "search" | "cloud" | "monitor" | "fileText" | "refresh" | "activity" | "mail"
   | "phone" | "arrowRight" | "arrowLeft" | "info" | "alert" | "package" | "cpu" | "trendingUp"
-  | "logOut" | "clock" | "calendar" | "layers" | "terminal" | "externalLink" | "globe";
+  | "logOut" | "clock" | "calendar" | "layers" | "terminal" | "externalLink" | "globe" | "sun" | "moon";
 
 export interface IconProps {
   name: IconName;

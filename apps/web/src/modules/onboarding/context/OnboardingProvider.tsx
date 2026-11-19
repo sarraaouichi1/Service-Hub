@@ -5,7 +5,10 @@ import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AuthUser } from "@service-hub/shared";
 import type { OnboardingForm } from "../../../types";
-import { useMarkAllRead, useMarkRead, useNotifications, useOnboardingSchemas, useSavedDraft } from "../../../queries";
+import { useNavigate } from "@tanstack/react-router";
+import { normalizeDraft } from "@service-hub/shared";
+import { useDiscardDraft, useMarkAllRead, useMarkRead, useNotifications, useOnboardingSchemas, useSavedDraft } from "../../../queries";
+import { NewOnboardingPrompt } from "./NewOnboardingPrompt";
 
 import { OnboardingContext } from "./onboardingContext";
 
@@ -63,7 +66,7 @@ export function OnboardingProvider(
   const { reset: resetForm } = form;
   const loadedDraft = savedDraft.data?.draft;
   useEffect(() => {
-    if (loadedDraft) resetForm(loadedDraft);
+    if (loadedDraft) resetForm(normalizeDraft(loadedDraft));
   }, [loadedDraft, resetForm]);
 
   const { reset } = form;
@@ -73,6 +76,41 @@ export function OnboardingProvider(
     setSubmitted(false);
   }, [reset]);
 
+  // ── Saved drafts ───────────────────────────────────────────────────────
+  // Testers saved a draft and could not find it again: "New onboarding" wiped
+  // the form without a word, and nothing said a draft existed. Now every entry
+  // point goes through `requestNewOnboarding`, which offers it back.
+  const navigate = useNavigate();
+  const discardDraft = useDiscardDraft();
+  const [promptOpen, setPromptOpen] = useState(false);
+  const updatedAt = savedDraft.data?.updatedAt ?? null;
+  const savedDraftInfo = useMemo(() => {
+    if (!loadedDraft || Object.keys(loadedDraft).length === 0) return null;
+    return { title: loadedDraft.opName?.trim() || "Untitled onboarding", savedAt: updatedAt };
+  }, [loadedDraft, updatedAt]);
+
+  const openWizard = useCallback(
+    () => navigate({ to: "/onboarding/wizard/$step", params: { step: "0" }, search: { project: undefined } }),
+    [navigate],
+  );
+  const resumeDraft = useCallback(() => {
+    resetForm(normalizeDraft(loadedDraft));
+    setDeclared(false);
+    setSubmitted(false);
+    setPromptOpen(false);
+    void openWizard();
+  }, [loadedDraft, resetForm, openWizard]);
+  const startFresh = useCallback(() => {
+    resetDraft();
+    setPromptOpen(false);
+    if (savedDraftInfo) discardDraft.mutate();
+    void openWizard();
+  }, [resetDraft, savedDraftInfo, discardDraft, openWizard]);
+  const requestNewOnboarding = useCallback(() => {
+    if (savedDraftInfo) setPromptOpen(true);
+    else startFresh();
+  }, [savedDraftInfo, startFresh]);
+
   const value = useMemo(
     () => ({
       currentUser,
@@ -80,13 +118,17 @@ export function OnboardingProvider(
       declared, setDeclared,
       submitted, setSubmitted,
       resetDraft,
+      savedDraft: savedDraftInfo, resumeDraft, startFresh, requestNewOnboarding,
     }),
-    [currentUser, notifs, markAllRead, markRead, declared, submitted, resetDraft],
+    [currentUser, notifs, markAllRead, markRead, declared, submitted, resetDraft, savedDraftInfo, resumeDraft, startFresh, requestNewOnboarding],
   );
 
   return (
     <OnboardingContext.Provider value={value}>
       <FormProvider {...form}>{children}</FormProvider>
+      {promptOpen && savedDraftInfo && (
+        <NewOnboardingPrompt draft={savedDraftInfo} onResume={resumeDraft} onStartFresh={startFresh} onCancel={() => setPromptOpen(false)} />
+      )}
     </OnboardingContext.Provider>
   );
 }

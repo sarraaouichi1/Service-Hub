@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { HUB_MODULES } from "../../data/modules";
 import { useAuth } from "../auth/useAuth";
 import {
-  AccountMenu, AppFooter, AppHeader, CheckList, Icon, Tile, TileArt, buttonClass,
+  AccountMenu, AppFooter, ThemeMenu, AppHeader, CheckList, Icon, Tile, TileArt, buttonClass,
 } from "../../design-system";
 import "../../styles/landing.css";
 
@@ -13,7 +13,7 @@ export function LandingHub() {
 
   return (
     <div className="page-shell">
-      <AppHeader contained actions={<AccountMenu />} />
+      <AppHeader contained actions={<><ThemeMenu /><AccountMenu /></>} />
 
       <main className="hub">
         <section className="hub-hero fade-in">

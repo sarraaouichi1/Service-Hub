@@ -1,5 +1,5 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { AccountMenu, AppFooter, AppHeader, Icon, SubNav, buttonClass, type SubNavItem } from "../../design-system";
+import { AccountMenu, AppFooter, AppHeader, Icon, SubNav, ThemeMenu, buttonClass, type SubNavItem } from "../../design-system";
 import "../../styles/patch.css";
 
 // Every entry is a route of its own, so each page has an address that can be
@@ -21,7 +21,7 @@ export function PatchLayout() {
 
   return (
     <div className="page-shell">
-      <AppHeader contained actions={<AccountMenu />} />
+      <AppHeader contained actions={<><ThemeMenu /><AccountMenu /></>} />
       <SubNav
         title="Patch Management"
         items={PATCH_NAV}

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { PAYMENT_PRODUCTS, needsPaymentProvider, parseProducts } from "@service-hub/shared";
+import { Icon } from "../../../components/Icon";
 import { Field } from "../../../components/Field";
 import { Toggle } from "../../../components/Toggle";
 import { clickable } from "../../../components/clickable";
@@ -12,17 +14,28 @@ export function AppPaymentStep() {
   const secretsOnFile = useSecretsOnFile();
   const { values, input, toggle, choose, message } = useStepFields();
 
-  const selectedStr = (values.product as string) || "smart-web-pay";
-  const selectedList = selectedStr ? selectedStr.split(",").filter(Boolean) : ["smart-web-pay"];
+  const selectedList = parseProducts(values.product);
+  const productNames = (ids: readonly string[]) =>
+    ids.map(id => (productsQuery.data ?? []).find(p => p.id === id)?.name ?? id).join(", ");
 
   // Default active product tab to the first selected (starting) product
-  const [activeTab, setActiveTab] = useState<string>(selectedList[0] || "smart-web-pay");
+  const [activeTab, setActiveTab] = useState<string>(selectedList[0] ?? "");
 
 
   const psp = values.psp;
 
   return (
     <div className="slide-in">
+      {/* Only products that take payments need a payment service provider; say so
+          rather than leaving the user to wonder where the PSP question went. */}
+      {selectedList.length > 0 && !needsPaymentProvider(selectedList) && (
+        <div className="notif-bar info">
+          <Icon name="info" size={14} />
+          No payment service provider is needed: {productNames(selectedList)} {selectedList.length === 1 ? "does" : "do"} not take payments.
+          A PSP is only asked for with {productNames(PAYMENT_PRODUCTS)}.
+        </div>
+      )}
+
       {/* Multi-product tab header if more than 1 product selected */}
       {selectedList.length > 1 && (
         <div style={{ marginBottom: 20 }}>
@@ -50,7 +63,7 @@ export function AppPaymentStep() {
                     padding: "8px 16px",
                     borderRadius: 20,
                     border: `1.5px solid ${isActive ? pInfo?.color || "var(--blue)" : "var(--gray-300)"}`,
-                    background: isActive ? pInfo?.bg || "var(--blue-pale)" : "white",
+                    background: isActive ? pInfo?.bg || "var(--blue-pale)" : "var(--color-surface)",
                     color: isActive ? pInfo?.color || "var(--blue)" : "var(--gray-600)",
                     fontWeight: isActive ? 700 : 500,
                     fontSize: 12.5,
@@ -170,9 +183,6 @@ export function AppPaymentStep() {
               <input {...input("adminEmail")} type="email" placeholder="admin@scheidt-bachmann.de" />
             </Field>
 
-            <Field label="SSH Port" hint="Delivered by DevOps (1–65535)" error={message("sshPort")}>
-              <input {...input("sshPort", "mono")} placeholder="e.g. 8443" />
-            </Field>
           </div>
 
           <div style={{ padding: "14px 16px", background: "var(--gray-50)", border: "1px solid var(--gray-200)", borderRadius: 8 }}>

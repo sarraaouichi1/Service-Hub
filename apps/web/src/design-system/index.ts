@@ -13,3 +13,5 @@ export { AppHeader } from "./components/AppHeader";
 export { AccountMenu } from "./components/AccountMenu";
 export { AppFooter } from "./components/AppFooter";
 export { SubNav, type SubNavItem } from "./components/SubNav";
+export { ThemeMenu } from "./components/ThemeMenu";
+export { useTheme, useSidebarCollapsed, type ThemeChoice } from "./theme";

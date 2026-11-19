@@ -11,6 +11,15 @@
       href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap"
     />
     <title>entervo Service Hub</title>
+    <script>
+      // Apply the saved theme before first paint, so dark mode never flashes white.
+      (function () {
+        var choice = null;
+        try { choice = localStorage.getItem("service-hub-theme"); } catch (e) {}
+        var dark = choice === "dark" || (choice !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -116,7 +116,7 @@ export function ReviewQueueView() {
         {(list) => {
           const count = list.filter(p => p.status === "sales-approval" || p.status === "review").length;
           return count > 0 ? <></> : (
-            <div className="async-state" style={{ background: "white", borderRadius: 10, padding: 32, textAlign: "center", border: "1px dashed var(--gray-200)" }}>
+            <div className="async-state" style={{ background: "var(--color-surface)", borderRadius: 10, padding: 32, textAlign: "center", border: "1px dashed var(--gray-200)" }}>
               <Icon name="check" size={28} color="var(--green)" />
               <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)", marginTop: 8 }}>All caught up!</div>
               <div style={{ fontSize: 13, color: "var(--gray-500)", marginTop: 4 }}>

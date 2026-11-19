@@ -118,7 +118,7 @@ export function WizardView() {
   if (submitted) {
     return (
       <div className="fade-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 400, textAlign: "center" }}>
-        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#E8FAF1", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--color-success-soft)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
           <Icon name="check" size={32} color="var(--green)" />
         </div>
         <div style={{ fontSize: 24, fontWeight: 700, color: "var(--navy)", marginBottom: 8 }}>Submitted for Review</div>
@@ -172,15 +172,17 @@ export function WizardView() {
             <div style={{
               marginBottom: 20,
               padding: "10px 14px",
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
+              background: "var(--color-surface-muted)",
+              border: "1px solid var(--color-border)",
               borderLeft: "4px solid var(--blue)",
               borderRadius: "0 8px 8px 0",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               fontSize: 12,
-              color: "#334155"
+              color: "var(--color-text)",
+              flexWrap: "wrap",
+              gap: 8,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontWeight: 700, color: "var(--navy)" }}>⭐ Multi-Product Mode:</span>
@@ -191,8 +193,8 @@ export function WizardView() {
                   <span key={pId} style={{
                     padding: "2px 8px",
                     borderRadius: 12,
-                    background: idx === 0 ? "var(--blue)" : "#E2E8F0",
-                    color: idx === 0 ? "white" : "#475569",
+                    background: idx === 0 ? "var(--blue)" : "var(--color-surface-sunken)",
+                    color: idx === 0 ? "var(--color-action-text)" : "var(--color-text-muted)",
                     fontWeight: idx === 0 ? 600 : 500,
                     fontSize: 11
                   }}>

@@ -5,6 +5,7 @@ import { AsyncSection } from "../../../components/AsyncSection";
 import { useProductLookup, useProjects } from "../../../queries";
 import { Can } from "../../auth/Can";
 import { clickable } from "../../../components/clickable";
+import { formatSavedAt } from "../context/formatSavedAt";
 import { useOnboarding } from "../context/onboardingContext";
 import type { Project, ProjectStatus } from "../../../types";
 
@@ -24,17 +25,16 @@ const route = getRouteApi("/onboarding/projects");
 export function ProjectsView() {
   const navigate = useNavigate();
   const { status, q } = route.useSearch();
-  const { resetDraft } = useOnboarding();
+  const { requestNewOnboarding, savedDraft, resumeDraft } = useOnboarding();
   const projects = useProjects();
   const productById = useProductLookup();
 
+  // A submitted project opens on its configuration: everything it was
+  // submitted with, on one page, ready to copy.
   const openProject = (p: Project) =>
-    navigate({ to: "/onboarding/wizard/$step", params: { step: String(p.step) }, search: { project: p.id } });
+    navigate({ to: "/onboarding/projects/$id/configuration", params: { id: String(p.id) } });
 
-  const startNewOnboarding = () => {
-    resetDraft();
-    navigate({ to: "/onboarding/wizard/$step", params: { step: "0" }, search: { project: undefined } });
-  };
+  const startNewOnboarding = requestNewOnboarding;
 
   const needle = (q ?? "").trim().toLowerCase();
   const visible = (projects.data ?? []).filter(p =>
@@ -64,14 +64,14 @@ export function ProjectsView() {
       {PROJECT_FILTERS.map(f => (
         <button key={f.value} type="button"
           onClick={() => navigate({ to: "/onboarding/projects", search: { status: f.value, q } })}
-          style={{ padding: "5px 14px", borderRadius: 20, border: "1px solid", borderColor: status === f.value ? "var(--navy)" : "var(--gray-200)", fontSize: 12, fontWeight: 600, cursor: "pointer", background: status === f.value ? "var(--navy)" : "white", color: status === f.value ? "white" : "var(--gray-600)" }}>
+          style={{ padding: "5px 14px", borderRadius: 20, border: "1px solid", borderColor: status === f.value ? "var(--navy)" : "var(--gray-200)", fontSize: 12, fontWeight: 600, cursor: "pointer", background: status === f.value ? "var(--navy)" : "var(--color-surface)", color: status === f.value ? "var(--color-surface)" : "var(--gray-600)" }}>
           {f.label}
         </button>
       ))}
       <div style={{ marginLeft: "auto" }}>
         <input placeholder="Search projects…" value={q}
             onChange={e => navigate({ to: "/onboarding/projects", search: { status, q: e.target.value || undefined } })}
-            style={{ padding: "6px 14px", border: "1.5px solid var(--gray-200)", borderRadius: 20, fontFamily: "var(--font)", fontSize: 13, outline: "none", width: 220 }} />
+            style={{ padding: "6px 14px", border: "1.5px solid var(--gray-200)", borderRadius: 20, fontFamily: "var(--font)", fontSize: 13, outline: "none", width: 220, background: "var(--color-surface)", color: "var(--color-text)" }} />
       </div>
     </div>
 
@@ -81,15 +81,27 @@ export function ProjectsView() {
         <div key={i} style={{ fontSize: 11, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", letterSpacing: "0.8px" }}>{h}</div>
       ))}
     </div>
-    <div style={{ border: "1px solid var(--gray-200)", borderRadius: "0 0 8px 8px", overflow: "hidden", background: "white" }}>
+    <div className="table-scroll-body" style={{ border: "1px solid var(--gray-200)", borderRadius: "0 0 8px 8px", overflow: "hidden", background: "var(--color-surface)" }}>
       <AsyncSection query={projects} label="projects">
         {() => <>
+      {/* The signed-in person's own saved draft, so it is never lost from view. */}
+      {savedDraft && (status === "all" || status === "draft") && (
+        <div className="draft-row" {...clickable(resumeDraft)}>
+          <div>
+            <div className="draft-row-title">{savedDraft.title}</div>
+            <div className="draft-row-sub">Your saved draft · {formatSavedAt(savedDraft.savedAt)}</div>
+          </div>
+          <span className="badge badge-draft">Draft (yours)</span>
+          <button type="button" className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); resumeDraft(); }}>
+            Resume <Icon name="arrowRight" size={13} />
+          </button>
+        </div>
+      )}
       {visible.map((p, i) => {
         const pc = productById[p.product];
         return (
           <div key={p.id} {...clickable(() => openProject(p))} style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr 1.2fr 1fr 1fr 1.2fr 80px", padding: "14px 18px", borderBottom: i < visible.length - 1 ? "1px solid var(--gray-100)" : "none", alignItems: "center", cursor: "pointer", transition: "background 0.12s" }}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--gray-50)"}
-            onMouseLeave={e => e.currentTarget.style.background = "white"}>
+            className="table-row-hover">
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--navy)" }}>{p.name}</div>
               <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 2 }}>PM: {p.pm}</div>
@@ -110,7 +122,7 @@ export function ProjectsView() {
             </div>
             <div>
               <button className="btn btn-secondary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={(e) => { e.stopPropagation(); openProject(p); }}>
-                Open
+                View
               </button>
             </div>
           </div>

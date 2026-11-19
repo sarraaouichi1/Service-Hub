@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import {
-  AccountMenu, AppFooter, AppHeader, Badge, Button, Callout, Card, CheckList, FeatureCard, Flow, Icon, IconTile,
+  AccountMenu, AppFooter, ThemeMenu, AppHeader, Badge, Button, Callout, Card, CheckList, FeatureCard, Flow, Icon, IconTile,
   PageHeader, SectionHeader, StatBand, StatCard, Steps, Tile, TileArt,
 } from "../../design-system";
 import { Field } from "../../components/Field";
@@ -24,7 +24,7 @@ export function StyleGuideView() {
 
   return (
     <div className="page-shell">
-      <AppHeader contained actions={<AccountMenu />} />
+      <AppHeader contained actions={<><ThemeMenu /><AccountMenu /></>} />
       <main className="page-body styleguide">
         <PageHeader
           eyebrow="entervo Service Hub"

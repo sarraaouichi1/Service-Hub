@@ -38,7 +38,7 @@ export function AdminRules() {
       {/* Rules table */}
       <AsyncSection query={query} label="validation rules">
         {() => (
-      <div style={{ background: "white", border: "1px solid var(--gray-200)", borderRadius: 10, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
+      <div style={{ background: "var(--color-surface)", border: "1px solid var(--gray-200)", borderRadius: 10, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 2fr 100px 90px 60px", padding: "10px 18px", background: "var(--gray-50)", borderBottom: "1px solid var(--gray-200)" }}>
           {["Field", "Category", "Type", "Rule / Pattern", "Severity", "Status", ""].map((h, i) => (
             <div key={i} style={{ fontSize: 11, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", letterSpacing: "0.8px" }}>{h}</div>
